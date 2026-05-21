@@ -1,5 +1,4 @@
-"use client"
-
+// Supabase client - uses @supabase/supabase-js (NOT @supabase/ssr)
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
 let client: ReturnType<typeof createSupabaseClient> | null = null
