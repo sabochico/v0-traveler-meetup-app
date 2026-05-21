@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  // Simplified middleware - auth protection handled in components
-  // The @supabase/ssr package has issues with Edge runtime in this environment
+export function middleware(request: NextRequest) {
+  // Auth protection is handled at the component level via useAuth hook
   return NextResponse.next()
 }
 
