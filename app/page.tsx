@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+// Force rebuild - no middleware files exist
 import { useAuth } from "@/hooks/use-auth"
 import { BottomNav } from "@/components/bottom-nav"
 import { FeedView } from "@/components/feed-view"
