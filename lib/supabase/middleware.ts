@@ -1,2 +1,3 @@
-// This file intentionally left empty - moved to component-level auth
-export {}
+// Placeholder file - auth handled at component level
+// No imports needed
+export const placeholder = true
