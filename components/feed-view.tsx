@@ -1,10 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Clock, Users, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map } from "lucide-react"
+import { MapPin, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Loader2 } from "lucide-react"
 import { MeetupCard } from "./meetup-card"
 import { MoodStatus } from "./mood-status"
+import { useMeetups } from "@/hooks/use-meetups"
+import { useProfile, useUpdateProfile } from "@/hooks/use-profile"
+import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
+import type { MoodStatus as MoodStatusType, MeetupWithCreator } from "@/lib/types"
 
 const MEETUP_TYPES = [
   { id: "all", label: "All", icon: null },
@@ -17,76 +21,171 @@ const MEETUP_TYPES = [
   { id: "explore", label: "Explore", icon: Map },
 ]
 
-const MOCK_MEETUPS = [
+// Mock data for when there's no real data yet
+const MOCK_MEETUPS: MeetupWithCreator[] = [
   {
     id: "1",
-    user: {
-      name: "Mika",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
-      languages: ["日本語", "English"],
-      status: "exploring" as const,
-    },
+    creator_id: "mock-1",
     title: "Anyone want to grab coffee in Shibuya?",
-    location: "Shibuya, Tokyo",
-    type: "coffee" as const,
-    time: "Now",
-    distance: "0.3 km",
-    image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&h=400&fit=crop",
+    description: null,
+    category: "coffee",
+    location_name: "Shibuya, Tokyo",
+    location: null,
+    city: "Tokyo",
+    country: "Japan",
+    max_attendees: 4,
+    starts_at: new Date().toISOString(),
+    ends_at: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    creator: {
+      id: "mock-1",
+      display_name: "Mika",
+      bio: null,
+      avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
+      interests: [],
+      languages: ["日本語", "English"],
+      mood: "exploring",
+      travel_mode: true,
+      is_online: true,
+      anonymous_mode: false,
+      current_city: "Tokyo",
+      current_country: "Japan",
+      location: null,
+      last_seen_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   },
   {
     id: "2",
-    user: {
-      name: "Leo",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
-      languages: ["English", "한국어"],
-      status: "working" as const,
-    },
+    creator_id: "mock-2",
     title: "Working remotely in Seoul today, looking for cafe company",
-    location: "Hongdae, Seoul",
-    type: "coffee" as const,
-    time: "2h",
-    distance: "1.2 km",
-    image: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&h=400&fit=crop",
+    description: null,
+    category: "coffee",
+    location_name: "Hongdae, Seoul",
+    location: null,
+    city: "Seoul",
+    country: "South Korea",
+    max_attendees: 4,
+    starts_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    ends_at: null,
+    is_active: true,
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date().toISOString(),
+    creator: {
+      id: "mock-2",
+      display_name: "Leo",
+      bio: null,
+      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
+      interests: [],
+      languages: ["English", "한국어"],
+      mood: "working",
+      travel_mode: true,
+      is_online: false,
+      anonymous_mode: false,
+      current_city: "Seoul",
+      current_country: "South Korea",
+      location: null,
+      last_seen_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   },
   {
     id: "3",
-    user: {
-      name: "Sofia",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
-      languages: ["Español", "English", "中文"],
-      status: "social" as const,
-    },
+    creator_id: "mock-3",
     title: "First week in Taipei, want to explore night markets!",
-    location: "Ximending, Taipei",
-    type: "food" as const,
-    time: "Tonight",
-    distance: "2.5 km",
-    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop",
+    description: null,
+    category: "food",
+    location_name: "Ximending, Taipei",
+    location: null,
+    city: "Taipei",
+    country: "Taiwan",
+    max_attendees: 4,
+    starts_at: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+    ends_at: null,
+    is_active: true,
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date().toISOString(),
+    creator: {
+      id: "mock-3",
+      display_name: "Sofia",
+      bio: null,
+      avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
+      interests: [],
+      languages: ["Español", "English", "中文"],
+      mood: "social",
+      travel_mode: true,
+      is_online: true,
+      anonymous_mode: false,
+      current_city: "Taipei",
+      current_country: "Taiwan",
+      location: null,
+      last_seen_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   },
   {
     id: "4",
-    user: {
-      name: "Kai",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face",
-      languages: ["English", "日本語"],
-      status: "homesick" as const,
-    },
+    creator_id: "mock-4",
     title: "Late night photography walk through Shinjuku",
-    location: "Shinjuku, Tokyo",
-    type: "photo" as const,
-    time: "11 PM",
-    distance: "0.8 km",
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=400&fit=crop",
+    description: null,
+    category: "photo",
+    location_name: "Shinjuku, Tokyo",
+    location: null,
+    city: "Tokyo",
+    country: "Japan",
+    max_attendees: 4,
+    starts_at: new Date(Date.now() + 10 * 60 * 60 * 1000).toISOString(),
+    ends_at: null,
+    is_active: true,
+    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date().toISOString(),
+    creator: {
+      id: "mock-4",
+      display_name: "Kai",
+      bio: null,
+      avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face",
+      interests: [],
+      languages: ["English", "日本語"],
+      mood: "homesick",
+      travel_mode: true,
+      is_online: false,
+      anonymous_mode: false,
+      current_city: "Tokyo",
+      current_country: "Japan",
+      location: null,
+      last_seen_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   },
 ]
 
 export function FeedView() {
   const [selectedType, setSelectedType] = useState("all")
-  const [currentMood, setCurrentMood] = useState<"social" | "working" | "exploring" | "homesick">("exploring")
+  const { meetups, isLoading } = useMeetups()
+  const { profile } = useProfile()
+  const { updateMood } = useUpdateProfile()
+  const { isAuthenticated } = useAuth()
+  
+  const currentMood = (profile?.mood as MoodStatusType) ?? "exploring"
+
+  const handleMoodChange = async (mood: MoodStatusType) => {
+    if (isAuthenticated) {
+      await updateMood(mood)
+    }
+  }
+
+  // Use mock data if no real meetups exist yet
+  const displayMeetups = meetups.length > 0 ? meetups : MOCK_MEETUPS
 
   const filteredMeetups = selectedType === "all" 
-    ? MOCK_MEETUPS 
-    : MOCK_MEETUPS.filter(m => m.type === selectedType)
+    ? displayMeetups 
+    : displayMeetups.filter(m => m.category === selectedType)
 
   return (
     <div className="min-h-screen">
@@ -98,10 +197,10 @@ export function FeedView() {
               <h1 className="text-2xl font-serif font-semibold tracking-tight">drift</h1>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5" />
-                <span>Tokyo, Japan</span>
+                <span>{profile?.current_city ?? "Tokyo"}, {profile?.current_country ?? "Japan"}</span>
               </div>
             </div>
-            <MoodStatus currentMood={currentMood} onMoodChange={setCurrentMood} />
+            <MoodStatus currentMood={currentMood} onMoodChange={handleMoodChange} />
           </div>
 
           {/* Type Filter */}
@@ -127,9 +226,19 @@ export function FeedView() {
 
       {/* Feed */}
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
-        {filteredMeetups.map((meetup) => (
-          <MeetupCard key={meetup.id} meetup={meetup} />
-        ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : filteredMeetups.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No meetups yet. Be the first to create one!</p>
+          </div>
+        ) : (
+          filteredMeetups.map((meetup) => (
+            <MeetupCard key={meetup.id} meetup={meetup} />
+          ))
+        )}
       </div>
     </div>
   )

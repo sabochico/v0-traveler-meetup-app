@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { X, MapPin, Clock, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Sparkles } from "lucide-react"
+import { MapPin, Clock, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Sparkles, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { useCreateMeetup } from "@/hooks/use-meetups"
 import { cn } from "@/lib/utils"
 
 interface CreateMeetupProps {
@@ -22,17 +23,51 @@ const MEETUP_TYPES = [
   { id: "explore", label: "Exploring", icon: Map },
 ]
 
+const TIME_OPTIONS = [
+  { label: "Now", value: 0 },
+  { label: "In 1 hour", value: 1 },
+  { label: "Tonight", value: 6 },
+  { label: "Tomorrow", value: 24 },
+]
+
 export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [location, setLocation] = useState("")
+  const [selectedTime, setSelectedTime] = useState<number>(0)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  const { createMeetup } = useCreateMeetup()
 
-  const handleSubmit = () => {
-    // Handle meetup creation
-    onOpenChange(false)
-    setSelectedType(null)
-    setTitle("")
-    setLocation("")
+  const handleSubmit = async () => {
+    if (!selectedType || !title || !location) return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const startsAt = new Date()
+      startsAt.setHours(startsAt.getHours() + selectedTime)
+
+      await createMeetup({
+        title,
+        category: selectedType,
+        location_name: location,
+        city: location.split(",")[0]?.trim(),
+        starts_at: startsAt.toISOString(),
+      })
+
+      onOpenChange(false)
+      setSelectedType(null)
+      setTitle("")
+      setLocation("")
+      setSelectedTime(0)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create meetup")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -95,33 +130,51 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">When?</label>
             <div className="flex gap-2">
-              {["Now", "In 1 hour", "Tonight", "Tomorrow"].map((time) => (
+              {TIME_OPTIONS.map((time) => (
                 <button
-                  key={time}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-secondary text-secondary-foreground text-sm hover:bg-secondary/80 transition-colors"
+                  key={time.label}
+                  onClick={() => setSelectedTime(time.value)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors",
+                    selectedTime === time.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  )}
                 >
                   <Clock className="w-3.5 h-3.5" />
-                  {time}
+                  {time.label}
                 </button>
               ))}
             </div>
           </div>
+
+          {error && (
+            <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Submit */}
         <div className="p-6 pt-0">
           <button
             onClick={handleSubmit}
-            disabled={!selectedType || !title || !location}
+            disabled={!selectedType || !title || !location || loading}
             className={cn(
               "w-full py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2",
-              selectedType && title && location
+              selectedType && title && location && !loading
                 ? "bg-primary text-primary-foreground glow-amber"
                 : "bg-secondary text-muted-foreground cursor-not-allowed"
             )}
           >
-            <Sparkles className="w-4 h-4" />
-            Post Meetup
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Post Meetup
+              </>
+            )}
           </button>
         </div>
       </DialogContent>

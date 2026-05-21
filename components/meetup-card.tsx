@@ -1,27 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Clock, MessageCircle, Heart } from "lucide-react"
+import { MapPin, Clock, MessageCircle, Heart, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
-  meetup: {
-    id: string
-    user: {
-      name: string
-      avatar: string
-      languages: string[]
-      status: "social" | "working" | "exploring" | "homesick"
-    }
-    title: string
-    location: string
-    type: "coffee" | "food" | "photo" | "walk" | "study" | "gaming" | "explore"
-    time: string
-    distance: string
-    image: string
-  }
+  meetup: MeetupWithCreator
 }
 
 const STATUS_COLORS = {
@@ -38,15 +25,38 @@ const STATUS_LABELS = {
   homesick: "homesick",
 }
 
+const CATEGORY_IMAGES: Record<string, string> = {
+  coffee: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&h=400&fit=crop",
+  food: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop",
+  photo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=400&fit=crop",
+  walk: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=600&h=400&fit=crop",
+  study: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&h=400&fit=crop",
+  gaming: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&h=400&fit=crop",
+  explore: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=600&h=400&fit=crop",
+}
+
+function formatTime(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = date.getTime() - now.getTime()
+  
+  if (diff < 0) return "Now"
+  if (diff < 60 * 60 * 1000) return `${Math.round(diff / (60 * 1000))}m`
+  if (diff < 24 * 60 * 60 * 1000) return `${Math.round(diff / (60 * 60 * 1000))}h`
+  return "Tomorrow"
+}
+
 export function MeetupCard({ meetup }: MeetupCardProps) {
   const [liked, setLiked] = useState(false)
+  const creatorMood = (meetup.creator.mood as MoodStatus) ?? "exploring"
+  const categoryImage = CATEGORY_IMAGES[meetup.category] ?? CATEGORY_IMAGES.coffee
 
   return (
     <article className="group relative rounded-2xl overflow-hidden bg-card border border-border/50 transition-all duration-500 hover:border-primary/30">
       {/* Image */}
       <div className="relative aspect-[16/10] overflow-hidden">
         <img
-          src={meetup.image}
+          src={categoryImage}
           alt={meetup.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           crossOrigin="anonymous"
@@ -57,7 +67,7 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
         <div className="absolute top-3 right-3">
           <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-foreground border-0">
             <Clock className="w-3 h-3 mr-1" />
-            {meetup.time}
+            {formatTime(meetup.starts_at)}
           </Badge>
         </div>
 
@@ -76,21 +86,28 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
         {/* User Info */}
         <div className="flex items-start gap-3 mb-3">
           <Avatar className="w-11 h-11 ring-2 ring-primary/20">
-            <AvatarImage src={meetup.user.avatar} alt={meetup.user.name} />
-            <AvatarFallback>{meetup.user.name[0]}</AvatarFallback>
+            <AvatarImage 
+              src={meetup.creator.avatar_url ?? undefined} 
+              alt={meetup.creator.display_name ?? "User"} 
+            />
+            <AvatarFallback>
+              {(meetup.creator.display_name ?? "U")[0].toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">{meetup.user.name}</span>
-              <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[meetup.user.status])}>
-                {STATUS_LABELS[meetup.user.status]}
+              <span className="font-medium text-foreground">
+                {meetup.creator.display_name ?? "Anonymous"}
+              </span>
+              <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[creatorMood])}>
+                {STATUS_LABELS[creatorMood]}
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-              {meetup.user.languages.map((lang, i) => (
+              {meetup.creator.languages.slice(0, 3).map((lang, i) => (
                 <span key={lang}>
                   {lang}
-                  {i < meetup.user.languages.length - 1 && <span className="mx-1">·</span>}
+                  {i < Math.min(meetup.creator.languages.length, 3) - 1 && <span className="mx-1">·</span>}
                 </span>
               ))}
             </div>
@@ -106,8 +123,7 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <MapPin className="w-4 h-4" />
-            <span>{meetup.location}</span>
-            <span className="text-primary">· {meetup.distance}</span>
+            <span>{meetup.location_name ?? `${meetup.city}, ${meetup.country}`}</span>
           </div>
           <button className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium transition-all hover:glow-amber">
             <MessageCircle className="w-4 h-4" />

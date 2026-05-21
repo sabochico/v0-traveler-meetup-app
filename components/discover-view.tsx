@@ -1,65 +1,113 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Filter, MapPin, Users } from "lucide-react"
+import { Search, MapPin, Users, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { useNearbyProfiles } from "@/hooks/use-profile"
 import { cn } from "@/lib/utils"
+import type { Profile, MoodStatus } from "@/lib/types"
 
-const NEARBY_PEOPLE = [
-  {
-    id: "1",
-    name: "Yuki",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
-    status: "social" as const,
-    distance: "0.2 km",
-    bio: "Digital nomad from Berlin. Love finding hidden cafes.",
-    languages: ["Deutsch", "English", "日本語"],
-    interests: ["Photography", "Coffee", "Vinyl"],
-  },
-  {
-    id: "2",
-    name: "Marcus",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-    status: "exploring" as const,
-    distance: "0.5 km",
-    bio: "Software engineer exploring Asia for 3 months.",
-    languages: ["English", "Español"],
-    interests: ["Coding", "Ramen", "Night walks"],
-  },
-  {
-    id: "3",
-    name: "Hana",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face",
-    status: "working" as const,
-    distance: "0.8 km",
-    bio: "Freelance writer. Always looking for quiet study spots.",
-    languages: ["한국어", "English"],
-    interests: ["Writing", "Tea", "Bookstores"],
-  },
-  {
-    id: "4",
-    name: "Alex",
-    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face",
-    status: "homesick" as const,
-    distance: "1.1 km",
-    bio: "Exchange student from Canada. Missing home but loving Tokyo.",
-    languages: ["English", "Français"],
-    interests: ["Music", "Gaming", "Anime"],
-  },
-]
-
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   social: { color: "bg-emerald-500", label: "Feeling social" },
   working: { color: "bg-amber-500", label: "Working quietly" },
   exploring: { color: "bg-blue-500", label: "Exploring" },
   homesick: { color: "bg-purple-500", label: "Homesick" },
 }
 
+// Mock data for when no real users exist
+const MOCK_PROFILES: Profile[] = [
+  {
+    id: "1",
+    display_name: "Yuki",
+    avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
+    mood: "social",
+    bio: "Digital nomad from Berlin. Love finding hidden cafes.",
+    languages: ["Deutsch", "English", "日本語"],
+    interests: ["Photography", "Coffee", "Vinyl"],
+    travel_mode: true,
+    is_online: true,
+    anonymous_mode: false,
+    current_city: "Tokyo",
+    current_country: "Japan",
+    location: null,
+    last_seen_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    display_name: "Marcus",
+    avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
+    mood: "exploring",
+    bio: "Software engineer exploring Asia for 3 months.",
+    languages: ["English", "Español"],
+    interests: ["Coding", "Ramen", "Night walks"],
+    travel_mode: true,
+    is_online: false,
+    anonymous_mode: false,
+    current_city: "Tokyo",
+    current_country: "Japan",
+    location: null,
+    last_seen_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    display_name: "Hana",
+    avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face",
+    mood: "working",
+    bio: "Freelance writer. Always looking for quiet study spots.",
+    languages: ["한국어", "English"],
+    interests: ["Writing", "Tea", "Bookstores"],
+    travel_mode: true,
+    is_online: true,
+    anonymous_mode: false,
+    current_city: "Tokyo",
+    current_country: "Japan",
+    location: null,
+    last_seen_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "4",
+    display_name: "Alex",
+    avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face",
+    mood: "homesick",
+    bio: "Exchange student from Canada. Missing home but loving Tokyo.",
+    languages: ["English", "Français"],
+    interests: ["Music", "Gaming", "Anime"],
+    travel_mode: true,
+    is_online: false,
+    anonymous_mode: false,
+    current_city: "Tokyo",
+    current_country: "Japan",
+    location: null,
+    last_seen_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+]
+
 export function DiscoverView() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list")
   const [searchQuery, setSearchQuery] = useState("")
+  const { profiles, isLoading } = useNearbyProfiles()
+
+  // Use mock data if no real profiles exist
+  const displayProfiles = profiles.length > 0 ? profiles : MOCK_PROFILES
+
+  const filteredProfiles = searchQuery
+    ? displayProfiles.filter(
+        (p) =>
+          p.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.interests.some((i) => i.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          p.languages.some((l) => l.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : displayProfiles
 
   return (
     <div className="min-h-screen">
@@ -106,45 +154,53 @@ export function DiscoverView() {
       </header>
 
       {/* Content */}
-      {viewMode === "list" ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      ) : viewMode === "list" ? (
         <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-          {NEARBY_PEOPLE.map((person) => (
+          {filteredProfiles.map((person) => (
             <PersonCard key={person.id} person={person} />
           ))}
         </div>
       ) : (
         <div className="h-[calc(100vh-180px)] relative">
-          <MapView people={NEARBY_PEOPLE} />
+          <MapView people={filteredProfiles} />
         </div>
       )}
     </div>
   )
 }
 
-function PersonCard({ person }: { person: typeof NEARBY_PEOPLE[0] }) {
+function PersonCard({ person }: { person: Profile }) {
+  const mood = (person.mood as MoodStatus) ?? "exploring"
+
   return (
     <article className="p-4 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300">
       <div className="flex gap-4">
         <div className="relative">
           <Avatar className="w-16 h-16 ring-2 ring-primary/20">
-            <AvatarImage src={person.avatar} alt={person.name} />
-            <AvatarFallback>{person.name[0]}</AvatarFallback>
+            <AvatarImage src={person.avatar_url ?? undefined} alt={person.display_name ?? "User"} />
+            <AvatarFallback>{(person.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
           </Avatar>
           <span
             className={cn(
               "absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-card",
-              STATUS_STYLES[person.status].color
+              STATUS_STYLES[mood].color
             )}
-            title={STATUS_STYLES[person.status].label}
+            title={STATUS_STYLES[mood].label}
           />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="font-medium text-foreground">{person.name}</h3>
-            <span className="text-xs text-primary">{person.distance}</span>
+            <h3 className="font-medium text-foreground">{person.display_name ?? "Anonymous"}</h3>
+            <span className="text-xs text-primary">Nearby</span>
           </div>
-          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{person.bio}</p>
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+            {person.bio ?? "No bio yet"}
+          </p>
           
           <div className="flex flex-wrap gap-1.5">
             {person.interests.slice(0, 3).map((interest) => (
@@ -158,10 +214,10 @@ function PersonCard({ person }: { person: typeof NEARBY_PEOPLE[0] }) {
 
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          {person.languages.map((lang, i) => (
+          {person.languages.slice(0, 3).map((lang, i) => (
             <span key={lang}>
               {lang}
-              {i < person.languages.length - 1 && <span className="mx-1">·</span>}
+              {i < Math.min(person.languages.length, 3) - 1 && <span className="mx-1">·</span>}
             </span>
           ))}
         </div>
@@ -173,7 +229,7 @@ function PersonCard({ person }: { person: typeof NEARBY_PEOPLE[0] }) {
   )
 }
 
-function MapView({ people }: { people: typeof NEARBY_PEOPLE }) {
+function MapView({ people }: { people: Profile[] }) {
   return (
     <div className="w-full h-full bg-secondary relative overflow-hidden">
       {/* Stylized map background */}
@@ -190,7 +246,7 @@ function MapView({ people }: { people: typeof NEARBY_PEOPLE }) {
       </div>
 
       {/* People markers */}
-      {people.map((person, index) => {
+      {people.slice(0, 4).map((person, index) => {
         const positions = [
           { top: "30%", left: "40%" },
           { top: "45%", left: "60%" },
@@ -198,6 +254,7 @@ function MapView({ people }: { people: typeof NEARBY_PEOPLE }) {
           { top: "70%", left: "55%" },
         ]
         const pos = positions[index % positions.length]
+        const mood = (person.mood as MoodStatus) ?? "exploring"
 
         return (
           <div
@@ -207,13 +264,13 @@ function MapView({ people }: { people: typeof NEARBY_PEOPLE }) {
           >
             <div className="relative">
               <Avatar className="w-12 h-12 ring-4 ring-card shadow-lg group-hover:ring-primary transition-all">
-                <AvatarImage src={person.avatar} alt={person.name} />
-                <AvatarFallback>{person.name[0]}</AvatarFallback>
+                <AvatarImage src={person.avatar_url ?? undefined} alt={person.display_name ?? "User"} />
+                <AvatarFallback>{(person.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
               </Avatar>
               <span
                 className={cn(
                   "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card",
-                  STATUS_STYLES[person.status].color
+                  STATUS_STYLES[mood].color
                 )}
               />
             </div>
@@ -221,8 +278,8 @@ function MapView({ people }: { people: typeof NEARBY_PEOPLE }) {
             {/* Tooltip */}
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               <div className="bg-card px-3 py-2 rounded-lg shadow-lg border border-border whitespace-nowrap">
-                <p className="font-medium text-sm text-foreground">{person.name}</p>
-                <p className="text-xs text-muted-foreground">{person.distance}</p>
+                <p className="font-medium text-sm text-foreground">{person.display_name ?? "Anonymous"}</p>
+                <p className="text-xs text-muted-foreground">Nearby</p>
               </div>
             </div>
           </div>

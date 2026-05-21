@@ -15,47 +15,49 @@ import {
   Plane,
   Coffee,
   Utensils,
-  BookOpen
+  BookOpen,
+  LogOut,
+  Loader2
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
+import { useProfile, useUpdateProfile } from "@/hooks/use-profile"
+import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 
-const USER_PROFILE = {
-  name: "You",
-  username: "@drifter",
-  avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&h=200&fit=crop&crop=face",
-  coverPhoto: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&h=400&fit=crop",
-  bio: "Digital nomad exploring Asia. Looking for coffee buddies and late-night conversations.",
-  location: "Tokyo, Japan",
-  homeCountry: "Berlin, Germany",
-  languages: ["English", "Deutsch", "日本語 (Learning)"],
-  interests: ["Photography", "Coffee", "Night walks", "Vinyl", "Cooking"],
-  travelStatus: "traveling",
-  stats: {
-    meetups: 12,
-    connections: 34,
-    cities: 8,
-  },
-  badges: [
-    { id: "early", label: "Early Drifter", icon: Plane },
-    { id: "coffee", label: "Coffee Lover", icon: Coffee },
-    { id: "foodie", label: "Foodie", icon: Utensils },
-    { id: "bookworm", label: "Bookworm", icon: BookOpen },
-  ],
-}
+const DEFAULT_BADGES = [
+  { id: "early", label: "Early Drifter", icon: Plane },
+  { id: "coffee", label: "Coffee Lover", icon: Coffee },
+  { id: "foodie", label: "Foodie", icon: Utensils },
+  { id: "bookworm", label: "Bookworm", icon: BookOpen },
+]
 
 export function ProfileView() {
-  const [travelMode, setTravelMode] = useState(true)
-  const [anonymousMode, setAnonymousMode] = useState(false)
+  const { profile, isLoading } = useProfile()
+  const { toggleTravelMode, toggleAnonymousMode } = useUpdateProfile()
+  const { signOut } = useAuth()
+  const [signingOut, setSigningOut] = useState(false)
+
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    await signOut()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen pb-8">
       {/* Cover Photo */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={USER_PROFILE.coverPhoto}
+          src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&h=400&fit=crop"
           alt="Cover"
           className="w-full h-full object-cover"
           crossOrigin="anonymous"
@@ -73,8 +75,13 @@ export function ProfileView() {
         {/* Avatar */}
         <div className="relative inline-block mb-4">
           <Avatar className="w-28 h-28 ring-4 ring-background">
-            <AvatarImage src={USER_PROFILE.avatar} alt={USER_PROFILE.name} />
-            <AvatarFallback>YO</AvatarFallback>
+            <AvatarImage 
+              src={profile?.avatar_url ?? undefined} 
+              alt={profile?.display_name ?? "You"} 
+            />
+            <AvatarFallback>
+              {(profile?.display_name ?? "U")[0].toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <button className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center" aria-label="Change photo">
             <Camera className="w-4 h-4" />
@@ -84,39 +91,42 @@ export function ProfileView() {
         {/* Name & Bio */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-serif font-semibold">{USER_PROFILE.name}</h1>
+            <h1 className="text-2xl font-serif font-semibold">
+              {profile?.display_name ?? "Drifter"}
+            </h1>
             <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Edit profile">
               <Edit3 className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-sm text-muted-foreground mb-3">{USER_PROFILE.username}</p>
-          <p className="text-foreground leading-relaxed">{USER_PROFILE.bio}</p>
+          <p className="text-foreground leading-relaxed">
+            {profile?.bio ?? "No bio yet. Tell others about yourself!"}
+          </p>
         </div>
 
         {/* Location Info */}
         <div className="flex flex-wrap gap-4 mb-6 text-sm">
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <MapPin className="w-4 h-4 text-primary" />
-            <span>{USER_PROFILE.location}</span>
+            <span>{profile?.current_city ?? "Unknown"}, {profile?.current_country ?? "Location"}</span>
           </div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Globe className="w-4 h-4" />
-            <span>From {USER_PROFILE.homeCountry}</span>
+            <span>Traveler</span>
           </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="text-center p-4 rounded-xl bg-card border border-border/50">
-            <p className="text-2xl font-semibold text-primary">{USER_PROFILE.stats.meetups}</p>
+            <p className="text-2xl font-semibold text-primary">0</p>
             <p className="text-xs text-muted-foreground">Meetups</p>
           </div>
           <div className="text-center p-4 rounded-xl bg-card border border-border/50">
-            <p className="text-2xl font-semibold text-primary">{USER_PROFILE.stats.connections}</p>
+            <p className="text-2xl font-semibold text-primary">0</p>
             <p className="text-xs text-muted-foreground">Connections</p>
           </div>
           <div className="text-center p-4 rounded-xl bg-card border border-border/50">
-            <p className="text-2xl font-semibold text-primary">{USER_PROFILE.stats.cities}</p>
+            <p className="text-2xl font-semibold text-primary">1</p>
             <p className="text-xs text-muted-foreground">Cities</p>
           </div>
         </div>
@@ -125,7 +135,7 @@ export function ProfileView() {
         <div className="mb-6">
           <h2 className="text-sm font-medium text-foreground mb-3">Badges</h2>
           <div className="flex flex-wrap gap-2">
-            {USER_PROFILE.badges.map((badge) => (
+            {DEFAULT_BADGES.slice(0, 2).map((badge) => (
               <div
                 key={badge.id}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm"
@@ -141,11 +151,15 @@ export function ProfileView() {
         <div className="mb-6">
           <h2 className="text-sm font-medium text-foreground mb-3">Languages</h2>
           <div className="flex flex-wrap gap-2">
-            {USER_PROFILE.languages.map((lang) => (
-              <Badge key={lang} variant="secondary">
-                {lang}
-              </Badge>
-            ))}
+            {(profile?.languages?.length ?? 0) > 0 ? (
+              profile?.languages.map((lang) => (
+                <Badge key={lang} variant="secondary">
+                  {lang}
+                </Badge>
+              ))
+            ) : (
+              <Badge variant="secondary">Add languages</Badge>
+            )}
           </div>
         </div>
 
@@ -153,11 +167,17 @@ export function ProfileView() {
         <div className="mb-6">
           <h2 className="text-sm font-medium text-foreground mb-3">Interests</h2>
           <div className="flex flex-wrap gap-2">
-            {USER_PROFILE.interests.map((interest) => (
-              <Badge key={interest} variant="outline" className="border-border text-foreground">
-                {interest}
+            {(profile?.interests?.length ?? 0) > 0 ? (
+              profile?.interests.map((interest) => (
+                <Badge key={interest} variant="outline" className="border-border text-foreground">
+                  {interest}
+                </Badge>
+              ))
+            ) : (
+              <Badge variant="outline" className="border-border text-foreground">
+                Add interests
               </Badge>
-            ))}
+            )}
           </div>
         </div>
 
@@ -183,7 +203,10 @@ export function ProfileView() {
                 <p className="text-xs text-muted-foreground">Show you&apos;re visiting this city</p>
               </div>
             </div>
-            <Switch checked={travelMode} onCheckedChange={setTravelMode} />
+            <Switch 
+              checked={profile?.travel_mode ?? true} 
+              onCheckedChange={toggleTravelMode} 
+            />
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-border/50">
@@ -194,7 +217,10 @@ export function ProfileView() {
                 <p className="text-xs text-muted-foreground">Hide your profile from discovery</p>
               </div>
             </div>
-            <Switch checked={anonymousMode} onCheckedChange={setAnonymousMode} />
+            <Switch 
+              checked={profile?.anonymous_mode ?? false} 
+              onCheckedChange={toggleAnonymousMode} 
+            />
           </div>
 
           <button className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
@@ -207,6 +233,19 @@ export function ProfileView() {
             <Moon className="w-5 h-5 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">Appearance</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+          </button>
+
+          <button 
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="flex items-center gap-3 w-full p-4 rounded-xl bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-colors"
+          >
+            {signingOut ? (
+              <Loader2 className="w-5 h-5 text-destructive animate-spin" />
+            ) : (
+              <LogOut className="w-5 h-5 text-destructive" />
+            )}
+            <span className="text-sm font-medium text-destructive">Sign out</span>
           </button>
         </div>
       </div>
