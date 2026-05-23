@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch"
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { EditProfileModal } from "@/components/edit-profile-modal"
+import { ConnectSocialModal } from "@/components/connect-social-modal"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_BADGES = [
@@ -40,6 +41,7 @@ export function ProfileView() {
   const { signOut } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showSocialModal, setShowSocialModal] = useState(false)
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -202,9 +204,14 @@ export function ProfileView() {
         {/* Social Links */}
         <div className="mb-6">
           <h2 className="text-sm font-medium text-foreground mb-3">Social</h2>
-          <button className="flex items-center gap-3 w-full p-3 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
+          <button 
+            onClick={() => setShowSocialModal(true)}
+            className="flex items-center gap-3 w-full p-3 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+          >
             <Instagram className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm text-foreground">Connect Instagram</span>
+            <span className="text-sm text-foreground">
+              {profile?.instagram_handle ? `@${profile.instagram_handle}` : "Connect Instagram"}
+            </span>
             <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
           </button>
         </div>
@@ -270,6 +277,13 @@ export function ProfileView() {
           onClose={() => setShowEditModal(false)}
         />
       )}
+
+      {/* Connect Social Modal */}
+      <ConnectSocialModal
+        isOpen={showSocialModal}
+        onClose={() => setShowSocialModal(false)}
+        currentInstagram={profile?.instagram_handle}
+      />
     </div>
   )
 }

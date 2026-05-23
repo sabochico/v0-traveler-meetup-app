@@ -24,6 +24,7 @@ export interface Database {
           current_city: string | null
           current_country: string | null
           location: unknown | null
+          instagram_handle: string | null
           last_seen_at: string
           created_at: string
           updated_at: string
@@ -42,6 +43,7 @@ export interface Database {
           current_city?: string | null
           current_country?: string | null
           location?: unknown | null
+          instagram_handle?: string | null
           last_seen_at?: string
           created_at?: string
           updated_at?: string
@@ -60,6 +62,7 @@ export interface Database {
           current_city?: string | null
           current_country?: string | null
           location?: unknown | null
+          instagram_handle?: string | null
           last_seen_at?: string
           created_at?: string
           updated_at?: string
