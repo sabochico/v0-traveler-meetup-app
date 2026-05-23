@@ -148,7 +148,7 @@ export function useMessages(conversationId: string | null) {
 export function useCreateConversation() {
   const { refresh: refreshConversations } = useConversations()
 
-  const startConversation = async (otherUserId: string): Promise<string> => {
+  const startConversation = async (otherUserId: string, greeting: string = "Hey 👋"): Promise<string> => {
     const supabase = createClient()
     
     const { data: { user } } = await supabase.auth.getUser()
@@ -170,7 +170,7 @@ export function useCreateConversation() {
           .single()
 
         if (otherPart) {
-          // Conversation already exists
+          // Conversation already exists - return existing conversation ID
           return part.conversation_id
         }
       }
@@ -194,6 +194,23 @@ export function useCreateConversation() {
       ])
 
     if (partError) throw partError
+
+    // Send the greeting message
+    const { error: msgError } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: newConv.id,
+        sender_id: user.id,
+        content: greeting,
+      })
+
+    if (msgError) throw msgError
+
+    // Update conversation updated_at timestamp
+    await supabase
+      .from("conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", newConv.id)
 
     await refreshConversations()
     return newConv.id

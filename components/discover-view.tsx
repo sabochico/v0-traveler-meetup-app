@@ -93,7 +93,11 @@ const MOCK_PROFILES: Profile[] = [
   },
 ]
 
-export function DiscoverView() {
+interface DiscoverViewProps {
+  onNavigateToMessages?: () => void
+}
+
+export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const [viewMode, setViewMode] = useState<"list" | "map">("list")
   const [searchQuery, setSearchQuery] = useState("")
   const { profiles, isLoading } = useNearbyProfiles()
@@ -163,19 +167,19 @@ export function DiscoverView() {
       ) : viewMode === "list" ? (
         <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
           {filteredProfiles.map((person) => (
-            <PersonCard key={person.id} person={person} isMock={isMockData} />
+            <PersonCard key={person.id} person={person} isMock={isMockData} onNavigateToMessages={onNavigateToMessages} />
           ))}
         </div>
       ) : (
         <div className="h-[calc(100vh-180px)] relative">
-          <MapView people={filteredProfiles} isMock={isMockData} />
+          <MapView people={filteredProfiles} isMock={isMockData} onNavigateToMessages={onNavigateToMessages} />
         </div>
       )}
     </div>
   )
 }
 
-function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
+function PersonCard({ person, isMock, onNavigateToMessages }: { person: Profile; isMock: boolean; onNavigateToMessages?: () => void }) {
   const [messageSent, setMessageSent] = useState(false)
   const [sending, setSending] = useState(false)
   const { startConversation } = useCreateConversation()
@@ -188,16 +192,25 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
       setTimeout(() => {
         setSending(false)
         setMessageSent(true)
+        // Navigate to messages after a brief delay
+        setTimeout(() => {
+          onNavigateToMessages?.()
+        }, 500)
       }, 500)
       return
     }
 
     try {
       setSending(true)
-      await startConversation(person.id)
+      await startConversation(person.id, "Hey 👋")
       setMessageSent(true)
+      // Navigate to messages after successful send
+      setTimeout(() => {
+        onNavigateToMessages?.()
+      }, 800)
     } catch (error) {
       console.error("Failed to start conversation:", error)
+      alert("Failed to send message. Please try again.")
     } finally {
       setSending(false)
     }
@@ -277,7 +290,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
   )
 }
 
-function MapView({ people, isMock }: { people: Profile[]; isMock: boolean }) {
+function MapView({ people, isMock, onNavigateToMessages }: { people: Profile[]; isMock: boolean; onNavigateToMessages?: () => void }) {
   return (
     <div className="w-full h-full bg-secondary relative overflow-hidden">
       {/* Stylized map background */}
@@ -323,7 +336,7 @@ function MapView({ people, isMock }: { people: Profile[]; isMock: boolean }) {
         const mood = (person.mood as MoodStatus) ?? "exploring"
 
         return (
-          <MapMarker key={person.id} person={person} position={pos} mood={mood} isMock={isMock} />
+          <MapMarker key={person.id} person={person} position={pos} mood={mood} isMock={isMock} onNavigateToMessages={onNavigateToMessages} />
         )
       })}
 
@@ -351,11 +364,13 @@ function MapMarker({
   position,
   mood,
   isMock,
+  onNavigateToMessages,
 }: {
   person: Profile
   position: { top: string; left: string }
   mood: MoodStatus
   isMock: boolean
+  onNavigateToMessages?: () => void
 }) {
   const [showTooltip, setShowTooltip] = useState(false)
   const [messageSent, setMessageSent] = useState(false)
@@ -368,16 +383,23 @@ function MapMarker({
       setTimeout(() => {
         setSending(false)
         setMessageSent(true)
+        setTimeout(() => {
+          onNavigateToMessages?.()
+        }, 500)
       }, 500)
       return
     }
 
     try {
       setSending(true)
-      await startConversation(person.id)
+      await startConversation(person.id, "Hey 👋")
       setMessageSent(true)
+      setTimeout(() => {
+        onNavigateToMessages?.()
+      }, 800)
     } catch (error) {
       console.error("Failed to start conversation:", error)
+      alert("Failed to send message. Please try again.")
     } finally {
       setSending(false)
     }
