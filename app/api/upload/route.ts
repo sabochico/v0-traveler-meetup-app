@@ -3,10 +3,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
+  console.log("[v0] Upload API route hit")
+  
   try {
     // Verify user is authenticated
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    
+    console.log("[v0] User authenticated:", !!user)
     
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

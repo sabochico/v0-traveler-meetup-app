@@ -57,20 +57,34 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
       const formData = new FormData()
       formData.append("file", file)
 
+      console.log("[v0] Uploading file to /api/upload...")
+      
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        // Explicitly don't set Content-Type - let browser set it with boundary for FormData
       })
 
+      console.log("[v0] Upload response status:", response.status)
+
+      const responseText = await response.text()
+      console.log("[v0] Upload response text:", responseText)
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Upload failed")
+        let errorMessage = "Upload failed"
+        try {
+          const errorData = JSON.parse(responseText)
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          errorMessage = responseText || errorMessage
+        }
+        throw new Error(errorMessage)
       }
 
-      const { url } = await response.json()
-      setAvatarUrl(url)
+      const data = JSON.parse(responseText)
+      setAvatarUrl(data.url)
     } catch (error) {
-      console.error("Upload error:", error)
+      console.error("[v0] Upload error:", error)
       alert("Failed to upload image. Please try again.")
     } finally {
       setUploading(false)
