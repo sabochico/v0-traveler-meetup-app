@@ -31,11 +31,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Allow public routes
-  const publicPaths = ['/auth/login', '/auth/sign-up', '/auth/callback', '/auth/sign-up-success']
+  // Allow public routes and API routes
+  const publicPaths = ['/auth/login', '/auth/sign-up', '/auth/callback', '/auth/sign-up-success', '/auth/forgot-password', '/auth/reset-password', '/auth/verified', '/auth/error']
   const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
 
-  if (!user && !isPublicPath && request.nextUrl.pathname !== '/') {
+  if (!user && !isPublicPath && !isApiRoute && request.nextUrl.pathname !== '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
