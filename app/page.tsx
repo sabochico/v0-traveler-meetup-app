@@ -45,7 +45,7 @@ export default function Home() {
       {/* Main Content Area */}
       <div className="pb-20">
         {activeTab === "feed" && <FeedView />}
-        {activeTab === "discover" && <DiscoverView />}
+        {activeTab === "discover" && <DiscoverView onNavigateToMessages={() => setActiveTab("messages")} />}
         {activeTab === "messages" && (
           isAuthenticated ? <MessagesView /> : <AuthPrompt message="Sign in to see your messages" />
         )}

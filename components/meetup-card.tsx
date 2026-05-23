@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useSavedMeetups, useSaveMeetup, useJoinMeetup, useUserMeetups } from "@/hooks/use-saved-meetups"
 import { useAuth } from "@/hooks/use-auth"
+import { UserProfileSheet } from "@/components/user-profile-sheet"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
@@ -57,10 +58,16 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
   
   const [savingLike, setSavingLike] = useState(false)
   const [joiningMeetup, setJoiningMeetup] = useState(false)
+  const [showProfileSheet, setShowProfileSheet] = useState(false)
   
   const isLiked = savedMeetupIds.includes(meetup.id)
   const isJoined = joinedMeetups.some(m => m.meetup_id === meetup.id)
   const isCreator = user?.id === meetup.creator_id
+  
+  // Handle case where creator data might not be loaded
+  if (!meetup.creator) {
+    return null
+  }
   
   const creatorMood = (meetup.creator.mood as MoodStatus) ?? "exploring"
   const categoryImage = CATEGORY_IMAGES[meetup.category] ?? CATEGORY_IMAGES.coffee
@@ -134,8 +141,11 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
 
       {/* Content */}
       <div className="p-4">
-        {/* User Info */}
-        <div className="flex items-start gap-3 mb-3">
+        {/* User Info - Clickable */}
+        <button
+          onClick={() => setShowProfileSheet(true)}
+          className="flex items-start gap-3 mb-3 w-full text-left hover:opacity-80 transition-opacity cursor-pointer"
+        >
           <Avatar className="w-11 h-11 ring-2 ring-primary/20">
             <AvatarImage 
               src={meetup.creator.avatar_url ?? undefined} 
@@ -163,7 +173,7 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
               ))}
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Title */}
         <h3 className="text-lg font-medium leading-snug mb-3 text-balance">
@@ -211,6 +221,13 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
           )}
         </div>
       </div>
+
+      {/* User Profile Sheet */}
+      <UserProfileSheet
+        user={meetup.creator}
+        isOpen={showProfileSheet}
+        onClose={() => setShowProfileSheet(false)}
+      />
     </article>
   )
 }
