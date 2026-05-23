@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Search, MapPin, Users, Loader2 } from "lucide-react"
+import { Search, MapPin, Users, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useNearbyProfiles } from "@/hooks/use-profile"
+import { useCreateConversation } from "@/hooks/use-messages"
 import { cn } from "@/lib/utils"
 import type { Profile, MoodStatus } from "@/lib/types"
 
@@ -19,7 +20,7 @@ const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
 // Mock data for when no real users exist
 const MOCK_PROFILES: Profile[] = [
   {
-    id: "1",
+    id: "mock-1",
     display_name: "Yuki",
     avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
     mood: "social",
@@ -37,7 +38,7 @@ const MOCK_PROFILES: Profile[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: "2",
+    id: "mock-2",
     display_name: "Marcus",
     avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
     mood: "exploring",
@@ -55,7 +56,7 @@ const MOCK_PROFILES: Profile[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: "3",
+    id: "mock-3",
     display_name: "Hana",
     avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face",
     mood: "working",
@@ -73,7 +74,7 @@ const MOCK_PROFILES: Profile[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: "4",
+    id: "mock-4",
     display_name: "Alex",
     avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face",
     mood: "homesick",
@@ -99,6 +100,7 @@ export function DiscoverView() {
 
   // Use mock data if no real profiles exist
   const displayProfiles = profiles.length > 0 ? profiles : MOCK_PROFILES
+  const isMockData = profiles.length === 0
 
   const filteredProfiles = searchQuery
     ? displayProfiles.filter(
@@ -161,20 +163,45 @@ export function DiscoverView() {
       ) : viewMode === "list" ? (
         <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
           {filteredProfiles.map((person) => (
-            <PersonCard key={person.id} person={person} />
+            <PersonCard key={person.id} person={person} isMock={isMockData} />
           ))}
         </div>
       ) : (
         <div className="h-[calc(100vh-180px)] relative">
-          <MapView people={filteredProfiles} />
+          <MapView people={filteredProfiles} isMock={isMockData} />
         </div>
       )}
     </div>
   )
 }
 
-function PersonCard({ person }: { person: Profile }) {
+function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
+  const [messageSent, setMessageSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const { startConversation } = useCreateConversation()
   const mood = (person.mood as MoodStatus) ?? "exploring"
+
+  const handleSayHi = async () => {
+    if (isMock) {
+      // For mock data, just show success animation
+      setSending(true)
+      setTimeout(() => {
+        setSending(false)
+        setMessageSent(true)
+      }, 500)
+      return
+    }
+
+    try {
+      setSending(true)
+      await startConversation(person.id)
+      setMessageSent(true)
+    } catch (error) {
+      console.error("Failed to start conversation:", error)
+    } finally {
+      setSending(false)
+    }
+  }
 
   return (
     <article className="p-4 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300">
@@ -201,7 +228,7 @@ function PersonCard({ person }: { person: Profile }) {
           <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
             {person.bio ?? "No bio yet"}
           </p>
-          
+
           <div className="flex flex-wrap gap-1.5">
             {person.interests.slice(0, 3).map((interest) => (
               <Badge key={interest} variant="secondary" className="text-xs">
@@ -221,15 +248,36 @@ function PersonCard({ person }: { person: Profile }) {
             </span>
           ))}
         </div>
-        <button className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:glow-amber transition-all">
-          Say hi
+        <button
+          onClick={handleSayHi}
+          disabled={messageSent || sending}
+          className={cn(
+            "px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2",
+            messageSent
+              ? "bg-emerald-500/20 text-emerald-400 cursor-default"
+              : "bg-primary text-primary-foreground hover:glow-amber"
+          )}
+        >
+          {sending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : messageSent ? (
+            <>
+              <Check className="w-4 h-4" />
+              <span>Sent</span>
+            </>
+          ) : (
+            <>
+              <MessageCircle className="w-4 h-4" />
+              <span>Say hi</span>
+            </>
+          )}
         </button>
       </div>
     </article>
   )
 }
 
-function MapView({ people }: { people: Profile[] }) {
+function MapView({ people, isMock }: { people: Profile[]; isMock: boolean }) {
   return (
     <div className="w-full h-full bg-secondary relative overflow-hidden">
       {/* Stylized map background */}
@@ -237,10 +285,28 @@ function MapView({ people }: { people: Profile[] }) {
         <svg className="w-full h-full" viewBox="0 0 400 600">
           {/* Grid lines */}
           {Array.from({ length: 20 }).map((_, i) => (
-            <line key={`h-${i}`} x1="0" y1={i * 30} x2="400" y2={i * 30} stroke="currentColor" strokeWidth="0.5" className="text-border" />
+            <line
+              key={`h-${i}`}
+              x1="0"
+              y1={i * 30}
+              x2="400"
+              y2={i * 30}
+              stroke="currentColor"
+              strokeWidth="0.5"
+              className="text-border"
+            />
           ))}
           {Array.from({ length: 15 }).map((_, i) => (
-            <line key={`v-${i}`} x1={i * 30} y1="0" x2={i * 30} y2="600" stroke="currentColor" strokeWidth="0.5" className="text-border" />
+            <line
+              key={`v-${i}`}
+              x1={i * 30}
+              y1="0"
+              x2={i * 30}
+              y2="600"
+              stroke="currentColor"
+              strokeWidth="0.5"
+              className="text-border"
+            />
           ))}
         </svg>
       </div>
@@ -257,32 +323,7 @@ function MapView({ people }: { people: Profile[] }) {
         const mood = (person.mood as MoodStatus) ?? "exploring"
 
         return (
-          <div
-            key={person.id}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
-            style={{ top: pos.top, left: pos.left }}
-          >
-            <div className="relative">
-              <Avatar className="w-12 h-12 ring-4 ring-card shadow-lg group-hover:ring-primary transition-all">
-                <AvatarImage src={person.avatar_url ?? undefined} alt={person.display_name ?? "User"} />
-                <AvatarFallback>{(person.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <span
-                className={cn(
-                  "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card",
-                  STATUS_STYLES[mood].color
-                )}
-              />
-            </div>
-            
-            {/* Tooltip */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <div className="bg-card px-3 py-2 rounded-lg shadow-lg border border-border whitespace-nowrap">
-                <p className="font-medium text-sm text-foreground">{person.display_name ?? "Anonymous"}</p>
-                <p className="text-xs text-muted-foreground">Nearby</p>
-              </div>
-            </div>
-          </div>
+          <MapMarker key={person.id} person={person} position={pos} mood={mood} isMock={isMock} />
         )
       })}
 
@@ -301,6 +342,109 @@ function MapView({ people }: { people: Profile[] }) {
           <span className="text-foreground">Shibuya, Tokyo</span>
         </div>
       </div>
+    </div>
+  )
+}
+
+function MapMarker({
+  person,
+  position,
+  mood,
+  isMock,
+}: {
+  person: Profile
+  position: { top: string; left: string }
+  mood: MoodStatus
+  isMock: boolean
+}) {
+  const [showTooltip, setShowTooltip] = useState(false)
+  const [messageSent, setMessageSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const { startConversation } = useCreateConversation()
+
+  const handleSayHi = async () => {
+    if (isMock) {
+      setSending(true)
+      setTimeout(() => {
+        setSending(false)
+        setMessageSent(true)
+      }, 500)
+      return
+    }
+
+    try {
+      setSending(true)
+      await startConversation(person.id)
+      setMessageSent(true)
+    } catch (error) {
+      console.error("Failed to start conversation:", error)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div
+      className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer"
+      style={{ top: position.top, left: position.left }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onClick={() => setShowTooltip(!showTooltip)}
+    >
+      <div className="relative">
+        <Avatar
+          className={cn(
+            "w-12 h-12 ring-4 ring-card shadow-lg transition-all",
+            showTooltip ? "ring-primary" : ""
+          )}
+        >
+          <AvatarImage src={person.avatar_url ?? undefined} alt={person.display_name ?? "User"} />
+          <AvatarFallback>{(person.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <span
+          className={cn(
+            "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card",
+            STATUS_STYLES[mood].color
+          )}
+        />
+      </div>
+
+      {/* Tooltip */}
+      {showTooltip && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10">
+          <div className="bg-card px-4 py-3 rounded-lg shadow-lg border border-border whitespace-nowrap">
+            <p className="font-medium text-sm text-foreground">{person.display_name ?? "Anonymous"}</p>
+            <p className="text-xs text-muted-foreground mb-2">{STATUS_STYLES[mood].label}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSayHi()
+              }}
+              disabled={messageSent || sending}
+              className={cn(
+                "w-full px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center justify-center gap-1.5",
+                messageSent
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "bg-primary text-primary-foreground hover:glow-amber"
+              )}
+            >
+              {sending ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : messageSent ? (
+                <>
+                  <Check className="w-3 h-3" />
+                  <span>Sent</span>
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="w-3 h-3" />
+                  <span>Say hi</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

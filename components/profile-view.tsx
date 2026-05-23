@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { 
-  Settings, 
-  MapPin, 
-  Globe, 
-  Camera, 
-  Instagram, 
+import {
+  Settings,
+  MapPin,
+  Globe,
+  Camera,
+  Instagram,
   Edit3,
   Shield,
   Bell,
@@ -17,13 +17,14 @@ import {
   Utensils,
   BookOpen,
   LogOut,
-  Loader2
+  Loader2,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
+import { EditProfileModal } from "@/components/edit-profile-modal"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_BADGES = [
@@ -38,6 +39,7 @@ export function ProfileView() {
   const { toggleTravelMode, toggleAnonymousMode } = useUpdateProfile()
   const { signOut } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -63,9 +65,12 @@ export function ProfileView() {
           crossOrigin="anonymous"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-        
+
         {/* Settings Button */}
-        <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 transition-colors" aria-label="Settings">
+        <button
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 transition-colors"
+          aria-label="Settings"
+        >
           <Settings className="w-5 h-5" />
         </button>
       </div>
@@ -75,15 +80,14 @@ export function ProfileView() {
         {/* Avatar */}
         <div className="relative inline-block mb-4">
           <Avatar className="w-28 h-28 ring-4 ring-background">
-            <AvatarImage 
-              src={profile?.avatar_url ?? undefined} 
-              alt={profile?.display_name ?? "You"} 
-            />
-            <AvatarFallback>
-              {(profile?.display_name ?? "U")[0].toUpperCase()}
-            </AvatarFallback>
+            <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.display_name ?? "You"} />
+            <AvatarFallback>{(profile?.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
           </Avatar>
-          <button className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center" aria-label="Change photo">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all"
+            aria-label="Change photo"
+          >
             <Camera className="w-4 h-4" />
           </button>
         </div>
@@ -91,10 +95,12 @@ export function ProfileView() {
         {/* Name & Bio */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-serif font-semibold">
-              {profile?.display_name ?? "Drifter"}
-            </h1>
-            <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Edit profile">
+            <h1 className="text-2xl font-serif font-semibold">{profile?.display_name ?? "Drifter"}</h1>
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Edit profile"
+            >
               <Edit3 className="w-4 h-4" />
             </button>
           </div>
@@ -107,7 +113,9 @@ export function ProfileView() {
         <div className="flex flex-wrap gap-4 mb-6 text-sm">
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <MapPin className="w-4 h-4 text-primary" />
-            <span>{profile?.current_city ?? "Unknown"}, {profile?.current_country ?? "Location"}</span>
+            <span>
+              {profile?.current_city ?? "Unknown"}, {profile?.current_country ?? "Location"}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Globe className="w-4 h-4" />
@@ -158,7 +166,13 @@ export function ProfileView() {
                 </Badge>
               ))
             ) : (
-              <Badge variant="secondary">Add languages</Badge>
+              <Badge
+                variant="secondary"
+                className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                onClick={() => setShowEditModal(true)}
+              >
+                + Add languages
+              </Badge>
             )}
           </div>
         </div>
@@ -174,8 +188,12 @@ export function ProfileView() {
                 </Badge>
               ))
             ) : (
-              <Badge variant="outline" className="border-border text-foreground">
-                Add interests
+              <Badge
+                variant="outline"
+                className="border-border text-foreground cursor-pointer hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                onClick={() => setShowEditModal(true)}
+              >
+                + Add interests
               </Badge>
             )}
           </div>
@@ -194,7 +212,7 @@ export function ProfileView() {
         {/* Settings */}
         <div className="space-y-4">
           <h2 className="text-sm font-medium text-foreground">Settings</h2>
-          
+
           <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-border/50">
             <div className="flex items-center gap-3">
               <Plane className="w-5 h-5 text-primary" />
@@ -203,10 +221,7 @@ export function ProfileView() {
                 <p className="text-xs text-muted-foreground">Show you&apos;re visiting this city</p>
               </div>
             </div>
-            <Switch 
-              checked={profile?.travel_mode ?? true} 
-              onCheckedChange={toggleTravelMode} 
-            />
+            <Switch checked={profile?.travel_mode ?? true} onCheckedChange={toggleTravelMode} />
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-border/50">
@@ -217,10 +232,7 @@ export function ProfileView() {
                 <p className="text-xs text-muted-foreground">Hide your profile from discovery</p>
               </div>
             </div>
-            <Switch 
-              checked={profile?.anonymous_mode ?? false} 
-              onCheckedChange={toggleAnonymousMode} 
-            />
+            <Switch checked={profile?.anonymous_mode ?? false} onCheckedChange={toggleAnonymousMode} />
           </div>
 
           <button className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
@@ -235,7 +247,7 @@ export function ProfileView() {
             <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
           </button>
 
-          <button 
+          <button
             onClick={handleSignOut}
             disabled={signingOut}
             className="flex items-center gap-3 w-full p-4 rounded-xl bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-colors"
@@ -249,6 +261,15 @@ export function ProfileView() {
           </button>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {profile && (
+        <EditProfileModal
+          profile={profile}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   )
 }
