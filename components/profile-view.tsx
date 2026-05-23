@@ -22,6 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { EditProfileModal } from "@/components/edit-profile-modal"
@@ -48,6 +49,7 @@ export function ProfileView() {
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
   const [showAppearanceModal, setShowAppearanceModal] = useState(false)
+  const [showSettingsSheet, setShowSettingsSheet] = useState(false)
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -76,7 +78,8 @@ export function ProfileView() {
 
         {/* Settings Button */}
         <button
-          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 transition-colors"
+          onClick={() => setShowSettingsSheet(true)}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 active:scale-95 transition-all"
           aria-label="Settings"
         >
           <Settings className="w-5 h-5" />
@@ -319,6 +322,91 @@ export function ProfileView() {
         isOpen={showAppearanceModal}
         onClose={() => setShowAppearanceModal(false)}
       />
+
+      {/* Settings Sheet */}
+      <Sheet open={showSettingsSheet} onOpenChange={setShowSettingsSheet}>
+        <SheetContent side="right" className="w-full sm:max-w-md bg-background border-border">
+          <SheetHeader>
+            <SheetTitle className="text-foreground">Settings</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-2">
+            <button
+              onClick={() => {
+                setShowSettingsSheet(false)
+                setShowEditModal(true)
+              }}
+              className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+            >
+              <Edit3 className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Edit Profile</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+            </button>
+
+            <button
+              onClick={() => {
+                setShowSettingsSheet(false)
+                setShowLocationModal(true)
+              }}
+              className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+            >
+              <MapPin className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Location</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+            </button>
+
+            <button
+              onClick={() => {
+                setShowSettingsSheet(false)
+                setShowNotificationsModal(true)
+              }}
+              className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+            >
+              <Bell className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Notifications</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+            </button>
+
+            <button
+              onClick={() => {
+                setShowSettingsSheet(false)
+                setShowAppearanceModal(true)
+              }}
+              className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+            >
+              <Moon className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Appearance</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+            </button>
+
+            <button
+              onClick={() => {
+                setShowSettingsSheet(false)
+                setShowSocialModal(true)
+              }}
+              className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+            >
+              <Instagram className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Social Accounts</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+            </button>
+
+            <div className="pt-4 border-t border-border mt-4">
+              <button
+                onClick={handleSignOut}
+                disabled={signingOut}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-destructive/30 hover:border-destructive/50 transition-colors"
+              >
+                {signingOut ? (
+                  <Loader2 className="w-5 h-5 text-destructive animate-spin" />
+                ) : (
+                  <LogOut className="w-5 h-5 text-destructive" />
+                )}
+                <span className="text-sm font-medium text-destructive">Sign out</span>
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
