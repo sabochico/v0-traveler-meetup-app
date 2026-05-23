@@ -27,12 +27,15 @@ export async function POST(request: NextRequest) {
     const ext = file.name.split(".").pop() || "jpg"
     const filename = `avatars/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
 
-    // Upload to Vercel Blob
+    // Upload to Vercel Blob (private store)
     const blob = await put(filename, file, {
-      access: "public",
+      access: "private",
     })
 
-    return NextResponse.json({ url: blob.url })
+    // Return the pathname for use with /api/file route
+    const fileUrl = `/api/file?pathname=${encodeURIComponent(blob.pathname)}`
+
+    return NextResponse.json({ url: fileUrl })
   } catch (error) {
     console.error("Upload error:", error)
     return NextResponse.json(
