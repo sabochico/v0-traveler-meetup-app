@@ -1,28 +1,27 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
-import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react"
+import { Mail, ArrowLeft, ArrowRight, Loader2, CheckCircle2 } from "lucide-react"
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [sent, setSent] = useState(false)
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo:
+        process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+        `${window.location.origin}/auth/reset-password`,
     })
 
     if (error) {
@@ -31,26 +30,62 @@ export default function LoginPage() {
       return
     }
 
-    router.push("/")
-    router.refresh()
+    setSent(true)
+    setLoading(false)
+  }
+
+  if (sent) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col film-grain">
+        <header className="p-6">
+          <h1 className="text-3xl font-serif font-semibold tracking-tight text-primary">drift</h1>
+        </header>
+
+        <main className="flex-1 flex flex-col justify-center px-6 pb-12">
+          <div className="max-w-sm mx-auto w-full text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-8 h-8 text-primary" />
+            </div>
+
+            <h2 className="text-2xl font-serif font-semibold text-foreground mb-3">Check your email</h2>
+            <p className="text-muted-foreground mb-8">
+              We sent a password reset link to <strong className="text-foreground">{email}</strong>
+            </p>
+
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to login
+            </Link>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-background flex flex-col film-grain">
-      {/* Header */}
       <header className="p-6">
         <h1 className="text-3xl font-serif font-semibold tracking-tight text-primary">drift</h1>
       </header>
 
-      {/* Main */}
       <main className="flex-1 flex flex-col justify-center px-6 pb-12">
         <div className="max-w-sm mx-auto w-full">
           <div className="mb-8">
-            <h2 className="text-2xl font-serif font-semibold text-foreground mb-2">Welcome back</h2>
-            <p className="text-muted-foreground">Sign in to find your next coffee buddy</p>
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to login
+            </Link>
+            <h2 className="text-2xl font-serif font-semibold text-foreground mb-2">Reset password</h2>
+            <p className="text-muted-foreground">Enter your email and we&apos;ll send you a reset link</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Email</label>
               <div className="relative">
@@ -60,26 +95,6 @@ export default function LoginPage() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-secondary border-0 pl-10 text-foreground placeholder:text-muted-foreground"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-foreground">Password</label>
-                <Link href="/auth/forgot-password" className="text-xs text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="password"
-                  placeholder="Your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   className="bg-secondary border-0 pl-10 text-foreground placeholder:text-muted-foreground"
                   required
                 />
@@ -101,23 +116,15 @@ export default function LoginPage() {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  Sign in
+                  Send reset link
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            New to drift?{" "}
-            <Link href="/auth/sign-up" className="text-primary hover:underline">
-              Create an account
-            </Link>
-          </p>
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="p-6 text-center">
         <p className="text-xs text-muted-foreground">Find your people, anywhere in the world</p>
       </footer>
