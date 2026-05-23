@@ -26,6 +26,9 @@ import { useProfile, useUpdateProfile } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { EditProfileModal } from "@/components/edit-profile-modal"
 import { ConnectSocialModal } from "@/components/connect-social-modal"
+import { LocationSelector } from "@/components/location-selector"
+import { NotificationsSettings } from "@/components/notifications-settings"
+import { AppearanceSettings } from "@/components/appearance-settings"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_BADGES = [
@@ -42,6 +45,9 @@ export function ProfileView() {
   const [signingOut, setSigningOut] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSocialModal, setShowSocialModal] = useState(false)
+  const [showLocationModal, setShowLocationModal] = useState(false)
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false)
+  const [showAppearanceModal, setShowAppearanceModal] = useState(false)
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -113,12 +119,15 @@ export function ProfileView() {
 
         {/* Location Info */}
         <div className="flex flex-wrap gap-4 mb-6 text-sm">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
+          <button
+            onClick={() => setShowLocationModal(true)}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+          >
             <MapPin className="w-4 h-4 text-primary" />
             <span>
-              {profile?.current_city ?? "Unknown"}, {profile?.current_country ?? "Location"}
+              {profile?.current_city ?? "Set"}, {profile?.current_country ?? "Location"}
             </span>
-          </div>
+          </button>
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Globe className="w-4 h-4" />
             <span>Traveler</span>
@@ -242,13 +251,19 @@ export function ProfileView() {
             <Switch checked={profile?.anonymous_mode ?? false} onCheckedChange={toggleAnonymousMode} />
           </div>
 
-          <button className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
+          <button 
+            onClick={() => setShowNotificationsModal(true)}
+            className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+          >
             <Bell className="w-5 h-5 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">Notifications</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
           </button>
 
-          <button className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
+          <button 
+            onClick={() => setShowAppearanceModal(true)}
+            className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+          >
             <Moon className="w-5 h-5 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">Appearance</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
@@ -283,6 +298,26 @@ export function ProfileView() {
         isOpen={showSocialModal}
         onClose={() => setShowSocialModal(false)}
         currentInstagram={profile?.instagram_handle}
+      />
+
+      {/* Location Selector Modal */}
+      <LocationSelector
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        currentCity={profile?.current_city}
+        currentCountry={profile?.current_country}
+      />
+
+      {/* Notifications Settings Modal */}
+      <NotificationsSettings
+        isOpen={showNotificationsModal}
+        onClose={() => setShowNotificationsModal(false)}
+      />
+
+      {/* Appearance Settings Modal */}
+      <AppearanceSettings
+        isOpen={showAppearanceModal}
+        onClose={() => setShowAppearanceModal(false)}
       />
     </div>
   )

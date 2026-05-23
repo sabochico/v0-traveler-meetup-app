@@ -218,12 +218,17 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
       ])
     } else {
       setLocalMessages(messages)
-      // Mark messages as read
-      if (messages.length > 0) {
-        markAsRead(conversation.id)
-      }
     }
-  }, [messages, isMock, conversation, markAsRead])
+  }, [messages, isMock, conversation.other_user.id, conversation.last_message])
+
+  // Mark messages as read (separate effect to avoid infinite loop)
+  useEffect(() => {
+    if (!isMock && messages.length > 0) {
+      markAsRead(conversation.id)
+    }
+    // Only run once when conversation changes, not when markAsRead changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation.id, isMock, messages.length])
 
   // Scroll to bottom on new messages
   useEffect(() => {

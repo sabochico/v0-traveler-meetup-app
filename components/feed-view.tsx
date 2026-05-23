@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Loader2 } from "lucide-react"
+import { MapPin, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Loader2, Heart } from "lucide-react"
 import { MeetupCard } from "./meetup-card"
 import { MoodStatus } from "./mood-status"
 import { useMeetups } from "@/hooks/use-meetups"
+import { useSavedMeetupsWithDetails } from "@/hooks/use-saved-meetups"
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
@@ -167,7 +168,9 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
 
 export function FeedView() {
   const [selectedType, setSelectedType] = useState("all")
+  const [activeTab, setActiveTab] = useState<"feed" | "saved">("feed")
   const { meetups, isLoading } = useMeetups()
+  const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails()
   const { profile } = useProfile()
   const { updateMood } = useUpdateProfile()
   const { isAuthenticated } = useAuth()
@@ -203,8 +206,36 @@ export function FeedView() {
             <MoodStatus currentMood={currentMood} onMoodChange={handleMoodChange} />
           </div>
 
-          {/* Type Filter */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+          {/* Tabs: Feed / Saved */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setActiveTab("feed")}
+              className={cn(
+                "flex-1 py-2 text-sm font-medium rounded-lg transition-colors",
+                activeTab === "feed"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              )}
+            >
+              Feed
+            </button>
+            <button
+              onClick={() => setActiveTab("saved")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-lg transition-colors",
+                activeTab === "saved"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              )}
+            >
+              <Heart className="w-3.5 h-3.5" />
+              Saved
+            </button>
+          </div>
+
+          {/* Type Filter - only show for feed tab */}
+          {activeTab === "feed" && (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
             {MEETUP_TYPES.map((type) => (
               <button
                 key={type.id}
@@ -219,25 +250,46 @@ export function FeedView() {
                 {type.icon && <type.icon className="w-3.5 h-3.5" />}
                 {type.label}
               </button>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
       {/* Feed */}
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
-        ) : filteredMeetups.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No meetups yet. Be the first to create one!</p>
-          </div>
+        {activeTab === "feed" ? (
+          // Feed tab content
+          isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : filteredMeetups.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No meetups yet. Be the first to create one!</p>
+            </div>
+          ) : (
+            filteredMeetups.map((meetup) => (
+              <MeetupCard key={meetup.id} meetup={meetup} />
+            ))
+          )
         ) : (
-          filteredMeetups.map((meetup) => (
-            <MeetupCard key={meetup.id} meetup={meetup} />
-          ))
+          // Saved tab content
+          savedLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : savedMeetups.length === 0 ? (
+            <div className="text-center py-12">
+              <Heart className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-muted-foreground">No saved meetups yet.</p>
+              <p className="text-sm text-muted-foreground/70">Tap the heart on meetups to save them here.</p>
+            </div>
+          ) : (
+            savedMeetups.map((meetup) => (
+              <MeetupCard key={meetup.id} meetup={meetup as MeetupWithCreator} />
+            ))
+          )
         )}
       </div>
     </div>

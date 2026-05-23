@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Clock, MessageCircle, Heart, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map } from "lucide-react"
+import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useSavedMeetups, useSaveMeetup, useJoinMeetup, useUserMeetups } from "@/hooks/use-saved-meetups"
+import { useAuth } from "@/hooks/use-auth"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
@@ -47,9 +49,53 @@ function formatTime(dateString: string): string {
 }
 
 export function MeetupCard({ meetup }: MeetupCardProps) {
-  const [liked, setLiked] = useState(false)
+  const { user } = useAuth()
+  const { savedMeetupIds } = useSavedMeetups()
+  const { saveMeetup, unsaveMeetup } = useSaveMeetup()
+  const { joinMeetup, leaveMeetup } = useJoinMeetup()
+  const { joinedMeetups } = useUserMeetups()
+  
+  const [savingLike, setSavingLike] = useState(false)
+  const [joiningMeetup, setJoiningMeetup] = useState(false)
+  
+  const isLiked = savedMeetupIds.includes(meetup.id)
+  const isJoined = joinedMeetups.some(m => m.meetup_id === meetup.id)
+  const isCreator = user?.id === meetup.creator_id
+  
   const creatorMood = (meetup.creator.mood as MoodStatus) ?? "exploring"
   const categoryImage = CATEGORY_IMAGES[meetup.category] ?? CATEGORY_IMAGES.coffee
+
+  const handleLikeToggle = async () => {
+    if (!user) return
+    setSavingLike(true)
+    try {
+      if (isLiked) {
+        await unsaveMeetup(meetup.id)
+      } else {
+        await saveMeetup(meetup.id)
+      }
+    } catch (error) {
+      console.error("Failed to toggle like:", error)
+    } finally {
+      setSavingLike(false)
+    }
+  }
+
+  const handleJoinToggle = async () => {
+    if (!user) return
+    setJoiningMeetup(true)
+    try {
+      if (isJoined) {
+        await leaveMeetup(meetup.id)
+      } else {
+        await joinMeetup(meetup.id)
+      }
+    } catch (error) {
+      console.error("Failed to toggle join:", error)
+    } finally {
+      setJoiningMeetup(false)
+    }
+  }
 
   return (
     <article className="group relative rounded-2xl overflow-hidden bg-card border border-border/50 transition-all duration-500 hover:border-primary/30">
@@ -73,11 +119,16 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
 
         {/* Like Button */}
         <button
-          onClick={() => setLiked(!liked)}
-          className="absolute top-3 left-3 w-9 h-9 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-background/80"
-          aria-label={liked ? "Unlike" : "Like"}
+          onClick={handleLikeToggle}
+          disabled={savingLike || !user}
+          className="absolute top-3 left-3 w-9 h-9 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-background/80 disabled:opacity-50"
+          aria-label={isLiked ? "Unlike" : "Like"}
         >
-          <Heart className={cn("w-5 h-5 transition-colors", liked ? "fill-accent text-accent" : "text-foreground")} />
+          {savingLike ? (
+            <Loader2 className="w-4 h-4 animate-spin text-foreground" />
+          ) : (
+            <Heart className={cn("w-5 h-5 transition-colors", isLiked ? "fill-accent text-accent" : "text-foreground")} />
+          )}
         </button>
       </div>
 
@@ -104,10 +155,10 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-              {meetup.creator.languages.slice(0, 3).map((lang, i) => (
+              {meetup.creator.languages?.slice(0, 3).map((lang, i) => (
                 <span key={lang}>
                   {lang}
-                  {i < Math.min(meetup.creator.languages.length, 3) - 1 && <span className="mx-1">·</span>}
+                  {i < Math.min(meetup.creator.languages?.length || 0, 3) - 1 && <span className="mx-1">·</span>}
                 </span>
               ))}
             </div>
@@ -125,10 +176,39 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
             <MapPin className="w-4 h-4" />
             <span>{meetup.location_name ?? `${meetup.city}, ${meetup.country}`}</span>
           </div>
-          <button className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium transition-all hover:glow-amber">
-            <MessageCircle className="w-4 h-4" />
-            <span>Join</span>
-          </button>
+          
+          {isCreator ? (
+            <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted text-muted-foreground text-sm font-medium">
+              <Users className="w-4 h-4" />
+              <span>Your meetup</span>
+            </div>
+          ) : isJoined ? (
+            <button 
+              onClick={handleJoinToggle}
+              disabled={joiningMeetup}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-medium transition-all hover:bg-emerald-500/30"
+            >
+              {joiningMeetup ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+              <span>Joined</span>
+            </button>
+          ) : (
+            <button 
+              onClick={handleJoinToggle}
+              disabled={joiningMeetup || !user}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium transition-all hover:glow-amber disabled:opacity-50"
+            >
+              {joiningMeetup ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <MessageCircle className="w-4 h-4" />
+              )}
+              <span>Join</span>
+            </button>
+          )}
         </div>
       </div>
     </article>

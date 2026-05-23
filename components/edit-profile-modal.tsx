@@ -33,7 +33,8 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
   const [currentCountry, setCurrentCountry] = useState(profile.current_country ?? "")
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? [])
   const [interests, setInterests] = useState<string[]>(profile.interests ?? [])
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url)
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<"profile" | "languages" | "interests">("profile")
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -41,14 +42,38 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
 
   if (!isOpen) return null
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setAvatarPreview(e.target?.result as string)
+    if (!file) return
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be less than 5MB")
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Upload failed")
       }
-      reader.readAsDataURL(file)
+
+      const { url } = await response.json()
+      setAvatarUrl(url)
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("Failed to upload image. Please try again.")
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -74,8 +99,7 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
         current_country: currentCountry || null,
         languages,
         interests,
-        // Note: Avatar upload would require Vercel Blob or Supabase Storage
-        // For now, we'll skip the avatar_url update
+        avatar_url: avatarUrl,
       })
       onClose()
     } catch (error) {
@@ -131,7 +155,7 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
                 <div className="relative">
                   <Avatar className="w-24 h-24 ring-4 ring-primary/20">
                     <AvatarImage
-                      src={avatarPreview ?? profile.avatar_url ?? undefined}
+                      src={avatarUrl ?? undefined}
                       alt={displayName || "Profile"}
                     />
                     <AvatarFallback>
@@ -140,10 +164,15 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
                   </Avatar>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all"
+                    disabled={uploading}
+                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all disabled:opacity-50"
                     aria-label="Change photo"
                   >
-                    <Camera className="w-4 h-4" />
+                    {uploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
                   </button>
                   <input
                     ref={fileInputRef}
@@ -153,7 +182,9 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
                     className="hidden"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">Tap to change photo</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {uploading ? "Uploading..." : "Tap to change photo"}
+                </p>
               </div>
 
               {/* Name */}
