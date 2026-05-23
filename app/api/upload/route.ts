@@ -1,21 +1,11 @@
 import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export async function POST(request: NextRequest) {
-  console.log("[v0] Upload API route hit")
-  
   try {
-    // Verify user is authenticated
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    console.log("[v0] User authenticated:", !!user)
-    
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const formData = await request.formData()
     const file = formData.get("file") as File
 
@@ -33,29 +23,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "File must be less than 5MB" }, { status: 400 })
     }
 
-    // Create unique filename with user ID
+    // Create unique filename
     const ext = file.name.split(".").pop() || "jpg"
-    const filename = `avatars/${user.id}/${Date.now()}.${ext}`
+    const filename = `avatars/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
 
-    // Upload to Vercel Blob (private access - serve through API)
+    // Upload to Vercel Blob
     const blob = await put(filename, file, {
-      access: "private",
+      access: "public",
     })
 
-    // For private blobs, we need to store the pathname and serve through an API route
-    // But for simplicity, we'll update the profile with the download URL
-    // The blob.url works for downloading, we just need to use our file API to serve it
-    const fileUrl = `/api/file?pathname=${encodeURIComponent(blob.pathname)}`
-
-    // Update user profile with new avatar URL
-    await supabase
-      .from("profiles")
-      .update({ avatar_url: fileUrl })
-      .eq("id", user.id)
-
-    return NextResponse.json({ url: fileUrl })
+    return NextResponse.json({ url: blob.url })
   } catch (error) {
     console.error("Upload error:", error)
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Upload failed" },
+      { status: 500 }
+    )
   }
 }
