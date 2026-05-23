@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Mail, Lock, User, ArrowRight, Loader2, Ticket } from "lucide-react"
 
 // Default invite code - can be overridden with NEXT_PUBLIC_INVITE_CODE env var
-const VALID_INVITE_CODE = process.env.NEXT_PUBLIC_INVITE_CODE || "DRIFT2024"
+const VALID_INVITE_CODE = process.env.NEXT_PUBLIC_INVITE_CODE || "AWE"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
