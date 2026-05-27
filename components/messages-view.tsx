@@ -235,7 +235,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     } else {
       setLocalMessages(messages)
     }
-  }, [messages, isMock, conversation.other_user.id, conversation.last_message])
+  }, [messages, isMock, conversation.other_user.id, conversation.last_message?.content, conversation.last_message?.created_at])
 
   // Mark messages as read (separate effect to avoid infinite loop)
   useEffect(() => {

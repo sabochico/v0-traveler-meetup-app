@@ -32,6 +32,9 @@ export interface Message {
   created_at: string
 }
 
+const EMPTY_CONVERSATIONS: Conversation[] = []
+const EMPTY_MESSAGES: Message[] = []
+
 const conversationsFetcher = async (): Promise<Conversation[]> => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
@@ -111,7 +114,7 @@ export function useConversations() {
   const { data, error, isLoading, mutate } = useSWR("conversations", conversationsFetcher)
 
   return {
-    conversations: data ?? [],
+    conversations: data ?? EMPTY_CONVERSATIONS,
     isLoading,
     error,
     refresh: mutate,
@@ -136,7 +139,7 @@ export function useMessages(conversationId: string | null) {
   )
 
   return {
-    messages: data ?? [],
+    messages: data ?? EMPTY_MESSAGES,
     isLoading,
     error,
     refresh: mutate,
