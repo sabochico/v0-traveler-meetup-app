@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -156,11 +157,15 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
       {/* Content */}
       <div className="p-4">
         {/* User Info */}
-        <div className="flex items-start gap-3 mb-3">
+        <Link
+          href={`/profile/${meetup.creator_id}`}
+          className="flex items-start gap-3 mb-3 group/creator"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Avatar className="w-11 h-11 ring-2 ring-primary/20">
-            <AvatarImage 
-              src={meetup.creator.avatar_url ?? undefined} 
-              alt={meetup.creator.display_name ?? "User"} 
+            <AvatarImage
+              src={meetup.creator.avatar_url ?? undefined}
+              alt={meetup.creator.display_name ?? "User"}
             />
             <AvatarFallback>
               {(meetup.creator.display_name ?? "U")[0].toUpperCase()}
@@ -168,7 +173,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">
+              <span className="font-medium text-foreground group-hover/creator:text-primary transition-colors">
                 {meetup.creator.display_name ?? "Anonymous"}
               </span>
               <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[creatorMood])}>
@@ -184,7 +189,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
               ))}
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Title */}
         <h3 className="text-lg font-medium leading-snug mb-3 text-balance">

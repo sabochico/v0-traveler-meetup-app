@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import { Search, ArrowLeft, Send, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -307,24 +308,50 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          <Avatar className="w-10 h-10">
-            <AvatarImage
-              src={conversation.other_user.avatar_url ?? undefined}
-              alt={conversation.other_user.display_name ?? "User"}
-            />
-            <AvatarFallback>
-              {(conversation.other_user.display_name ?? "U")[0].toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1 min-w-0">
-            <h2 className="font-medium text-foreground truncate">
-              {conversation.other_user.display_name ?? "Anonymous"}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {conversation.other_user.is_online ? "Online" : "Offline"}
-            </p>
-          </div>
+          {isMock ? (
+            <>
+              <Avatar className="w-10 h-10">
+                <AvatarImage
+                  src={conversation.other_user.avatar_url ?? undefined}
+                  alt={conversation.other_user.display_name ?? "User"}
+                />
+                <AvatarFallback>
+                  {(conversation.other_user.display_name ?? "U")[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-medium text-foreground truncate">
+                  {conversation.other_user.display_name ?? "Anonymous"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {conversation.other_user.is_online ? "Online" : "Offline"}
+                </p>
+              </div>
+            </>
+          ) : (
+            <Link
+              href={`/profile/${conversation.other_user.id}`}
+              className="flex items-center gap-3 flex-1 min-w-0 group"
+            >
+              <Avatar className="w-10 h-10">
+                <AvatarImage
+                  src={conversation.other_user.avatar_url ?? undefined}
+                  alt={conversation.other_user.display_name ?? "User"}
+                />
+                <AvatarFallback>
+                  {(conversation.other_user.display_name ?? "U")[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                  {conversation.other_user.display_name ?? "Anonymous"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {conversation.other_user.is_online ? "Online" : "Offline"}
+                </p>
+              </div>
+            </Link>
+          )}
         </div>
       </header>
 

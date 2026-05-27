@@ -75,6 +75,25 @@ export function useUpdateProfile() {
   return { updateProfile, updateMood, updateLocation, toggleTravelMode, toggleAnonymousMode }
 }
 
+// Fetch a single public profile by ID
+const supabase = createClient()
+
+export function usePublicProfile(userId: string | null) {
+  const { data, error, isLoading } = useSWR(
+    userId ? `public-profile-${userId}` : null,
+    async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId!)
+        .single()
+      if (error) return null
+      return data as Profile
+    }
+  )
+  return { profile: data ?? null, isLoading, error }
+}
+
 // Fetch nearby profiles
 const nearbyFetcher = async (): Promise<Profile[]> => {
   const supabase = createClient()
