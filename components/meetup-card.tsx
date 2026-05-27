@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useSavedMeetups, useSaveMeetup, useJoinMeetup, useUserMeetups } from "@/hooks/use-saved-meetups"
 import { useAuth } from "@/hooks/use-auth"
+import { useToast } from "@/hooks/use-toast"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
@@ -54,6 +55,7 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
   const { saveMeetup, unsaveMeetup } = useSaveMeetup()
   const { joinMeetup, leaveMeetup } = useJoinMeetup()
   const { joinedMeetups } = useUserMeetups()
+  const { toast } = useToast()
   
   const [savingLike, setSavingLike] = useState(false)
   const [joiningMeetup, setJoiningMeetup] = useState(false)
@@ -87,11 +89,14 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
     try {
       if (isJoined) {
         await leaveMeetup(meetup.id)
+        toast({ title: "Left meetup", description: `You've left "${meetup.title}"` })
       } else {
         await joinMeetup(meetup.id)
+        toast({ title: "You're in!", description: `Joined "${meetup.title}"` })
       }
     } catch (error) {
       console.error("Failed to toggle join:", error)
+      toast({ title: "Something went wrong", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" })
     } finally {
       setJoiningMeetup(false)
     }

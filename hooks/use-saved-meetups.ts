@@ -131,8 +131,8 @@ export function useJoinMeetup() {
       throw error
     }
 
-    // Revalidate meetups
     mutate("meetups")
+    mutate("user-meetups")
   }
 
   const leaveMeetup = async (meetupId: string) => {
@@ -147,8 +147,8 @@ export function useJoinMeetup() {
 
     if (error) throw error
 
-    // Revalidate meetups
     mutate("meetups")
+    mutate("user-meetups")
   }
 
   return { joinMeetup, leaveMeetup }
