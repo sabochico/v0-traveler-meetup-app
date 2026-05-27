@@ -166,7 +166,11 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
   },
 ]
 
-export function FeedView() {
+interface FeedViewProps {
+  onNavigateToMessages?: (conversationId: string) => void
+}
+
+export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [selectedType, setSelectedType] = useState("all")
   const [activeTab, setActiveTab] = useState<"feed" | "saved">("feed")
   const { meetups, isLoading } = useMeetups()
@@ -270,7 +274,7 @@ export function FeedView() {
             </div>
           ) : (
             filteredMeetups.map((meetup) => (
-              <MeetupCard key={meetup.id} meetup={meetup} />
+              <MeetupCard key={meetup.id} meetup={meetup} onNavigateToMessages={onNavigateToMessages} />
             ))
           )
         ) : (

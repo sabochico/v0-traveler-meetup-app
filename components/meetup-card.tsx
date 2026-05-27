@@ -8,10 +8,12 @@ import { cn } from "@/lib/utils"
 import { useSavedMeetups, useSaveMeetup, useJoinMeetup, useUserMeetups } from "@/hooks/use-saved-meetups"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
+import { useCreateConversation, useSendMessage } from "@/hooks/use-messages"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
   meetup: MeetupWithCreator
+  onNavigateToMessages?: (conversationId: string) => void
 }
 
 const STATUS_COLORS = {
@@ -49,13 +51,15 @@ function formatTime(dateString: string): string {
   return "Tomorrow"
 }
 
-export function MeetupCard({ meetup }: MeetupCardProps) {
+export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
   const { user } = useAuth()
   const { savedMeetupIds } = useSavedMeetups()
   const { saveMeetup, unsaveMeetup } = useSaveMeetup()
   const { joinMeetup, leaveMeetup } = useJoinMeetup()
   const { joinedMeetups } = useUserMeetups()
   const { toast } = useToast()
+  const { startConversation } = useCreateConversation()
+  const { sendMessage } = useSendMessage()
   
   const [savingLike, setSavingLike] = useState(false)
   const [joiningMeetup, setJoiningMeetup] = useState(false)
@@ -92,7 +96,18 @@ export function MeetupCard({ meetup }: MeetupCardProps) {
         toast({ title: "Left meetup", description: `You've left "${meetup.title}"` })
       } else {
         await joinMeetup(meetup.id)
-        toast({ title: "You're in!", description: `Joined "${meetup.title}"` })
+
+        // Open a DM with the organizer (skip if user IS the creator)
+        if (meetup.creator_id !== user.id) {
+          const { conversationId, isNew } = await startConversation(meetup.creator_id)
+          if (isNew) {
+            await sendMessage(conversationId, `Hi! I just joined your meetup: ${meetup.title}`)
+          }
+          toast({ title: "You're in! Opening your conversation..." })
+          onNavigateToMessages?.(conversationId)
+        } else {
+          toast({ title: "You're in!", description: `Joined "${meetup.title}"` })
+        }
       }
     } catch (error) {
       console.error("Failed to toggle join:", error)

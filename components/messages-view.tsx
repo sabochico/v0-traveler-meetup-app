@@ -63,10 +63,21 @@ const MOCK_CONVERSATIONS = [
   },
 ]
 
-export function MessagesView() {
+interface MessagesViewProps {
+  initialConversationId?: string
+}
+
+export function MessagesView({ initialConversationId }: MessagesViewProps) {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const { conversations, isLoading } = useConversations()
+
+  // Auto-open a conversation when navigated here from a meetup join
+  useEffect(() => {
+    if (!initialConversationId || selectedConversation) return
+    const match = conversations.find(c => c.id === initialConversationId)
+    if (match) setSelectedConversation(match)
+  }, [initialConversationId, conversations, selectedConversation])
 
   // Use mock data if no real conversations
   const displayConversations = conversations.length > 0 ? conversations : MOCK_CONVERSATIONS

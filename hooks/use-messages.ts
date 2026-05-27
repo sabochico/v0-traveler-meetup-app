@@ -148,9 +148,9 @@ export function useMessages(conversationId: string | null) {
 export function useCreateConversation() {
   const { refresh: refreshConversations } = useConversations()
 
-  const startConversation = async (otherUserId: string): Promise<string> => {
+  const startConversation = async (otherUserId: string): Promise<{ conversationId: string; isNew: boolean }> => {
     const supabase = createClient()
-    
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
@@ -170,8 +170,7 @@ export function useCreateConversation() {
           .single()
 
         if (otherPart) {
-          // Conversation already exists
-          return part.conversation_id
+          return { conversationId: part.conversation_id, isNew: false }
         }
       }
     }
@@ -196,7 +195,7 @@ export function useCreateConversation() {
     if (partError) throw partError
 
     await refreshConversations()
-    return newConv.id
+    return { conversationId: newConv.id, isNew: true }
   }
 
   return { startConversation }

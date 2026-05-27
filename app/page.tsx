@@ -16,6 +16,12 @@ export default function Home() {
   const { user, isLoading, isAuthenticated } = useAuth()
   const [activeTab, setActiveTab] = useState<"feed" | "discover" | "create" | "messages" | "profile">("feed")
   const [showCreate, setShowCreate] = useState(false)
+  const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
+
+  const handleNavigateToMessages = (conversationId: string) => {
+    setPendingConversationId(conversationId)
+    setActiveTab("messages")
+  }
 
   const handleTabChange = (tab: "feed" | "discover" | "create" | "messages" | "profile") => {
     if (tab === "create") {
@@ -44,10 +50,12 @@ export default function Home() {
     <main className="min-h-screen bg-background relative film-grain">
       {/* Main Content Area */}
       <div className="pb-20">
-        {activeTab === "feed" && <FeedView />}
+        {activeTab === "feed" && <FeedView onNavigateToMessages={handleNavigateToMessages} />}
         {activeTab === "discover" && <DiscoverView />}
         {activeTab === "messages" && (
-          isAuthenticated ? <MessagesView /> : <AuthPrompt message="Sign in to see your messages" />
+          isAuthenticated
+            ? <MessagesView initialConversationId={pendingConversationId} />
+            : <AuthPrompt message="Sign in to see your messages" />
         )}
         {activeTab === "profile" && (
           isAuthenticated ? <ProfileView /> : <AuthPrompt message="Sign in to view your profile" />
