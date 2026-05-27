@@ -101,7 +101,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
         if (meetup.creator_id !== user.id) {
           const { conversationId, isNew } = await startConversation(meetup.creator_id)
           if (isNew) {
-            await sendMessage(conversationId, `Hi! I just joined your meetup: ${meetup.title}`)
+            await sendMessage(conversationId, `Hey! 👋 I just joined your meetup. Would love to connect!`)
           }
           toast({ title: "You're in! Opening your conversation..." })
           onNavigateToMessages?.(conversationId)

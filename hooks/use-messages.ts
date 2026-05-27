@@ -147,65 +147,25 @@ export function useCreateConversation() {
   const { refresh: refreshConversations } = useConversations()
 
   const startConversation = async (otherUserId: string): Promise<{ conversationId: string; isNew: boolean }> => {
-    console.log("[startConversation] step 1: getUser")
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError) console.error("[startConversation] getUser error:", JSON.stringify(userError), userError?.message)
-    if (!user) throw new Error("Not authenticated")
-    console.log("[startConversation] step 1 ok, uid:", user.id)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) throw new Error("Not authenticated")
 
-    console.log("[startConversation] step 2: check existing participations")
-    const { data: existingParticipations, error: existingError } = await supabase
-      .from("conversation_participants")
-      .select("conversation_id")
-      .eq("user_id", user.id)
-    if (existingError) console.error("[startConversation] existing participations error:", JSON.stringify(existingError), existingError?.message, existingError?.code)
-    console.log("[startConversation] step 2 ok, found:", existingParticipations?.length ?? 0)
+    const response = await fetch("/api/conversations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ otherUserId }),
+    })
 
-    if (existingParticipations?.length) {
-      for (const part of existingParticipations) {
-        const { data: otherPart } = await supabase
-          .from("conversation_participants")
-          .select("conversation_id")
-          .eq("conversation_id", part.conversation_id)
-          .eq("user_id", otherUserId)
-          .single()
-
-        if (otherPart) {
-          console.log("[startConversation] existing conversation found:", part.conversation_id)
-          return { conversationId: part.conversation_id, isNew: false }
-        }
-      }
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.error ?? "Failed to create conversation")
     }
-
-    console.log("[startConversation] step 3: insert conversation")
-    const { data: newConv, error: convError } = await supabase
-      .from("conversations")
-      .insert({})
-      .select()
-      .single()
-
-    if (convError || !newConv) {
-      console.error("[startConversation] insert conversation failed:", JSON.stringify(convError), convError?.message, convError?.code, convError?.details)
-      throw new Error(convError?.message ?? "Failed to create conversation")
-    }
-    console.log("[startConversation] step 3 ok, conversation id:", newConv.id)
-
-    console.log("[startConversation] step 4: insert participants")
-    const { error: partError } = await supabase
-      .from("conversation_participants")
-      .insert([
-        { conversation_id: newConv.id, user_id: user.id },
-        { conversation_id: newConv.id, user_id: otherUserId },
-      ])
-
-    if (partError) {
-      console.error("[startConversation] insert participants failed:", JSON.stringify(partError), partError?.message, partError?.code, partError?.details)
-      throw new Error(partError?.message ?? "Failed to add conversation participants")
-    }
-    console.log("[startConversation] step 4 ok")
 
     await refreshConversations()
-    return { conversationId: newConv.id, isNew: true }
+    return { conversationId: data.conversationId, isNew: data.isNew }
   }
 
   return { startConversation }
