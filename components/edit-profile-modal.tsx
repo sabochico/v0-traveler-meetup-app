@@ -6,8 +6,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useUpdateProfile } from "@/hooks/use-profile"
+import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import type { Profile } from "@/lib/types"
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      resolve(result.split(",")[1] ?? "")
+    }
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"))
+    reader.readAsDataURL(file)
+  })
+}
 
 const SUGGESTED_LANGUAGES = [
   "English", "日本語", "Español", "Français", "Deutsch", 
@@ -53,22 +66,37 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
     }
 
     setUploading(true)
+    const previousAvatarUrl = avatarUrl
+    const previewUrl = URL.createObjectURL(file)
+    setAvatarUrl(previewUrl)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error("Please sign in to upload a photo")
+      }
 
-      console.log("[v0] Uploading file to /api/upload...")
-      
+      const fileBase64 = await readFileAsBase64(file)
+
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
-        // Explicitly don't set Content-Type - let browser set it with boundary for FormData
+        redirect: "manual",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          file: fileBase64,
+          fileName: file.name,
+          contentType: file.type,
+        }),
       })
 
-      console.log("[v0] Upload response status:", response.status)
+      if (response.status >= 300 && response.status < 400) {
+        throw new Error("Session expired. Please sign in again.")
+      }
 
       const responseText = await response.text()
-      console.log("[v0] Upload response text:", responseText)
 
       if (!response.ok) {
         let errorMessage = "Upload failed"
@@ -82,11 +110,14 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
       }
 
       const data = JSON.parse(responseText)
-      setAvatarUrl(data.url)
+      setAvatarUrl(`${data.url}?t=${Date.now()}`)
     } catch (error) {
-      console.error("[v0] Upload error:", error)
-      alert("Failed to upload image. Please try again.")
+      console.error("Upload error:", error)
+      setAvatarUrl(previousAvatarUrl)
+      alert(error instanceof Error ? error.message : "Failed to upload image. Please try again.")
     } finally {
+      URL.revokeObjectURL(previewUrl)
+      e.target.value = ""
       setUploading(false)
     }
   }
