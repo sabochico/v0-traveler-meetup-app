@@ -69,10 +69,11 @@ export async function POST(request: NextRequest) {
     const filename = `avatars/${user.id}/${Date.now()}.${ext}`
 
     const blob = await put(filename, file, {
-      access: "public",
+      access: "private",
     })
+    const proxyUrl = `/api/blob?url=${encodeURIComponent(blob.url)}`
     console.log("[upload]", requestId, "ok", blob.url)
-    return NextResponse.json({ url: blob.url })
+    return NextResponse.json({ url: proxyUrl })
   } catch (error) {
     console.error("Upload error:", error)
     return NextResponse.json(

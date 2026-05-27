@@ -39,6 +39,7 @@ export async function updateSession(request: NextRequest) {
     '/auth/sign-up-success',
     '/api/upload',
     '/api/file',
+    '/api/blob',
   ]
   const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
 
