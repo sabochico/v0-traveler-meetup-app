@@ -3,6 +3,8 @@
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 
+const supabase = createClient()
+
 export interface Conversation {
   id: string
   created_at: string
@@ -31,8 +33,6 @@ export interface Message {
 }
 
 const conversationsFetcher = async (): Promise<Conversation[]> => {
-  const supabase = createClient()
-  
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -119,8 +119,6 @@ export function useConversations() {
 }
 
 const messagesFetcher = async (conversationId: string): Promise<Message[]> => {
-  const supabase = createClient()
-  
   const { data, error } = await supabase
     .from("messages")
     .select("*")
@@ -149,16 +147,19 @@ export function useCreateConversation() {
   const { refresh: refreshConversations } = useConversations()
 
   const startConversation = async (otherUserId: string): Promise<{ conversationId: string; isNew: boolean }> => {
-    const supabase = createClient()
-
-    const { data: { user } } = await supabase.auth.getUser()
+    console.log("[startConversation] step 1: getUser")
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) console.error("[startConversation] getUser error:", JSON.stringify(userError), userError?.message)
     if (!user) throw new Error("Not authenticated")
+    console.log("[startConversation] step 1 ok, uid:", user.id)
 
-    // Check if conversation already exists between these users
-    const { data: existingParticipations } = await supabase
+    console.log("[startConversation] step 2: check existing participations")
+    const { data: existingParticipations, error: existingError } = await supabase
       .from("conversation_participants")
       .select("conversation_id")
       .eq("user_id", user.id)
+    if (existingError) console.error("[startConversation] existing participations error:", JSON.stringify(existingError), existingError?.message, existingError?.code)
+    console.log("[startConversation] step 2 ok, found:", existingParticipations?.length ?? 0)
 
     if (existingParticipations?.length) {
       for (const part of existingParticipations) {
@@ -170,21 +171,26 @@ export function useCreateConversation() {
           .single()
 
         if (otherPart) {
+          console.log("[startConversation] existing conversation found:", part.conversation_id)
           return { conversationId: part.conversation_id, isNew: false }
         }
       }
     }
 
-    // Create new conversation
+    console.log("[startConversation] step 3: insert conversation")
     const { data: newConv, error: convError } = await supabase
       .from("conversations")
       .insert({})
       .select()
       .single()
 
-    if (convError || !newConv) throw convError ?? new Error("Failed to create conversation")
+    if (convError || !newConv) {
+      console.error("[startConversation] insert conversation failed:", JSON.stringify(convError), convError?.message, convError?.code, convError?.details)
+      throw new Error(convError?.message ?? "Failed to create conversation")
+    }
+    console.log("[startConversation] step 3 ok, conversation id:", newConv.id)
 
-    // Add both participants
+    console.log("[startConversation] step 4: insert participants")
     const { error: partError } = await supabase
       .from("conversation_participants")
       .insert([
@@ -192,7 +198,11 @@ export function useCreateConversation() {
         { conversation_id: newConv.id, user_id: otherUserId },
       ])
 
-    if (partError) throw partError
+    if (partError) {
+      console.error("[startConversation] insert participants failed:", JSON.stringify(partError), partError?.message, partError?.code, partError?.details)
+      throw new Error(partError?.message ?? "Failed to add conversation participants")
+    }
+    console.log("[startConversation] step 4 ok")
 
     await refreshConversations()
     return { conversationId: newConv.id, isNew: true }
@@ -203,8 +213,6 @@ export function useCreateConversation() {
 
 export function useSendMessage() {
   const sendMessage = async (conversationId: string, content: string) => {
-    const supabase = createClient()
-    
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
@@ -230,8 +238,6 @@ export function useSendMessage() {
   }
 
   const markAsRead = async (conversationId: string) => {
-    const supabase = createClient()
-    
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 

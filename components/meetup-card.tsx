@@ -110,8 +110,9 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
         }
       }
     } catch (error) {
-      console.error("Failed to toggle join:", error)
-      toast({ title: "Something went wrong", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" })
+      const e = error as { message?: string; code?: string; details?: string; hint?: string }
+      console.error("Failed to toggle join:", JSON.stringify(error), e?.message, e?.code, e?.details, e?.hint)
+      toast({ title: "Something went wrong", description: e?.message ?? (error instanceof Error ? error.message : "Please try again."), variant: "destructive" })
     } finally {
       setJoiningMeetup(false)
     }
