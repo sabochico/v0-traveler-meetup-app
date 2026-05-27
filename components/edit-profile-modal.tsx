@@ -110,7 +110,7 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
       }
 
       const data = JSON.parse(responseText)
-      setAvatarUrl(`${data.url}?t=${Date.now()}`)
+      setAvatarUrl(data.url)
     } catch (error) {
       console.error("Upload error:", error)
       setAvatarUrl(previousAvatarUrl)
