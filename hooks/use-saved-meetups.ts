@@ -96,11 +96,32 @@ export function useSavedMeetupsWithDetails() {
 
     if (savedError) throw savedError
     
-    // Transform the data
-    return savedMeetups?.map(s => ({
-      ...s.meetups,
-      saved_at: s.created_at,
-    })) || []
+    // Transform the data — rename profiles→creator to match MeetupWithCreator type
+    return savedMeetups?.map(s => {
+      const meetup = s.meetups as any
+      if (!meetup) return null
+      const { profiles, ...meetupFields } = meetup
+      return {
+        ...meetupFields,
+        saved_at: s.created_at,
+        creator: {
+          bio: null,
+          interests: [],
+          languages: [],
+          travel_mode: false,
+          is_online: false,
+          anonymous_mode: false,
+          current_city: null,
+          current_country: null,
+          location: null,
+          instagram_handle: null,
+          last_seen_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          ...profiles,
+        },
+      }
+    }).filter(Boolean) || []
   })
 
   return {

@@ -291,7 +291,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             </div>
           ) : (
             savedMeetups.map((meetup) => (
-              <MeetupCard key={meetup.id} meetup={meetup as MeetupWithCreator} />
+              <MeetupCard key={meetup.id} meetup={meetup as MeetupWithCreator} onNavigateToMessages={onNavigateToMessages} />
             ))
           )
         )}

@@ -68,7 +68,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
   const isJoined = joinedMeetups.some(m => m.meetup_id === meetup.id)
   const isCreator = user?.id === meetup.creator_id
   
-  const creatorMood = (meetup.creator.mood as MoodStatus) ?? "exploring"
+  const creatorMood = (meetup.creator?.mood as MoodStatus) ?? "exploring"
   const categoryImage = CATEGORY_IMAGES[meetup.category] ?? CATEGORY_IMAGES.coffee
 
   const handleLikeToggle = async () => {
