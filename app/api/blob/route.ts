@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 })
   }
 
-  const result = await get(blobUrl, {})
+  const result = await get(blobUrl, { access: "private" })
   if (!result) {
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }
