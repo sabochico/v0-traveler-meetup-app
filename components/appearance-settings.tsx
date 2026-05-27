@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
 import { X, Sun, Moon, Monitor, Palette, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -8,8 +9,6 @@ interface AppearanceSettingsProps {
   isOpen: boolean
   onClose: () => void
 }
-
-type Theme = "light" | "dark" | "system"
 
 const ACCENT_COLORS = [
   { name: "Amber", value: "amber", color: "bg-amber-500" },
@@ -21,40 +20,27 @@ const ACCENT_COLORS = [
 ]
 
 export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps) {
-  const [theme, setTheme] = useState<Theme>("dark")
+  const { theme, setTheme } = useTheme()
   const [accentColor, setAccentColor] = useState("amber")
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
-    // Load saved preferences
-    const savedTheme = localStorage.getItem("drift-theme") as Theme
-    const savedAccent = localStorage.getItem("drift-accent")
-    const savedMotion = localStorage.getItem("drift-reduced-motion")
-    
-    if (savedTheme) setTheme(savedTheme)
-    if (savedAccent) setAccentColor(savedAccent)
-    if (savedMotion) setReducedMotion(savedMotion === "true")
+    const savedAccent = localStorage.getItem("drift-accent") ?? "amber"
+    const savedMotion = localStorage.getItem("drift-reduced-motion") === "true"
+    setAccentColor(savedAccent)
+    setReducedMotion(savedMotion)
   }, [])
 
   if (!isOpen) return null
 
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme)
-    localStorage.setItem("drift-theme", newTheme)
-    
-    // Apply theme to document
-    if (newTheme === "system") {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      document.documentElement.classList.toggle("dark", prefersDark)
-    } else {
-      document.documentElement.classList.toggle("dark", newTheme === "dark")
-    }
-  }
-
   const handleAccentChange = (newAccent: string) => {
     setAccentColor(newAccent)
     localStorage.setItem("drift-accent", newAccent)
-    // In a full implementation, this would update CSS variables
+    if (newAccent === "amber") {
+      document.documentElement.removeAttribute("data-accent")
+    } else {
+      document.documentElement.setAttribute("data-accent", newAccent)
+    }
   }
 
   const handleMotionToggle = () => {
@@ -63,6 +49,8 @@ export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps)
     localStorage.setItem("drift-reduced-motion", String(newValue))
     document.documentElement.classList.toggle("reduce-motion", newValue)
   }
+
+  const currentTheme = theme ?? "dark"
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -97,21 +85,21 @@ export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps)
               ].map((option) => (
                 <button
                   key={option.value}
-                  onClick={() => handleThemeChange(option.value as Theme)}
+                  onClick={() => setTheme(option.value)}
                   className={cn(
                     "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
-                    theme === option.value
+                    currentTheme === option.value
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50"
                   )}
                 >
                   <option.icon className={cn(
                     "w-6 h-6",
-                    theme === option.value ? "text-primary" : "text-muted-foreground"
+                    currentTheme === option.value ? "text-primary" : "text-muted-foreground"
                   )} />
                   <span className={cn(
                     "text-sm font-medium",
-                    theme === option.value ? "text-primary" : "text-foreground"
+                    currentTheme === option.value ? "text-primary" : "text-foreground"
                   )}>
                     {option.label}
                   </span>

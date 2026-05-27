@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { Inter, Playfair_Display, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/toaster'
+import { ThemeProvider } from '@/components/theme-provider'
+import Script from 'next/script'
 import './globals.css'
 
 const inter = Inter({ 
@@ -57,10 +59,20 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable} bg-background`}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable} bg-background`} suppressHydrationWarning>
       <body className="font-sans antialiased min-h-screen">
-        {children}
-        <Toaster />
+        {/* Restore accent color and reduce-motion before first paint */}
+        <Script id="appearance-init" strategy="beforeInteractive">{`
+          (function(){try{
+            var a=localStorage.getItem('drift-accent');
+            if(a&&a!=='amber')document.documentElement.setAttribute('data-accent',a);
+            if(localStorage.getItem('drift-reduced-motion')==='true')document.documentElement.classList.add('reduce-motion');
+          }catch(e){}}());
+        `}</Script>
+        <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
+          {children}
+          <Toaster />
+        </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

@@ -75,6 +75,56 @@
   --sidebar-ring: oklch(0.75 0.12 55);
 }
 
+.light {
+  --background: oklch(0.97 0.006 95);
+  --foreground: oklch(0.13 0.015 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0.015 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0.015 260);
+  --primary: oklch(0.62 0.14 55);
+  --primary-foreground: oklch(0.98 0.01 80);
+  --secondary: oklch(0.93 0.008 80);
+  --secondary-foreground: oklch(0.25 0.015 260);
+  --muted: oklch(0.92 0.008 80);
+  --muted-foreground: oklch(0.50 0.015 260);
+  --accent: oklch(0.60 0.15 25);
+  --accent-foreground: oklch(0.98 0.01 80);
+  --destructive: oklch(0.52 0.2 25);
+  --destructive-foreground: oklch(0.98 0.01 80);
+  --border: oklch(0.88 0.008 80);
+  --input: oklch(0.90 0.008 80);
+  --ring: oklch(0.62 0.14 55);
+  --chart-1: oklch(0.62 0.14 55);
+  --chart-2: oklch(0.60 0.15 25);
+  --chart-3: oklch(0.50 0.12 180);
+  --chart-4: oklch(0.55 0.10 280);
+  --chart-5: oklch(0.55 0.15 330);
+  --sidebar: oklch(0.95 0.005 95);
+  --sidebar-foreground: oklch(0.13 0.015 260);
+  --sidebar-primary: oklch(0.62 0.14 55);
+  --sidebar-primary-foreground: oklch(0.98 0.01 80);
+  --sidebar-accent: oklch(0.90 0.008 80);
+  --sidebar-accent-foreground: oklch(0.13 0.015 260);
+  --sidebar-border: oklch(0.88 0.008 80);
+  --sidebar-ring: oklch(0.62 0.14 55);
+}
+
+/* Accent color overrides — applied via data-accent attribute on <html> */
+[data-accent="blue"]    { --primary: oklch(0.62 0.19 245); --ring: oklch(0.62 0.19 245); --sidebar-primary: oklch(0.62 0.19 245); --sidebar-ring: oklch(0.62 0.19 245); }
+[data-accent="rose"]    { --primary: oklch(0.65 0.22 12);  --ring: oklch(0.65 0.22 12);  --sidebar-primary: oklch(0.65 0.22 12);  --sidebar-ring: oklch(0.65 0.22 12);  }
+[data-accent="emerald"] { --primary: oklch(0.70 0.17 165); --ring: oklch(0.70 0.17 165); --sidebar-primary: oklch(0.70 0.17 165); --sidebar-ring: oklch(0.70 0.17 165); }
+[data-accent="purple"]  { --primary: oklch(0.62 0.20 305); --ring: oklch(0.62 0.20 305); --sidebar-primary: oklch(0.62 0.20 305); --sidebar-ring: oklch(0.62 0.20 305); }
+[data-accent="orange"]  { --primary: oklch(0.73 0.18 50);  --ring: oklch(0.73 0.18 50);  --sidebar-primary: oklch(0.73 0.18 50);  --sidebar-ring: oklch(0.73 0.18 50);  }
+
+/* Reduce motion */
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Geist Mono', monospace;
