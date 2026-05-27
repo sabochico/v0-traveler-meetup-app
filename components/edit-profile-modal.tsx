@@ -207,10 +207,12 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
                       {(displayName || "U")[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all disabled:opacity-50"
+                  <label
+                    htmlFor="avatar-file-input"
+                    className={cn(
+                      "absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all cursor-pointer",
+                      uploading && "opacity-50 pointer-events-none"
+                    )}
                     aria-label="Change photo"
                   >
                     {uploading ? (
@@ -218,8 +220,9 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
                     ) : (
                       <Camera className="w-4 h-4" />
                     )}
-                  </button>
+                  </label>
                   <input
+                    id="avatar-file-input"
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
