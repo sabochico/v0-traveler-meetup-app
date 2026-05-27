@@ -71,13 +71,18 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const { conversations, isLoading } = useConversations()
+  const hasAutoOpened = useRef(false)
 
-  // Auto-open a conversation when navigated here from a meetup join
+  // Auto-open a conversation once when navigated here from a meetup join.
+  // The ref prevents re-opening after the user clicks back.
   useEffect(() => {
-    if (!initialConversationId || selectedConversation) return
+    if (!initialConversationId || hasAutoOpened.current) return
     const match = conversations.find(c => c.id === initialConversationId)
-    if (match) setSelectedConversation(match)
-  }, [initialConversationId, conversations, selectedConversation])
+    if (match) {
+      hasAutoOpened.current = true
+      setSelectedConversation(match)
+    }
+  }, [initialConversationId, conversations])
 
   // Use mock data if no real conversations
   const displayConversations = conversations.length > 0 ? conversations : MOCK_CONVERSATIONS
