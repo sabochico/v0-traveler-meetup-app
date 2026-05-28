@@ -347,11 +347,14 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
   const cat = CATEGORY_CONFIG[meetup.category] ?? CATEGORY_CONFIG.explore
   const CatIcon = cat.icon
   const mood = meetup.creator?.mood ?? "exploring"
-  const bgImage = CATEGORY_BG[meetup.category] ?? CATEGORY_BG.explore
+  const bgImage =
+    meetup.creator?.avatar_url ??
+    CATEGORY_BG[meetup.category] ??
+    CATEGORY_BG.explore
 
   return (
     <div className="w-full h-full rounded-3xl overflow-hidden relative bg-zinc-900">
-      {/* Full-bleed category photo */}
+      {/* Full-bleed creator photo (falls back to category image) */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${bgImage})` }}
@@ -382,39 +385,27 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
 
       {/* Bottom content */}
       <div className="absolute bottom-0 left-0 right-0 px-5 pb-7">
-        {/* Creator row */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative flex-shrink-0">
-            <Avatar className="w-12 h-12 ring-2 ring-white/30 shadow-lg">
-              <AvatarImage
-                src={meetup.creator?.avatar_url ?? undefined}
-                alt={meetup.creator?.display_name ?? ""}
-              />
-              <AvatarFallback className="text-lg font-serif bg-zinc-700 text-white">
-                {meetup.creator?.display_name?.[0] ?? "?"}
-              </AvatarFallback>
-            </Avatar>
-            <span
-              className={cn(
-                "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-black",
-                MOOD_DOT[mood] ?? "bg-gray-500"
-              )}
-            />
-          </div>
-          <div className="min-w-0">
-            <span className="text-white font-semibold text-base leading-tight block">
-              {meetup.creator?.display_name ?? "Anonymous"}
-            </span>
-            {meetup.creator?.languages && meetup.creator.languages.length > 0 && (
-              <div className="flex gap-2 mt-0.5">
-                {meetup.creator.languages.slice(0, 2).map((l) => (
-                  <span key={l} className="text-white/50 text-xs">
-                    {l}
-                  </span>
-                ))}
-              </div>
+        {/* Creator name + mood dot + languages */}
+        <div className="flex items-center gap-2 mb-3">
+          <span
+            className={cn(
+              "w-2.5 h-2.5 rounded-full flex-shrink-0",
+              MOOD_DOT[mood] ?? "bg-gray-500"
             )}
-          </div>
+          />
+          <span className="text-white font-semibold text-base leading-tight">
+            {meetup.creator?.display_name ?? "Anonymous"}
+          </span>
+          {meetup.creator?.languages && meetup.creator.languages.length > 0 && (
+            <>
+              <span className="text-white/30 text-sm">·</span>
+              {meetup.creator.languages.slice(0, 2).map((l) => (
+                <span key={l} className="text-white/50 text-xs">
+                  {l}
+                </span>
+              ))}
+            </>
+          )}
         </div>
 
         {/* Meetup title */}
