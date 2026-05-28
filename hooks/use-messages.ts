@@ -1,6 +1,7 @@
 "use client"
 
-import useSWR from "swr"
+import { useEffect } from "react"
+import useSWR, { mutate as globalMutate } from "swr"
 import { createClient } from "@/lib/supabase/client"
 
 const supabase = createClient()
@@ -79,8 +80,6 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       .eq("id", participants.user_id)
       .single()
 
-    if (!otherUser) continue
-
     // Get last message
     const { data: lastMessages } = await supabase
       .from("messages")
@@ -101,7 +100,12 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       id: conv.id,
       created_at: conv.created_at,
       updated_at: conv.updated_at,
-      other_user: otherUser,
+      other_user: {
+        id: participants.user_id,
+        display_name: otherUser?.display_name ?? null,
+        avatar_url: otherUser?.avatar_url ?? null,
+        is_online: otherUser?.is_online ?? false,
+      },
       last_message: lastMessages?.[0] ?? null,
       unread_count: unreadCount ?? 0,
     })
@@ -112,6 +116,40 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
 export function useConversations() {
   const { data, error, isLoading, mutate } = useSWR("conversations", conversationsFetcher)
+
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let cancelled = false
+
+    const subscribe = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || cancelled) return
+
+      channel = supabase
+        .channel("conversations:messages")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+          },
+          () => {
+            void mutate()
+          }
+        )
+        .subscribe()
+    }
+
+    void subscribe()
+
+    return () => {
+      cancelled = true
+      if (channel) {
+        void supabase.removeChannel(channel)
+      }
+    }
+  }, [mutate])
 
   return {
     conversations: data ?? EMPTY_CONVERSATIONS,
@@ -133,10 +171,56 @@ const messagesFetcher = async (conversationId: string): Promise<Message[]> => {
 }
 
 export function useMessages(conversationId: string | null) {
+  const swrKey = conversationId ? `messages-${conversationId}` : null
   const { data, error, isLoading, mutate } = useSWR(
-    conversationId ? `messages-${conversationId}` : null,
+    swrKey,
     () => conversationId ? messagesFetcher(conversationId) : Promise.resolve([])
   )
+
+  useEffect(() => {
+    if (!conversationId) return
+
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let cancelled = false
+
+    const subscribe = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || cancelled) return
+
+      channel = supabase
+        .channel(`messages:${conversationId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload) => {
+            const newMessage = payload.new as Message
+            void mutate(
+              async (current) => {
+                if (current?.some((m) => m.id === newMessage.id)) return current
+                return messagesFetcher(conversationId)
+              },
+              { revalidate: false }
+            )
+            void globalMutate("conversations")
+          }
+        )
+        .subscribe()
+    }
+
+    void subscribe()
+
+    return () => {
+      cancelled = true
+      if (channel) {
+        void supabase.removeChannel(channel)
+      }
+    }
+  }, [conversationId, mutate])
 
   return {
     messages: data ?? EMPTY_MESSAGES,

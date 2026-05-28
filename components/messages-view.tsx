@@ -90,7 +90,7 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
 
   const filteredConversations = searchQuery
     ? displayConversations.filter((c) =>
-        c.other_user.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
+        c.other_user?.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : displayConversations
 
@@ -148,11 +148,11 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
                 <div className="relative">
                   <Avatar className="w-14 h-14">
                     <AvatarImage
-                      src={conversation.other_user.avatar_url ?? undefined}
-                      alt={conversation.other_user.display_name ?? "User"}
+                      src={conversation.other_user?.avatar_url ?? undefined}
+                      alt={conversation.other_user?.display_name ?? "User"}
                     />
                     <AvatarFallback>
-                      {(conversation.other_user.display_name ?? "U")[0].toUpperCase()}
+                      {(conversation.other_user?.display_name ?? "U")[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   {conversation.other_user.is_online && (
@@ -163,7 +163,7 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-foreground">
-                      {conversation.other_user.display_name ?? "Anonymous"}
+                      {conversation.other_user?.display_name ?? "Anonymous"}
                     </h3>
                     <span className="text-xs text-muted-foreground">
                       {conversation.last_message
@@ -217,7 +217,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
         {
           id: "1",
           content: "Hey! I saw you're in Shibuya too. Want to grab a coffee?",
-          sender_id: conversation.other_user.id,
+          sender_id: conversation.other_user?.id ?? "",
           created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
         },
         {
@@ -229,14 +229,14 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
         {
           id: "3",
           content: conversation.last_message?.content ?? "See you soon!",
-          sender_id: conversation.other_user.id,
+          sender_id: conversation.other_user?.id ?? "",
           created_at: conversation.last_message?.created_at ?? new Date().toISOString(),
         },
       ])
     } else {
       setLocalMessages(messages)
     }
-  }, [messages, isMock, conversation.other_user.id, conversation.last_message?.content, conversation.last_message?.created_at])
+  }, [messages, isMock, conversation.other_user?.id, conversation.last_message?.content, conversation.last_message?.created_at])
 
   // Mark messages as read (separate effect to avoid infinite loop)
   useEffect(() => {
@@ -278,7 +278,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
           {
             id: `response-${Date.now()}`,
             content: "This is a demo conversation. Connect with real users to chat!",
-            sender_id: conversation.other_user.id,
+            sender_id: conversation.other_user?.id ?? "",
             created_at: new Date().toISOString(),
           },
         ])
@@ -312,42 +312,42 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
             <>
               <Avatar className="w-10 h-10">
                 <AvatarImage
-                  src={conversation.other_user.avatar_url ?? undefined}
-                  alt={conversation.other_user.display_name ?? "User"}
+                  src={conversation.other_user?.avatar_url ?? undefined}
+                  alt={conversation.other_user?.display_name ?? "User"}
                 />
                 <AvatarFallback>
-                  {(conversation.other_user.display_name ?? "U")[0].toUpperCase()}
+                  {(conversation.other_user?.display_name ?? "U")[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <h2 className="font-medium text-foreground truncate">
-                  {conversation.other_user.display_name ?? "Anonymous"}
+                  {conversation.other_user?.display_name ?? "Anonymous"}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {conversation.other_user.is_online ? "Online" : "Offline"}
+                  {conversation.other_user?.is_online ? "Online" : "Offline"}
                 </p>
               </div>
             </>
           ) : (
             <Link
-              href={`/profile/${conversation.other_user.id}`}
+              href={`/profile/${conversation.other_user?.id ?? ""}`}
               className="flex items-center gap-3 flex-1 min-w-0 group"
             >
               <Avatar className="w-10 h-10">
                 <AvatarImage
-                  src={conversation.other_user.avatar_url ?? undefined}
-                  alt={conversation.other_user.display_name ?? "User"}
+                  src={conversation.other_user?.avatar_url ?? undefined}
+                  alt={conversation.other_user?.display_name ?? "User"}
                 />
                 <AvatarFallback>
-                  {(conversation.other_user.display_name ?? "U")[0].toUpperCase()}
+                  {(conversation.other_user?.display_name ?? "U")[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <h2 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                  {conversation.other_user.display_name ?? "Anonymous"}
+                  {conversation.other_user?.display_name ?? "Anonymous"}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {conversation.other_user.is_online ? "Online" : "Offline"}
+                  {conversation.other_user?.is_online ? "Online" : "Offline"}
                 </p>
               </div>
             </Link>
@@ -369,7 +369,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
             </div>
           ) : (
             localMessages.map((message) => {
-              const isMe = message.sender_id === "me" || message.sender_id !== conversation.other_user.id
+              const isMe = message.sender_id === "me" || message.sender_id !== conversation.other_user?.id
               return (
                 <div
                   key={message.id}
