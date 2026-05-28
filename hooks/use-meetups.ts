@@ -41,6 +41,7 @@ export function useCreateMeetup() {
     category: string
     location_name?: string
     city?: string
+    country?: string
     starts_at: string
   }) => {
     const supabase = createClient()
