@@ -10,6 +10,7 @@ import { CreateMeetup } from "@/components/create-meetup"
 import { MessagesView } from "@/components/messages-view"
 import { ProfileView } from "@/components/profile-view"
 import { AuthPrompt } from "@/components/auth-prompt"
+import { NotificationsBell } from "@/components/notifications-bell"
 import { Loader2 } from "lucide-react"
 
 export default function Home() {
@@ -48,6 +49,13 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background relative film-grain">
+      {/* Notification bell — fixed top-right, visible on all tabs when signed in */}
+      {isAuthenticated && (
+        <div className="fixed top-3 right-3 z-50">
+          <NotificationsBell />
+        </div>
+      )}
+
       {/* Main Content Area */}
       <div className="pb-20">
         {activeTab === "feed" && <FeedView onNavigateToMessages={handleNavigateToMessages} />}

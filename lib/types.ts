@@ -7,6 +7,10 @@ export type Conversation = Database["public"]["Tables"]["conversations"]["Row"]
 export type Message = Database["public"]["Tables"]["messages"]["Row"]
 export type ConversationParticipant = Database["public"]["Tables"]["conversation_participants"]["Row"]
 
+export type Notification = Database["public"]["Tables"]["notifications"]["Row"] & {
+  related_user?: { display_name: string | null; avatar_url: string | null } | null
+}
+
 export type MoodStatus = "social" | "working" | "exploring" | "homesick"
 export type MeetupCategory = "coffee" | "food" | "photo" | "walk" | "study" | "gaming" | "explore"
 
