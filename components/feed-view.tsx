@@ -237,7 +237,7 @@ function MatchCelebration({
           🎉
         </motion.div>
         <h2 className="text-4xl font-serif font-bold text-white mb-3 tracking-tight">
-          You&apos;re in!
+          You joined! 🎊
         </h2>
         <p className="text-white/70 text-base leading-snug mb-4 max-w-[260px] mx-auto">
           {meetup.title}
