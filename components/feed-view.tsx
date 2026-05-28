@@ -95,14 +95,24 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
 
 const DAILY_LIMIT = 10
 
-const CATEGORY_CONFIG: Record<string, { label: string; icon: LucideIcon; gradient: string }> = {
-  coffee:  { label: "Coffee",        icon: Coffee,   gradient: "from-amber-950 to-orange-900" },
-  food:    { label: "Food Adventure",icon: Utensils,  gradient: "from-red-950 to-orange-900" },
-  photo:   { label: "Photography",   icon: Camera,   gradient: "from-violet-950 to-indigo-900" },
-  walk:    { label: "Night Walk",    icon: Moon,     gradient: "from-slate-950 to-blue-950" },
-  study:   { label: "Study Session", icon: BookOpen, gradient: "from-teal-950 to-cyan-900" },
-  gaming:  { label: "Gaming",        icon: Gamepad2, gradient: "from-purple-950 to-fuchsia-900" },
-  explore: { label: "Exploring",     icon: Map,      gradient: "from-emerald-950 to-teal-900" },
+const CATEGORY_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
+  coffee:  { label: "Coffee",         icon: Coffee   },
+  food:    { label: "Food Adventure", icon: Utensils  },
+  photo:   { label: "Photography",    icon: Camera   },
+  walk:    { label: "Night Walk",     icon: Moon     },
+  study:   { label: "Study Session",  icon: BookOpen },
+  gaming:  { label: "Gaming",         icon: Gamepad2 },
+  explore: { label: "Exploring",      icon: Map      },
+}
+
+const CATEGORY_BG: Record<string, string> = {
+  coffee:  "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=900&fit=crop&q=80",
+  food:    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&h=900&fit=crop&q=80",
+  photo:   "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=900&fit=crop&q=80",
+  walk:    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&h=900&fit=crop&q=80",
+  study:   "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=900&fit=crop&q=80",
+  gaming:  "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&h=900&fit=crop&q=80",
+  explore: "https://images.unsplash.com/photo-1500835556837-99ac94a94552?w=600&h=900&fit=crop&q=80",
 }
 
 const MOOD_DOT: Record<string, string> = {
@@ -337,78 +347,88 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
   const cat = CATEGORY_CONFIG[meetup.category] ?? CATEGORY_CONFIG.explore
   const CatIcon = cat.icon
   const mood = meetup.creator?.mood ?? "exploring"
+  const bgImage = CATEGORY_BG[meetup.category] ?? CATEGORY_BG.explore
 
   return (
-    <div className={cn("w-full h-full rounded-3xl overflow-hidden relative bg-gradient-to-br", cat.gradient)}>
-      {/* Blurred avatar background */}
-      {meetup.creator?.avatar_url && (
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${meetup.creator.avatar_url})`,
-            filter: "blur(30px) saturate(0.7) brightness(0.4)",
-            transform: "scale(1.2)",
-          }}
-        />
-      )}
+    <div className="w-full h-full rounded-3xl overflow-hidden relative bg-zinc-900">
+      {/* Full-bleed category photo */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      />
 
-      {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
+      {/* Deep gradient: transparent top → opaque black bottom */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.75) 28%, rgba(0,0,0,0.25) 55%, transparent 75%)",
+        }}
+      />
 
-      {/* Category badge — top left */}
-      <div className="absolute top-5 left-5 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-        <CatIcon className="w-3.5 h-3.5 text-white/85" />
-        <span className="text-white/85 text-xs font-medium">{cat.label}</span>
+      {/* Subtle top vignette so badges read cleanly */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 22%)",
+        }}
+      />
+
+      {/* Category pill — top left */}
+      <div className="absolute top-5 left-5 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15">
+        <CatIcon className="w-3.5 h-3.5 text-white" />
+        <span className="text-white text-xs font-semibold tracking-wide">{cat.label}</span>
       </div>
 
-      {/* Creator — vertically centered */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pb-24">
-        <div className="relative">
-          <Avatar className="w-28 h-28 ring-4 ring-white/15 shadow-2xl">
-            <AvatarImage
-              src={meetup.creator?.avatar_url ?? undefined}
-              alt={meetup.creator?.display_name ?? ""}
+      {/* Bottom content */}
+      <div className="absolute bottom-0 left-0 right-0 px-5 pb-7">
+        {/* Creator row */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="relative flex-shrink-0">
+            <Avatar className="w-12 h-12 ring-2 ring-white/30 shadow-lg">
+              <AvatarImage
+                src={meetup.creator?.avatar_url ?? undefined}
+                alt={meetup.creator?.display_name ?? ""}
+              />
+              <AvatarFallback className="text-lg font-serif bg-zinc-700 text-white">
+                {meetup.creator?.display_name?.[0] ?? "?"}
+              </AvatarFallback>
+            </Avatar>
+            <span
+              className={cn(
+                "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-black",
+                MOOD_DOT[mood] ?? "bg-gray-500"
+              )}
             />
-            <AvatarFallback className="text-4xl font-serif bg-secondary">
-              {meetup.creator?.display_name?.[0] ?? "?"}
-            </AvatarFallback>
-          </Avatar>
-          <span
-            className={cn(
-              "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-[3px] border-black",
-              MOOD_DOT[mood] ?? "bg-gray-500"
-            )}
-          />
-        </div>
-        <span className="text-white/85 text-sm font-medium tracking-wide">
-          {meetup.creator?.display_name}
-        </span>
-        {meetup.creator?.languages && meetup.creator.languages.length > 0 && (
-          <div className="flex gap-1.5">
-            {meetup.creator.languages.slice(0, 2).map((l) => (
-              <span
-                key={l}
-                className="text-[10px] text-white/50 bg-white/10 px-2 py-0.5 rounded-full border border-white/10"
-              >
-                {l}
-              </span>
-            ))}
           </div>
-        )}
-      </div>
+          <div className="min-w-0">
+            <span className="text-white font-semibold text-base leading-tight block">
+              {meetup.creator?.display_name ?? "Anonymous"}
+            </span>
+            {meetup.creator?.languages && meetup.creator.languages.length > 0 && (
+              <div className="flex gap-2 mt-0.5">
+                {meetup.creator.languages.slice(0, 2).map((l) => (
+                  <span key={l} className="text-white/50 text-xs">
+                    {l}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* Card info — bottom */}
-      <div className="absolute bottom-0 left-0 right-0 p-6">
-        <h2 className="text-white text-xl font-serif font-semibold leading-snug mb-3">
+        {/* Meetup title */}
+        <h2 className="text-white text-2xl font-serif font-bold leading-tight mb-3 drop-shadow-sm">
           {meetup.title}
         </h2>
-        <div className="flex items-center gap-4 text-white/55 text-xs">
+
+        {/* Location + time */}
+        <div className="flex items-center gap-4 text-white/60 text-sm">
           <span className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-white/40" />
-            {meetup.location_name ?? meetup.city}
+            <MapPin className="w-4 h-4 text-white/45 flex-shrink-0" />
+            <span className="truncate">{meetup.location_name ?? meetup.city}</span>
           </span>
-          <span>🕐 {formatTime(meetup.starts_at)}</span>
+          <span className="flex-shrink-0">🕐 {formatTime(meetup.starts_at)}</span>
         </div>
       </div>
     </div>
@@ -565,18 +585,18 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
 
   return (
     <>
-      <div className="flex flex-col items-center px-4 pt-3 pb-6 gap-5">
+      <div className="flex flex-col items-center px-3 pt-2 pb-5 gap-4">
         {/* Card stack */}
         <div
           className="relative w-full"
-          style={{ maxWidth: 380, height: 480 }}
+          style={{ height: "clamp(440px, 70dvh, 640px)" }}
         >
           {/* Back card — scales up as top card departs */}
           {nextMeetup && (
             <motion.div
               key={`back-${nextMeetup.id}`}
               className="absolute inset-0 rounded-3xl overflow-hidden"
-              animate={{ scale: leaving ? 1 : 0.94, y: leaving ? 0 : 18 }}
+              animate={{ scale: leaving ? 1 : 0.96, y: leaving ? 0 : 12 }}
               transition={{ duration: 0.32, ease: "easeOut" }}
               style={{ zIndex: 5 }}
             >
@@ -597,52 +617,62 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
         </div>
 
         {/* Progress dots */}
-        <div className="flex gap-1.5 items-center">
+        <div className="flex gap-1.5 items-center h-2">
           {Array.from({ length: dotCount }).map((_, i) => (
             <div
               key={i}
               className={cn(
-                "h-1 rounded-full transition-all duration-300",
-                i === 0 ? "w-6 bg-primary" : "w-2 bg-muted"
+                "h-1.5 rounded-full transition-all duration-300",
+                i === 0 ? "w-5 bg-primary" : "w-1.5 bg-muted"
               )}
             />
           ))}
           {remaining > 5 && (
-            <span className="text-muted-foreground text-xs ml-1">+{remaining - 5}</span>
+            <span className="text-muted-foreground/60 text-xs ml-1">+{remaining - 5}</span>
           )}
         </div>
 
-        {/* Joins remaining */}
-        <div className="text-xs text-muted-foreground">
-          {limitReached ? (
-            <span className="text-destructive/80">Daily limit reached · Resets at midnight</span>
-          ) : (
-            <>
-              <span className="text-primary font-semibold">{DAILY_LIMIT - joinsToday}</span>
-              {" joins left today"}
-            </>
-          )}
-        </div>
+        {/* Action buttons + join counter */}
+        <div className="flex flex-col items-center gap-3 w-full">
+          <div className="flex items-end justify-center gap-12">
+            {/* Skip */}
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={() => doSwipe("left")}
+                disabled={!!leaving}
+                aria-label="Pass"
+                className="w-[68px] h-[68px] rounded-full bg-card border-2 border-red-500/50 shadow-lg shadow-red-500/10 flex items-center justify-center hover:bg-red-500/10 hover:border-red-500/80 active:scale-90 transition-all duration-150 disabled:opacity-35"
+              >
+                <X className="w-8 h-8 text-red-400" strokeWidth={2.5} />
+              </button>
+              <span className="text-xs font-medium text-muted-foreground tracking-wide">Pass</span>
+            </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-14">
-          <button
-            onClick={() => doSwipe("left")}
-            disabled={!!leaving}
-            aria-label="Skip"
-            className="w-16 h-16 rounded-full bg-card border border-border shadow-xl flex items-center justify-center hover:border-red-500/40 hover:bg-red-500/5 active:scale-90 transition-all duration-150 disabled:opacity-40"
-          >
-            <X className="w-7 h-7 text-red-400" strokeWidth={2.5} />
-          </button>
+            {/* Join */}
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={() => doSwipe("right")}
+                disabled={!!leaving || limitReached}
+                aria-label="Join"
+                className="w-[68px] h-[68px] rounded-full bg-card border-2 border-emerald-500/50 shadow-lg shadow-emerald-500/10 flex items-center justify-center hover:bg-emerald-500/10 hover:border-emerald-500/80 active:scale-90 transition-all duration-150 disabled:opacity-35"
+              >
+                <Heart className="w-8 h-8 text-emerald-400" strokeWidth={2.5} />
+              </button>
+              <span className="text-xs font-medium text-muted-foreground tracking-wide">Join</span>
+            </div>
+          </div>
 
-          <button
-            onClick={() => doSwipe("right")}
-            disabled={!!leaving || limitReached}
-            aria-label="Join"
-            className="w-16 h-16 rounded-full bg-card border border-border shadow-xl flex items-center justify-center hover:border-emerald-500/40 hover:bg-emerald-500/5 active:scale-90 transition-all duration-150 disabled:opacity-40"
-          >
-            <Heart className="w-7 h-7 text-emerald-400" strokeWidth={2.5} />
-          </button>
+          {/* Joins counter */}
+          <div className="text-xs text-muted-foreground/70">
+            {limitReached ? (
+              <span className="text-destructive/70">Daily limit reached · Resets at midnight</span>
+            ) : (
+              <>
+                <span className="text-primary font-semibold">{DAILY_LIMIT - joinsToday}</span>
+                {" joins left today"}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
