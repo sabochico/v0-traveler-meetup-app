@@ -6,7 +6,7 @@ create table if not exists public.notifications (
   title             text        not null,
   body              text        not null,
   read              boolean     not null default false,
-  related_user_id   uuid        references auth.users(id) on delete set null,
+  related_user_id   uuid        references public.profiles(id) on delete set null,
   related_meetup_id uuid        references public.meetups(id) on delete set null,
   created_at        timestamptz not null default now()
 );
