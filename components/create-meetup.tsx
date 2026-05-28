@@ -15,6 +15,7 @@ interface CreateMeetupProps {
 
 interface CityResult {
   place_id: number
+  type?: string
   display_name: string
   address: {
     city?: string
@@ -81,17 +82,26 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
       setIsCitySearching(true)
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&featuretype=city&format=json&limit=5&addressdetails=1`,
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=10&addressdetails=1`,
           { headers: { "User-Agent": "DriftApp/1.0", "Accept-Language": "en" } }
         )
         const data: CityResult[] = await res.json()
         const seen = new Set<string>()
-        const unique = data.filter((s) => {
-          const label = formatCityLabel(s)
-          if (seen.has(label)) return false
-          seen.add(label)
-          return true
-        })
+        const unique = data
+          .filter((s) => {
+            // Keep results that represent a city/town area
+            const validType = ["city", "administrative", "suburb"].includes(s.type ?? "")
+            const hasCity = !!(s.address.city || s.address.town)
+            return validType && hasCity
+          })
+          .filter((s) => {
+            // Deduplicate by city+country
+            const key = `${s.address.city || s.address.town},${s.address.country}`
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+          })
+          .slice(0, 5)
         setCitySuggestions(unique)
         setShowDropdown(unique.length > 0)
       } catch {
