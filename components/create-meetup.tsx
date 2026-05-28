@@ -14,17 +14,12 @@ interface CreateMeetupProps {
 }
 
 interface CityResult {
-  place_id: number
-  type?: string
-  display_name: string
-  address: {
-    city?: string
-    town?: string
-    municipality?: string
-    village?: string
-    state?: string
-    country?: string
-  }
+  id: number
+  name: string
+  country: string
+  admin1?: string
+  latitude: number
+  longitude: number
 }
 
 const MEETUP_TYPES = [
@@ -45,11 +40,7 @@ const TIME_OPTIONS = [
 ]
 
 function formatCityLabel(s: CityResult): string {
-  const { address } = s
-  const city = address.city || address.town || address.municipality || address.village
-  const country = address.country
-  if (city && country) return `${city}, ${country}`
-  return s.display_name.split(",").slice(0, 2).join(",").trim()
+  return `${s.name}, ${s.country}`
 }
 
 export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
@@ -68,7 +59,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   const { createMeetup } = useCreateMeetup()
 
-  // Debounced city search via Nominatim
+  // Debounced city search via Open-Meteo geocoding
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
@@ -82,26 +73,17 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
       setIsCitySearching(true)
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=10&addressdetails=1`,
-          { headers: { "User-Agent": "DriftApp/1.0", "Accept-Language": "en" } }
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=8&language=en&format=json`
         )
-        const data: CityResult[] = await res.json()
+        const json = await res.json()
+        const results: CityResult[] = json.results ?? []
         const seen = new Set<string>()
-        const unique = data
-          .filter((s) => {
-            // Keep results that represent a city/town area
-            const validType = ["city", "administrative", "suburb"].includes(s.type ?? "")
-            const hasCity = !!(s.address.city || s.address.town)
-            return validType && hasCity
-          })
-          .filter((s) => {
-            // Deduplicate by city+country
-            const key = `${s.address.city || s.address.town},${s.address.country}`
-            if (seen.has(key)) return false
-            seen.add(key)
-            return true
-          })
-          .slice(0, 5)
+        const unique = results.filter((s) => {
+          const key = `${s.name},${s.country}`
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
         setCitySuggestions(unique)
         setShowDropdown(unique.length > 0)
       } catch {
@@ -121,12 +103,8 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   }
 
   const handleSelectCity = (suggestion: CityResult) => {
-    const label = formatCityLabel(suggestion)
-    setLocation(label)
-    setCityData({
-      city: suggestion.address.city || suggestion.address.town || suggestion.address.municipality || suggestion.address.village || label.split(",")[0].trim(),
-      country: suggestion.address.country,
-    })
+    setLocation(formatCityLabel(suggestion))
+    setCityData({ city: suggestion.name, country: suggestion.country })
     setCitySuggestions([])
     setShowDropdown(false)
   }
