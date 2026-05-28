@@ -207,7 +207,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
                   ) : (
                     citySuggestions.map((s) => (
                       <button
-                        key={s.place_id}
+                        key={s.id}
                         type="button"
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleSelectCity(s)}
