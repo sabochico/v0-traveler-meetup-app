@@ -85,8 +85,15 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
           { headers: { "User-Agent": "DriftApp/1.0", "Accept-Language": "en" } }
         )
         const data: CityResult[] = await res.json()
-        setCitySuggestions(data)
-        setShowDropdown(data.length > 0)
+        const seen = new Set<string>()
+        const unique = data.filter((s) => {
+          const label = formatCityLabel(s)
+          if (seen.has(label)) return false
+          seen.add(label)
+          return true
+        })
+        setCitySuggestions(unique)
+        setShowDropdown(unique.length > 0)
       } catch {
         setCitySuggestions([])
         setShowDropdown(false)
