@@ -347,18 +347,28 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
   const cat = CATEGORY_CONFIG[meetup.category] ?? CATEGORY_CONFIG.explore
   const CatIcon = cat.icon
   const mood = meetup.creator?.mood ?? "exploring"
-  const bgImage =
-    meetup.creator?.avatar_url ??
-    CATEGORY_BG[meetup.category] ??
-    CATEGORY_BG.explore
+  const avatarUrl = meetup.creator?.avatar_url
+  const initial = (meetup.creator?.display_name ?? "?")[0].toUpperCase()
 
   return (
     <div className="w-full h-full rounded-3xl overflow-hidden relative bg-zinc-900">
-      {/* Full-bleed creator photo (falls back to category image) */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${bgImage})` }}
-      />
+      {avatarUrl ? (
+        /* Full-bleed creator photo */
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${avatarUrl})` }}
+        />
+      ) : (
+        /* Gradient fallback with large initial */
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/50 to-black/80" />
+          <div className="absolute inset-0 flex items-center justify-center pb-24 select-none">
+            <span className="text-[140px] font-serif font-bold text-white/20 leading-none">
+              {initial}
+            </span>
+          </div>
+        </>
+      )}
 
       {/* Deep gradient: transparent top → opaque black bottom */}
       <div
