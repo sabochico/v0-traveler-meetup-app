@@ -173,12 +173,13 @@ interface FeedViewProps {
 export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [selectedType, setSelectedType] = useState("all")
   const [activeTab, setActiveTab] = useState<"feed" | "saved">("feed")
+  const [browseAll, setBrowseAll] = useState(false)
   const { meetups, isLoading } = useMeetups()
   const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails()
   const { profile } = useProfile()
   const { updateMood } = useUpdateProfile()
   const { isAuthenticated } = useAuth()
-  
+
   const currentMood = (profile?.mood as MoodStatusType) ?? "exploring"
 
   const handleMoodChange = async (mood: MoodStatusType) => {
@@ -190,9 +191,15 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   // Use mock data if no real meetups exist yet
   const displayMeetups = meetups.length > 0 ? meetups : MOCK_MEETUPS
 
-  const filteredMeetups = selectedType === "all" 
-    ? displayMeetups 
-    : displayMeetups.filter(m => m.category === selectedType)
+  // Filter by user's city unless browsing all
+  const userCity = profile?.current_city
+  const cityFilteredMeetups = (browseAll || !userCity)
+    ? displayMeetups
+    : displayMeetups.filter(m => m.city?.toLowerCase() === userCity.toLowerCase())
+
+  const filteredMeetups = selectedType === "all"
+    ? cityFilteredMeetups
+    : cityFilteredMeetups.filter(m => m.category === selectedType)
 
   return (
     <div className="min-h-screen">
@@ -204,7 +211,11 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
               <h1 className="text-2xl font-serif font-semibold tracking-tight">drift</h1>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5" />
-                <span>{profile?.current_city ?? "Tokyo"}, {profile?.current_country ?? "Japan"}</span>
+                <span>
+                  {browseAll
+                    ? "All cities"
+                    : `Near you in ${profile?.current_city ?? "Tokyo"}`}
+                </span>
               </div>
             </div>
             <MoodStatus currentMood={currentMood} onMoodChange={handleMoodChange} />
@@ -236,6 +247,26 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
               Saved
             </button>
           </div>
+
+          {/* Browse all toggle - only when city-filtered */}
+          {activeTab === "feed" && !browseAll && userCity && (
+            <div className="flex items-center justify-between text-xs text-muted-foreground pb-1">
+              <span>Showing meetups near you</span>
+              <button onClick={() => setBrowseAll(true)} className="text-primary hover:underline">
+                Browse all cities
+              </button>
+            </div>
+          )}
+          {activeTab === "feed" && browseAll && (
+            <div className="flex items-center justify-between text-xs text-muted-foreground pb-1">
+              <span>Showing all cities</span>
+              {userCity && (
+                <button onClick={() => setBrowseAll(false)} className="text-primary hover:underline">
+                  Near me
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Type Filter - only show for feed tab */}
           {activeTab === "feed" && (
@@ -269,8 +300,20 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : filteredMeetups.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No meetups yet. Be the first to create one!</p>
+            <div className="text-center py-12 space-y-3">
+              <p className="text-muted-foreground">
+                {!browseAll && userCity
+                  ? `No meetups in ${userCity} yet.`
+                  : "No meetups yet. Be the first to create one!"}
+              </p>
+              {!browseAll && userCity && (
+                <button
+                  onClick={() => setBrowseAll(true)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Browse all cities
+                </button>
+              )}
             </div>
           ) : (
             filteredMeetups.map((meetup) => (

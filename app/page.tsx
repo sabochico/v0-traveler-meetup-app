@@ -51,7 +51,7 @@ export default function Home() {
       {/* Main Content Area */}
       <div className="pb-20">
         {activeTab === "feed" && <FeedView onNavigateToMessages={handleNavigateToMessages} />}
-        {activeTab === "discover" && <DiscoverView />}
+        {activeTab === "discover" && <DiscoverView onNavigateToMessages={handleNavigateToMessages} />}
         {activeTab === "messages" && (
           isAuthenticated
             ? <MessagesView initialConversationId={pendingConversationId} />

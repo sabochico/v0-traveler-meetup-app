@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Search, MapPin, Users, Loader2, MessageCircle, Check } from "lucide-react"
+import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { MeetupCard } from "./meetup-card"
 import { useNearbyProfiles } from "@/hooks/use-profile"
+import { useMeetups } from "@/hooks/use-meetups"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { cn } from "@/lib/utils"
 import type { Profile, MoodStatus } from "@/lib/types"
@@ -17,7 +19,6 @@ const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   homesick: { color: "bg-purple-500", label: "Homesick" },
 }
 
-// Mock data for when no real users exist
 const MOCK_PROFILES: Profile[] = [
   {
     id: "mock-1",
@@ -93,14 +94,34 @@ const MOCK_PROFILES: Profile[] = [
   },
 ]
 
-export function DiscoverView() {
-  const [viewMode, setViewMode] = useState<"list" | "map">("list")
-  const [searchQuery, setSearchQuery] = useState("")
-  const { profiles, isLoading } = useNearbyProfiles()
+interface DiscoverViewProps {
+  onNavigateToMessages?: (conversationId: string) => void
+}
 
-  // Use mock data if no real profiles exist
+export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
+  const [activeTab, setActiveTab] = useState<"meetups" | "people">("meetups")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [cityFilter, setCityFilter] = useState("all")
+  const { profiles, isLoading: profilesLoading } = useNearbyProfiles()
+  const { meetups, isLoading: meetupsLoading } = useMeetups()
+
   const displayProfiles = profiles.length > 0 ? profiles : MOCK_PROFILES
   const isMockData = profiles.length === 0
+
+  // Sort meetups newest first
+  const sortedMeetups = [...meetups].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
+
+  // Build unique city list from real meetups
+  const cities = Array.from(
+    new Set(sortedMeetups.map((m) => m.city).filter(Boolean) as string[])
+  ).sort()
+
+  const filteredMeetups =
+    cityFilter === "all"
+      ? sortedMeetups
+      : sortedMeetups.filter((m) => m.city?.toLowerCase() === cityFilter.toLowerCase())
 
   const filteredProfiles = searchQuery
     ? displayProfiles.filter(
@@ -115,60 +136,126 @@ export function DiscoverView() {
     <div className="min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-serif font-semibold">Discover</h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "p-2 rounded-lg transition-colors",
-                  viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                )}
-                aria-label="List view"
-              >
-                <Users className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("map")}
-                className={cn(
-                  "p-2 rounded-lg transition-colors",
-                  viewMode === "map" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                )}
-                aria-label="Map view"
-              >
-                <MapPin className="w-4 h-4" />
-              </button>
+        <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
+          <div>
+            <h1 className="text-2xl font-serif font-semibold">Explore</h1>
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Globe className="w-3.5 h-3.5" />
+              <span>Meetups worldwide</span>
             </div>
           </div>
 
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, interest, or language..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-secondary border-0 pl-10 text-foreground placeholder:text-muted-foreground"
-            />
+          {/* Meetups / People tabs */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab("meetups")}
+              className={cn(
+                "flex-1 py-2 text-sm font-medium rounded-lg transition-colors",
+                activeTab === "meetups"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              )}
+            >
+              Meetups
+            </button>
+            <button
+              onClick={() => setActiveTab("people")}
+              className={cn(
+                "flex-1 py-2 text-sm font-medium rounded-lg transition-colors",
+                activeTab === "people"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              )}
+            >
+              People
+            </button>
           </div>
+
+          {/* City filter pills — meetups tab */}
+          {activeTab === "meetups" && cities.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
+              <button
+                onClick={() => setCityFilter("all")}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all",
+                  cityFilter === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                )}
+              >
+                All cities
+              </button>
+              {cities.map((city) => (
+                <button
+                  key={city}
+                  onClick={() => setCityFilter(city)}
+                  className={cn(
+                    "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all",
+                    cityFilter === city
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  )}
+                >
+                  <MapPin className="w-3 h-3" />
+                  {city}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Search — people tab */}
+          {activeTab === "people" && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, interest, or language..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-secondary border-0 pl-10 text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+          )}
         </div>
       </header>
 
       {/* Content */}
-      {isLoading ? (
+      {activeTab === "meetups" ? (
+        meetupsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : filteredMeetups.length === 0 ? (
+          <div className="text-center py-12 space-y-2">
+            <p className="text-muted-foreground">
+              {cityFilter !== "all"
+                ? `No meetups in ${cityFilter} yet.`
+                : "No meetups yet worldwide. Be the first to create one!"}
+            </p>
+            {cityFilter !== "all" && (
+              <button
+                onClick={() => setCityFilter("all")}
+                className="text-sm text-primary hover:underline"
+              >
+                Show all cities
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+            {filteredMeetups.map((meetup) => (
+              <MeetupCard key={meetup.id} meetup={meetup} onNavigateToMessages={onNavigateToMessages} />
+            ))}
+          </div>
+        )
+      ) : profilesLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
-      ) : viewMode === "list" ? (
+      ) : (
         <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
           {filteredProfiles.map((person) => (
             <PersonCard key={person.id} person={person} isMock={isMockData} />
           ))}
-        </div>
-      ) : (
-        <div className="h-[calc(100vh-180px)] relative">
-          <MapView people={filteredProfiles} isMock={isMockData} />
         </div>
       )}
     </div>
@@ -183,7 +270,6 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
 
   const handleSayHi = async () => {
     if (isMock) {
-      // For mock data, just show success animation
       setSending(true)
       setTimeout(() => {
         setSending(false)
@@ -274,177 +360,5 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
         </button>
       </div>
     </article>
-  )
-}
-
-function MapView({ people, isMock }: { people: Profile[]; isMock: boolean }) {
-  return (
-    <div className="w-full h-full bg-secondary relative overflow-hidden">
-      {/* Stylized map background */}
-      <div className="absolute inset-0 opacity-20">
-        <svg className="w-full h-full" viewBox="0 0 400 600">
-          {/* Grid lines */}
-          {Array.from({ length: 20 }).map((_, i) => (
-            <line
-              key={`h-${i}`}
-              x1="0"
-              y1={i * 30}
-              x2="400"
-              y2={i * 30}
-              stroke="currentColor"
-              strokeWidth="0.5"
-              className="text-border"
-            />
-          ))}
-          {Array.from({ length: 15 }).map((_, i) => (
-            <line
-              key={`v-${i}`}
-              x1={i * 30}
-              y1="0"
-              x2={i * 30}
-              y2="600"
-              stroke="currentColor"
-              strokeWidth="0.5"
-              className="text-border"
-            />
-          ))}
-        </svg>
-      </div>
-
-      {/* People markers */}
-      {people.slice(0, 4).map((person, index) => {
-        const positions = [
-          { top: "30%", left: "40%" },
-          { top: "45%", left: "60%" },
-          { top: "55%", left: "35%" },
-          { top: "70%", left: "55%" },
-        ]
-        const pos = positions[index % positions.length]
-        const mood = (person.mood as MoodStatus) ?? "exploring"
-
-        return (
-          <MapMarker key={person.id} person={person} position={pos} mood={mood} isMock={isMock} />
-        )
-      })}
-
-      {/* Center marker (you) */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <div className="w-6 h-6 rounded-full bg-primary glow-amber flex items-center justify-center">
-          <div className="w-2 h-2 rounded-full bg-primary-foreground" />
-        </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-primary/30 animate-ping" />
-      </div>
-
-      {/* Location label */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-card/90 backdrop-blur-sm px-4 py-2 rounded-full border border-border">
-        <div className="flex items-center gap-2 text-sm">
-          <MapPin className="w-4 h-4 text-primary" />
-          <span className="text-foreground">Shibuya, Tokyo</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MapMarker({
-  person,
-  position,
-  mood,
-  isMock,
-}: {
-  person: Profile
-  position: { top: string; left: string }
-  mood: MoodStatus
-  isMock: boolean
-}) {
-  const [showTooltip, setShowTooltip] = useState(false)
-  const [messageSent, setMessageSent] = useState(false)
-  const [sending, setSending] = useState(false)
-  const { startConversation } = useCreateConversation()
-
-  const handleSayHi = async () => {
-    if (isMock) {
-      setSending(true)
-      setTimeout(() => {
-        setSending(false)
-        setMessageSent(true)
-      }, 500)
-      return
-    }
-
-    try {
-      setSending(true)
-      await startConversation(person.id)
-      setMessageSent(true)
-    } catch (error) {
-      console.error("Failed to start conversation:", error)
-    } finally {
-      setSending(false)
-    }
-  }
-
-  return (
-    <div
-      className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer"
-      style={{ top: position.top, left: position.left }}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-      onClick={() => setShowTooltip(!showTooltip)}
-    >
-      <div className="relative">
-        <Avatar
-          className={cn(
-            "w-12 h-12 ring-4 ring-card shadow-lg transition-all",
-            showTooltip ? "ring-primary" : ""
-          )}
-        >
-          <AvatarImage src={person.avatar_url ?? undefined} alt={person.display_name ?? "User"} />
-          <AvatarFallback>{(person.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <span
-          className={cn(
-            "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card",
-            STATUS_STYLES[mood].color
-          )}
-        />
-      </div>
-
-      {/* Tooltip */}
-      {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10">
-          <div className="bg-card px-4 py-3 rounded-lg shadow-lg border border-border whitespace-nowrap">
-            <p className="font-medium text-sm text-foreground">{person.display_name ?? "Anonymous"}</p>
-            <p className="text-xs text-muted-foreground mb-2">{STATUS_STYLES[mood].label}</p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSayHi()
-              }}
-              disabled={messageSent || sending}
-              className={cn(
-                "w-full px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center justify-center gap-1.5",
-                messageSent
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "bg-primary text-primary-foreground hover:glow-amber"
-              )}
-            >
-              {sending ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : messageSent ? (
-                <>
-                  <Check className="w-3 h-3" />
-                  <span>Sent</span>
-                </>
-              ) : (
-                <>
-                  <MessageCircle className="w-3 h-3" />
-                  <span>Say hi</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
   )
 }
