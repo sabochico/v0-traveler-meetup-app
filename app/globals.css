@@ -116,6 +116,7 @@
 [data-accent="emerald"] { --primary: oklch(0.70 0.17 165); --ring: oklch(0.70 0.17 165); --sidebar-primary: oklch(0.70 0.17 165); --sidebar-ring: oklch(0.70 0.17 165); }
 [data-accent="purple"]  { --primary: oklch(0.62 0.20 305); --ring: oklch(0.62 0.20 305); --sidebar-primary: oklch(0.62 0.20 305); --sidebar-ring: oklch(0.62 0.20 305); }
 [data-accent="orange"]  { --primary: oklch(0.73 0.18 50);  --ring: oklch(0.73 0.18 50);  --sidebar-primary: oklch(0.73 0.18 50);  --sidebar-ring: oklch(0.73 0.18 50);  }
+[data-accent="pink"]    { --primary: oklch(0.68 0.22 350); --ring: oklch(0.68 0.22 350); --sidebar-primary: oklch(0.68 0.22 350); --sidebar-ring: oklch(0.68 0.22 350); }
 
 /* Reduce motion */
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {

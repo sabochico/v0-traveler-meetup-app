@@ -17,6 +17,7 @@ const ACCENT_COLORS = [
   { name: "Emerald", value: "emerald", color: "bg-emerald-500" },
   { name: "Purple", value: "purple", color: "bg-purple-500" },
   { name: "Orange", value: "orange", color: "bg-orange-500" },
+  { name: "Pink", value: "pink", color: "bg-pink-500" },
 ]
 
 export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps) {
