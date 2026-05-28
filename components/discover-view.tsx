@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -296,7 +297,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
   return (
     <article className="p-4 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300">
       <div className="flex gap-4">
-        <div className="relative">
+        <Link href={isMock ? "#" : `/profile/${person.id}`} className="relative flex-shrink-0">
           <Avatar className="w-16 h-16 ring-2 ring-primary/20">
             <AvatarImage src={person.avatar_url ?? undefined} alt={person.display_name ?? "User"} />
             <AvatarFallback>{(person.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
@@ -308,11 +309,16 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
             )}
             title={STATUS_STYLES[mood].label}
           />
-        </div>
+        </Link>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="font-medium text-foreground">{person.display_name ?? "Anonymous"}</h3>
+            <Link
+              href={isMock ? "#" : `/profile/${person.id}`}
+              className="font-medium text-foreground hover:text-primary transition-colors"
+            >
+              {person.display_name ?? "Anonymous"}
+            </Link>
             <span className="text-xs text-primary">Nearby</span>
           </div>
           <p className="text-sm text-muted-foreground mb-2 line-clamp-2">

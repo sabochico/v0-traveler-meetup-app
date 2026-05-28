@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
+import Link from "next/link"
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion"
 import {
   MapPin, X, Heart, Loader2, Coffee, Camera, Utensils,
@@ -403,9 +404,13 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
               MOOD_DOT[mood] ?? "bg-gray-500"
             )}
           />
-          <span className="text-white font-semibold text-base leading-tight">
+          <Link
+            href={`/profile/${meetup.creator_id}`}
+            className="text-white font-semibold text-base leading-tight hover:text-white/80 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
             {meetup.creator?.display_name ?? "Anonymous"}
-          </span>
+          </Link>
           {meetup.creator?.languages && meetup.creator.languages.length > 0 && (
             <>
               <span className="text-white/30 text-sm">·</span>
