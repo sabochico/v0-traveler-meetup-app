@@ -585,18 +585,18 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
 
   return (
     <>
-      <div className="flex flex-col items-center px-3 pt-2 pb-5 gap-4">
-        {/* Card stack */}
+      <div className="flex flex-col items-center px-3 pt-1 pb-3 gap-3">
+        {/* Card stack — height leaves room for buttons without scrolling */}
         <div
           className="relative w-full"
-          style={{ height: "clamp(440px, 70dvh, 640px)" }}
+          style={{ height: "clamp(320px, calc(100dvh - 380px), 500px)" }}
         >
           {/* Back card — scales up as top card departs */}
           {nextMeetup && (
             <motion.div
               key={`back-${nextMeetup.id}`}
               className="absolute inset-0 rounded-3xl overflow-hidden"
-              animate={{ scale: leaving ? 1 : 0.96, y: leaving ? 0 : 12 }}
+              animate={{ scale: leaving ? 1 : 0.96, y: leaving ? 0 : 10 }}
               transition={{ duration: 0.32, ease: "easeOut" }}
               style={{ zIndex: 5 }}
             >
