@@ -4,18 +4,92 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion"
 import {
   MapPin, X, Heart, Loader2, Coffee, Camera, Utensils,
-  Moon, BookOpen, Gamepad2, Map, Users,
+  Moon, BookOpen, Gamepad2, Map, Users, ChevronRight, Sparkles,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MeetupCard } from "./meetup-card"
 import { MoodStatus } from "./mood-status"
+import { EditProfileModal } from "./edit-profile-modal"
 import { useMeetups } from "@/hooks/use-meetups"
 import { useSavedMeetupsWithDetails } from "@/hooks/use-saved-meetups"
 import { useProfile, useUpdateProfile, useNearbyProfiles } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
-import type { MoodStatus as MoodStatusType, MeetupWithCreator } from "@/lib/types"
+import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
+
+// ─── Profile completion ──────────────────────────────────────────────────────
+
+function calcProfileScore(p: Profile): number {
+  let score = 0
+  if (p.display_name) score += 20
+  if (p.avatar_url) score += 25
+  if ((p.bio?.length ?? 0) >= 20) score += 20
+  if (p.current_city) score += 15
+  if ((p.interests?.length ?? 0) >= 3) score += 15
+  if (p.mood) score += 5
+  return score
+}
+
+interface ProfileCompletionBannerProps {
+  profile: Profile
+  onComplete: () => void
+  onDismiss: () => void
+}
+
+function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileCompletionBannerProps) {
+  const score = calcProfileScore(profile)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6, height: 0, marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
+      transition={{ duration: 0.25 }}
+      className="mx-4 mt-3 rounded-2xl border border-primary/25 bg-primary/6 overflow-hidden"
+    >
+      <div className="px-4 pt-3.5 pb-3">
+        {/* Top row */}
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span className="text-sm font-medium text-foreground">
+              Profile{" "}
+              <span className="text-primary font-semibold">{score}%</span>
+              {" "}complete
+            </span>
+          </div>
+          <button
+            onClick={onDismiss}
+            aria-label="Dismiss"
+            className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-1.5 w-full rounded-full bg-secondary mb-3">
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            initial={{ width: 0 }}
+            animate={{ width: `${score}%` }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
+          />
+        </div>
+
+        {/* CTA */}
+        <button
+          onClick={onComplete}
+          className="flex items-center justify-between w-full px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/18 active:scale-[0.98] transition-all"
+        >
+          <span>Complete your profile</span>
+          <ChevronRight className="w-4 h-4 opacity-70" />
+        </button>
+      </div>
+    </motion.div>
+  )
+}
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -595,12 +669,25 @@ interface FeedViewProps {
 export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [activeTab, setActiveTab] = useState<"feed" | "saved">("feed")
   const [browseAll, setBrowseAll] = useState(false)
+  const [showEditProfile, setShowEditProfile] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
   const { meetups, isLoading } = useMeetups()
   const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails()
   const { profile } = useProfile()
   const { updateMood } = useUpdateProfile()
   const { profiles } = useNearbyProfiles()
   const { isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    if (sessionStorage.getItem("drift-profile-banner-dismissed") === "1") {
+      setBannerDismissed(true)
+    }
+  }, [])
+
+  const handleDismissBanner = () => {
+    sessionStorage.setItem("drift-profile-banner-dismissed", "1")
+    setBannerDismissed(true)
+  }
 
   const currentMood = (profile?.mood as MoodStatusType) ?? "exploring"
   const userCity = profile?.current_city
@@ -681,6 +768,19 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
         </div>
       </header>
 
+      {/* Profile completion banner */}
+      <div className="max-w-lg mx-auto">
+        <AnimatePresence>
+          {activeTab === "feed" && isAuthenticated && profile && !bannerDismissed && calcProfileScore(profile) < 80 && (
+            <ProfileCompletionBanner
+              profile={profile}
+              onComplete={() => setShowEditProfile(true)}
+              onDismiss={handleDismissBanner}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* Content */}
       <div className="max-w-lg mx-auto">
         {activeTab === "feed" ? (
@@ -709,6 +809,15 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
           </div>
         )}
       </div>
+
+      {/* Edit profile modal */}
+      {isAuthenticated && profile && (
+        <EditProfileModal
+          profile={profile}
+          isOpen={showEditProfile}
+          onClose={() => setShowEditProfile(false)}
+        />
+      )}
     </div>
   )
 }
