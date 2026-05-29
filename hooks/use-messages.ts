@@ -2,9 +2,43 @@
 
 import { useEffect } from "react"
 import useSWR, { mutate as globalMutate } from "swr"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 
 const supabase = createClient()
+
+/** One shared channel — Supabase rejects .on() after .subscribe() on the same topic. */
+let conversationsMessagesChannel: RealtimeChannel | null = null
+const conversationsMessagesListeners = new Set<() => void>()
+
+function subscribeToConversationMessages(onUpdate: () => void): () => void {
+  conversationsMessagesListeners.add(onUpdate)
+
+  if (!conversationsMessagesChannel) {
+    conversationsMessagesChannel = supabase
+      .channel("conversations:messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          conversationsMessagesListeners.forEach((listener) => listener())
+        }
+      )
+      .subscribe()
+  }
+
+  return () => {
+    conversationsMessagesListeners.delete(onUpdate)
+    if (conversationsMessagesListeners.size === 0 && conversationsMessagesChannel) {
+      void supabase.removeChannel(conversationsMessagesChannel)
+      conversationsMessagesChannel = null
+    }
+  }
+}
 
 export interface Conversation {
   id: string
@@ -118,24 +152,9 @@ export function useConversations() {
   const { data, error, isLoading, mutate } = useSWR("conversations", conversationsFetcher)
 
   useEffect(() => {
-    const channel = supabase
-      .channel("conversations:messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        () => {
-          void mutate()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      void supabase.removeChannel(channel)
-    }
+    return subscribeToConversationMessages(() => {
+      void mutate()
+    })
   }, [mutate])
 
   return {
@@ -205,8 +224,6 @@ export function useMessages(conversationId: string | null) {
 }
 
 export function useCreateConversation() {
-  const { refresh: refreshConversations } = useConversations()
-
   const startConversation = async (otherUserId: string): Promise<{ conversationId: string; isNew: boolean }> => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) throw new Error("Not authenticated")
@@ -225,7 +242,7 @@ export function useCreateConversation() {
       throw new Error(data.error ?? "Failed to create conversation")
     }
 
-    await refreshConversations()
+    await globalMutate("conversations")
     return { conversationId: data.conversationId, isNew: data.isNew }
   }
 
