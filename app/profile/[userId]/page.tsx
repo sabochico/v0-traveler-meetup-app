@@ -13,6 +13,9 @@ import {
   Sparkles,
   Languages,
   Heart,
+  CalendarDays,
+  Users,
+  Clock3,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -25,6 +28,29 @@ const ONLINE_WINDOW_MS = 2 * 60 * 1000
 const isRecentlySeen = (lastSeenAt?: string | null) => {
   if (!lastSeenAt) return false
   return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS
+}
+
+const formatMemberSince = (createdAt?: string | null) => {
+  if (!createdAt) return "Recently joined"
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    year: "numeric",
+  }).format(new Date(createdAt))
+}
+
+const formatLastSeen = (lastSeenAt?: string | null) => {
+  if (!lastSeenAt) return "Last active recently"
+
+  const diffMs = Date.now() - new Date(lastSeenAt).getTime()
+  const diffMins = Math.max(1, Math.floor(diffMs / 60000))
+
+  if (diffMins < 2) return "Active now"
+  if (diffMins < 60) return `Active ${diffMins} min ago`
+
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) return `Active ${diffHours} hr ago`
+
+  return "Active earlier"
 }
 
 const MOOD_COLORS: Record<string, string> = {
@@ -57,14 +83,19 @@ export default function PublicProfilePage({
   const displayName = profile?.display_name ?? "Anonymous"
   const initial = displayName[0]?.toUpperCase() ?? "U"
 
+  const location =
+    [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
+    profile?.location ||
+    "Location not shared"
+
   const handleSayHi = async () => {
     if (!profile?.id) return
 
     try {
       setIsStartingChat(true)
       setChatError(null)
-      await startConversation(profile.id)
-      router.push("/")
+      const result = await startConversation(profile.id)
+      router.push(`/?tab=messages&conversation=${result.conversationId}`)
     } catch (error) {
       setChatError(error instanceof Error ? error.message : "Could not start chat")
     } finally {
@@ -90,7 +121,7 @@ export default function PublicProfilePage({
             </h1>
             {profile && (
               <p className="text-xs text-muted-foreground">
-                {isOnline ? "Online now" : "Offline"}
+                {isOnline ? "Online now" : formatLastSeen(profile.last_seen_at)}
               </p>
             )}
           </div>
@@ -112,93 +143,90 @@ export default function PublicProfilePage({
           </button>
         </div>
       ) : (
-        <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
-          <section className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm">
-            <div className="flex items-start gap-4">
+        <main className="max-w-lg mx-auto px-4 py-6 space-y-5 pb-24">
+          <section className="rounded-[2rem] border border-border/60 bg-card/80 p-6 shadow-sm text-center">
+            <div className="flex justify-center">
               <div className="relative">
-                <Avatar className="w-24 h-24 ring-4 ring-primary/20">
-                  <AvatarImage
-                    src={profile.avatar_url ?? undefined}
-                    alt={displayName}
-                  />
-                  <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
+                <Avatar className="w-32 h-32 ring-4 ring-primary/20">
+                  <AvatarImage src={profile.avatar_url ?? undefined} alt={displayName} />
+                  <AvatarFallback className="text-4xl">{initial}</AvatarFallback>
                 </Avatar>
 
                 <span
                   className={cn(
-                    "absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-background",
+                    "absolute bottom-2 right-2 w-5 h-5 rounded-full border-2 border-background",
                     isOnline ? "bg-emerald-500" : "bg-muted"
                   )}
                 />
               </div>
-
-              <div className="flex-1 min-w-0 pt-1">
-                <h2 className="text-2xl font-serif font-semibold truncate">
-                  {displayName}
-                </h2>
-
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isOnline ? "Online now" : "Offline"}
-                </p>
-
-                {profile.mood && (
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full mt-3",
-                      MOOD_COLORS[profile.mood] ?? MOOD_COLORS.exploring
-                    )}
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    {MOOD_LABELS[profile.mood] ?? profile.mood}
-                  </span>
-                )}
-              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-5">
-              <div className="rounded-2xl bg-secondary/50 p-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  Location
-                </div>
-                <p className="text-sm mt-1">
-                  {[profile.current_city, profile.current_country]
-                    .filter(Boolean)
-                    .join(", ") || "Not shared"}
-                </p>
-              </div>
+            <h2 className="text-3xl font-serif font-semibold mt-4">{displayName}</h2>
 
-              <div className="rounded-2xl bg-secondary/50 p-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {profile.travel_mode ? (
-                    <Plane className="w-4 h-4 text-primary" />
-                  ) : (
-                    <Globe className="w-4 h-4 text-primary" />
+            <p className="text-sm text-muted-foreground mt-1">
+              {isOnline ? "Online now" : formatLastSeen(profile.last_seen_at)}
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-2 mt-4">
+              {profile.mood && (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full",
+                    MOOD_COLORS[profile.mood] ?? MOOD_COLORS.exploring
                   )}
-                  Mode
-                </div>
-                <p className="text-sm mt-1">
-                  {profile.travel_mode ? "Traveler" : "Local"}
-                </p>
-              </div>
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {MOOD_LABELS[profile.mood] ?? profile.mood}
+                </span>
+              )}
+
+              <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-secondary text-muted-foreground">
+                {profile.travel_mode ? <Plane className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
+                {profile.travel_mode ? "Traveler" : "Local"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mt-4">
+              <MapPin className="w-4 h-4 text-primary" />
+              <span>{location}</span>
             </div>
 
             <button
               onClick={handleSayHi}
               disabled={isStartingChat}
-              className="mt-5 w-full h-12 rounded-2xl bg-primary text-primary-foreground font-medium flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60 transition"
+              className="mt-6 w-full h-12 rounded-2xl bg-primary text-primary-foreground font-medium flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60 transition"
             >
               {isStartingChat ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <MessageCircle className="w-4 h-4" />
               )}
-              {isStartingChat ? "Starting chat..." : "Say Hi"}
+              {isStartingChat ? "Opening chat..." : "Say Hi"}
             </button>
 
             {chatError && (
               <p className="text-xs text-red-400 mt-3 text-center">{chatError}</p>
             )}
+          </section>
+
+          <section className="grid grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-card/70 border border-border/60 p-3 text-center">
+              <CalendarDays className="w-4 h-4 mx-auto text-primary mb-1" />
+              <p className="text-[11px] text-muted-foreground">Member since</p>
+              <p className="text-xs font-medium">{formatMemberSince(profile.created_at)}</p>
+            </div>
+
+            <div className="rounded-2xl bg-card/70 border border-border/60 p-3 text-center">
+              <Clock3 className="w-4 h-4 mx-auto text-primary mb-1" />
+              <p className="text-[11px] text-muted-foreground">Status</p>
+              <p className="text-xs font-medium">{isOnline ? "Online" : "Away"}</p>
+            </div>
+
+            <div className="rounded-2xl bg-card/70 border border-border/60 p-3 text-center">
+              <Users className="w-4 h-4 mx-auto text-primary mb-1" />
+              <p className="text-[11px] text-muted-foreground">Meetups</p>
+              <p className="text-xs font-medium">Soon</p>
+            </div>
           </section>
 
           <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
@@ -236,11 +264,7 @@ export default function PublicProfilePage({
             {(profile.interests?.length ?? 0) > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {profile.interests.map((interest) => (
-                  <Badge
-                    key={interest}
-                    variant="outline"
-                    className="border-border text-foreground"
-                  >
+                  <Badge key={interest} variant="outline" className="border-border text-foreground">
                     {interest}
                   </Badge>
                 ))}
@@ -248,6 +272,14 @@ export default function PublicProfilePage({
             ) : (
               <p className="text-sm text-muted-foreground">No interests added yet.</p>
             )}
+          </section>
+
+          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+            <h3 className="text-sm font-semibold mb-3">Shared vibe</h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>Mutual interests will appear here soon.</p>
+              <p>Shared meetup history will appear here soon.</p>
+            </div>
           </section>
 
           {profile.instagram_handle && (
