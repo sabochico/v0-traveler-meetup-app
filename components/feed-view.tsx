@@ -32,6 +32,15 @@ function calcProfileScore(p: Profile): number {
   return score
 }
 
+function getNextProfileStep(p: Profile): string {
+  if (!p.display_name) return "Add your name"
+  if (!p.avatar_url) return "Add a profile photo"
+  if ((p.bio?.length ?? 0) < 20) return "Write a short bio"
+  if (!p.current_city) return "Set your city"
+  if ((p.interests?.length ?? 0) < 3) return "Add 3 interests"
+  return "Set your mood"
+}
+
 interface ProfileCompletionBannerProps {
   profile: Profile
   onComplete: () => void
@@ -40,6 +49,7 @@ interface ProfileCompletionBannerProps {
 
 function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileCompletionBannerProps) {
   const score = calcProfileScore(profile)
+  const nextStep = getNextProfileStep(profile)
 
   return (
     <motion.div
@@ -54,7 +64,7 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-sm font-medium text-foreground">
-              Profile <span className="text-primary font-semibold">{score}%</span> complete
+              Next step: <span className="text-primary font-semibold">{nextStep}</span>
             </span>
           </div>
           <button
@@ -79,7 +89,7 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
           onClick={onComplete}
           className="flex items-center justify-between w-full px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/18 active:scale-[0.98] transition-all"
         >
-          <span>Complete your profile</span>
+          <span>{nextStep}</span>
           <ChevronRight className="w-4 h-4 opacity-70" />
         </button>
       </div>
