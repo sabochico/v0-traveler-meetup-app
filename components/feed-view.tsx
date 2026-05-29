@@ -50,14 +50,11 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
       className="mx-4 mt-3 rounded-2xl border border-primary/25 bg-primary/6 overflow-hidden"
     >
       <div className="px-4 pt-3.5 pb-3">
-        {/* Top row */}
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-sm font-medium text-foreground">
-              Profile{" "}
-              <span className="text-primary font-semibold">{score}%</span>
-              {" "}complete
+              Profile <span className="text-primary font-semibold">{score}%</span> complete
             </span>
           </div>
           <button
@@ -69,7 +66,6 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
           </button>
         </div>
 
-        {/* Progress bar */}
         <div className="h-1.5 w-full rounded-full bg-secondary mb-3">
           <motion.div
             className="h-full rounded-full bg-primary"
@@ -79,7 +75,6 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
           />
         </div>
 
-        {/* CTA */}
         <button
           onClick={onComplete}
           className="flex items-center justify-between w-full px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/18 active:scale-[0.98] transition-all"
@@ -104,16 +99,6 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
   study:   { label: "Study Session",  icon: BookOpen },
   gaming:  { label: "Gaming",         icon: Gamepad2 },
   explore: { label: "Exploring",      icon: Map      },
-}
-
-const CATEGORY_BG: Record<string, string> = {
-  coffee:  "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=900&fit=crop&q=80",
-  food:    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&h=900&fit=crop&q=80",
-  photo:   "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=900&fit=crop&q=80",
-  walk:    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&h=900&fit=crop&q=80",
-  study:   "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=900&fit=crop&q=80",
-  gaming:  "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&h=900&fit=crop&q=80",
-  explore: "https://images.unsplash.com/photo-1500835556837-99ac94a94552?w=600&h=900&fit=crop&q=80",
 }
 
 const MOOD_DOT: Record<string, string> = {
@@ -207,8 +192,6 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
   },
 ]
 
-// ─── Join limit helpers ──────────────────────────────────────────────────────
-
 function getTodayKey() {
   return `drift-joins-${new Date().toISOString().split("T")[0]}`
 }
@@ -240,8 +223,6 @@ function formatTime(startsAt: string): string {
   if (diff < 1440) return `In ${Math.round(diff / 60)}h`
   return "Tomorrow"
 }
-
-// ─── Confetti ────────────────────────────────────────────────────────────────
 
 function ConfettiBlast() {
   const pieces = useMemo(
@@ -284,8 +265,6 @@ function ConfettiBlast() {
     </div>
   )
 }
-
-// ─── Match Celebration ───────────────────────────────────────────────────────
 
 function MatchCelebration({
   meetup,
@@ -334,15 +313,13 @@ function MatchCelebration({
               {meetup.creator?.display_name?.[0] ?? "?"}
             </AvatarFallback>
           </Avatar>
-          <span className="text-white/55 text-sm">with {meetup.creator?.display_name}</span>
+          <span className="text-white/55 text-sm">with {meetup.creator?.display_name ?? "someone new"}</span>
         </div>
         <p className="text-white/25 text-xs mt-8">Tap anywhere to continue</p>
       </motion.div>
     </motion.div>
   )
 }
-
-// ─── Card face (shared by top card and back-stack preview) ───────────────────
 
 function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
   const cat = CATEGORY_CONFIG[meetup.category] ?? CATEGORY_CONFIG.explore
@@ -354,13 +331,11 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
   return (
     <div className="w-full h-full rounded-3xl overflow-hidden relative bg-zinc-900">
       {avatarUrl ? (
-        /* Full-bleed creator photo */
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${avatarUrl})` }}
         />
       ) : (
-        /* Gradient fallback with large initial */
         <>
           <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/50 to-black/80" />
           <div className="absolute inset-0 flex items-center justify-center pb-24 select-none">
@@ -371,7 +346,6 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
         </>
       )}
 
-      {/* Deep gradient: transparent top → opaque black bottom */}
       <div
         className="absolute inset-0"
         style={{
@@ -380,7 +354,6 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
         }}
       />
 
-      {/* Subtle top vignette so badges read cleanly */}
       <div
         className="absolute inset-0"
         style={{
@@ -388,15 +361,12 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
         }}
       />
 
-      {/* Category pill — top left */}
       <div className="absolute top-5 left-5 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15">
         <CatIcon className="w-3.5 h-3.5 text-white" />
         <span className="text-white text-xs font-semibold tracking-wide">{cat.label}</span>
       </div>
 
-      {/* Bottom content */}
       <div className="absolute bottom-0 left-0 right-0 px-5 pb-7">
-        {/* Creator name + mood dot + languages */}
         <div className="flex items-center gap-2 mb-3">
           <span
             className={cn(
@@ -423,12 +393,10 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
           )}
         </div>
 
-        {/* Meetup title */}
         <h2 className="text-white text-2xl font-serif font-bold leading-tight mb-3 drop-shadow-sm">
           {meetup.title}
         </h2>
 
-        {/* Location + time */}
         <div className="flex items-center gap-4 text-white/60 text-sm">
           <span className="flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-white/45 flex-shrink-0" />
@@ -440,8 +408,6 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
     </div>
   )
 }
-
-// ─── Swipeable top card ───────────────────────────────────────────────────────
 
 interface SwipeCardProps {
   meetup: MeetupWithCreator
@@ -483,7 +449,6 @@ function SwipeCard({ meetup, leaving, onDragSwipe, onExitComplete }: SwipeCardPr
     >
       <CardFace meetup={meetup} />
 
-      {/* SKIP stamp */}
       <motion.div
         className="absolute top-7 left-6 pointer-events-none"
         style={{ opacity: skipOpacity }}
@@ -493,7 +458,6 @@ function SwipeCard({ meetup, leaving, onDragSwipe, onExitComplete }: SwipeCardPr
         </div>
       </motion.div>
 
-      {/* JOIN stamp */}
       <motion.div
         className="absolute top-7 right-6 pointer-events-none"
         style={{ opacity: joinOpacity }}
@@ -505,8 +469,6 @@ function SwipeCard({ meetup, leaving, onDragSwipe, onExitComplete }: SwipeCardPr
     </motion.div>
   )
 }
-
-// ─── Swipe feed (card stack + controls) ──────────────────────────────────────
 
 interface SwipeFeedProps {
   meetups: MeetupWithCreator[]
@@ -574,7 +536,7 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
         <div className="text-6xl">✨</div>
         <h3 className="text-xl font-serif font-semibold text-foreground">You&apos;re all caught up</h3>
         <p className="text-sm text-muted-foreground max-w-xs">
-          No more meetups right now. Check back soon or create your own!
+          No nearby meetups right now. Check Discover for other cities or create your own.
         </p>
         <button
           onClick={() => setCurrentIndex(0)}
@@ -592,12 +554,10 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
   return (
     <>
       <div className="flex flex-col items-center px-3 pt-1 pb-3 gap-3">
-        {/* Card stack — height leaves room for buttons without scrolling */}
         <div
           className="relative w-full"
-          style={{ height: "clamp(320px, calc(100dvh - 380px), 500px)" }}
+          style={{ height: "clamp(320px, calc(100dvh - 410px), 500px)" }}
         >
-          {/* Back card — scales up as top card departs */}
           {nextMeetup && (
             <motion.div
               key={`back-${nextMeetup.id}`}
@@ -610,7 +570,6 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
             </motion.div>
           )}
 
-          {/* Top draggable card */}
           {currentMeetup && (
             <SwipeCard
               key={`top-${currentMeetup.id}`}
@@ -622,7 +581,6 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
           )}
         </div>
 
-        {/* Progress dots */}
         <div className="flex gap-1.5 items-center h-2">
           {Array.from({ length: dotCount }).map((_, i) => (
             <div
@@ -638,10 +596,8 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
           )}
         </div>
 
-        {/* Action buttons + join counter */}
         <div className="flex flex-col items-center gap-3 w-full">
           <div className="flex items-end justify-center gap-12">
-            {/* Skip */}
             <div className="flex flex-col items-center gap-2">
               <button
                 onClick={() => doSwipe("left")}
@@ -654,7 +610,6 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
               <span className="text-xs font-medium text-muted-foreground tracking-wide">Pass</span>
             </div>
 
-            {/* Join */}
             <div className="flex flex-col items-center gap-2">
               <button
                 onClick={() => doSwipe("right")}
@@ -668,7 +623,6 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
             </div>
           </div>
 
-          {/* Joins counter */}
           <div className="text-xs text-muted-foreground/70">
             {limitReached ? (
               <span className="text-destructive/70">Daily limit reached · Resets at midnight</span>
@@ -682,7 +636,6 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
         </div>
       </div>
 
-      {/* Match overlay */}
       <AnimatePresence>
         {matchMeetup && (
           <MatchCelebration
@@ -695,8 +648,6 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
     </>
   )
 }
-
-// ─── Main export ─────────────────────────────────────────────────────────────
 
 interface FeedViewProps {
   onNavigateToMessages?: (conversationId: string) => void
@@ -742,7 +693,6 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
@@ -751,7 +701,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {browseAll ? "All cities" : `Near you in ${userCity ?? "Tokyo"}`}
+                  {browseAll ? "All cities" : `Near you in ${userCity ?? "your city"}`}
                 </span>
                 <span className="flex items-center gap-1 text-emerald-400/80">
                   <Users className="w-3 h-3" />
@@ -762,7 +712,6 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             <MoodStatus currentMood={currentMood} onMoodChange={handleMoodChange} />
           </div>
 
-          {/* Feed / Saved tabs */}
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("feed")}
@@ -773,7 +722,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
               )}
             >
-              Feed
+              Nearby
             </button>
             <button
               onClick={() => setActiveTab("saved")}
@@ -789,22 +738,34 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             </button>
           </div>
 
-          {/* Browse all toggle */}
-          {activeTab === "feed" && userCity && (
-            <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
-              <span>{browseAll ? "Showing all cities" : "Near you"}</span>
-              <button
-                onClick={() => setBrowseAll((b) => !b)}
-                className="text-primary hover:underline"
-              >
-                {browseAll ? "Near me" : "Browse all"}
-              </button>
+          {activeTab === "feed" && (
+            <div className="pt-2">
+              <p className="text-xs text-muted-foreground">
+                {browseAll
+                  ? "Browsing meetups from every city. Use Discover to explore people and places."
+                  : "Meetups happening near you right now."}
+              </p>
+
+              {userCity && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
+                  <span>
+                    {browseAll
+                      ? "Showing meetups from all cities"
+                      : `Showing meetups in ${userCity}`}
+                  </span>
+                  <button
+                    onClick={() => setBrowseAll((b) => !b)}
+                    className="text-primary hover:underline"
+                  >
+                    {browseAll ? "Near me" : "Browse all"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
       </header>
 
-      {/* Profile completion banner */}
       <div className="max-w-lg mx-auto">
         <AnimatePresence>
           {activeTab === "feed" && isAuthenticated && profile && !bannerDismissed && calcProfileScore(profile) < 80 && (
@@ -817,7 +778,6 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
         </AnimatePresence>
       </div>
 
-      {/* Content */}
       <div className="max-w-lg mx-auto">
         {activeTab === "feed" ? (
           <SwipeFeed meetups={filteredMeetups} isLoading={isLoading} />
@@ -830,7 +790,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             <Heart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground font-medium">No saved meetups yet</p>
             <p className="text-sm text-muted-foreground/60 mt-1">
-              Swipe right on meetups to save them here.
+              Swipe right on nearby meetups to save them here.
             </p>
           </div>
         ) : (
@@ -846,7 +806,6 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
         )}
       </div>
 
-      {/* Edit profile modal */}
       {isAuthenticated && profile && (
         <EditProfileModal
           profile={profile}
