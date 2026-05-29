@@ -16,6 +16,7 @@ import {
   CalendarDays,
   Users,
   Clock3,
+  ShieldCheck,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -87,6 +88,45 @@ export default function PublicProfilePage({
     [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
     profile?.location ||
     "Location not shared"
+
+  const hasLocation = location !== "Location not shared"
+  const profileDetailsCount = profile
+    ? [
+        profile.avatar_url,
+        profile.bio,
+        hasLocation,
+        (profile.languages?.length ?? 0) > 0,
+        (profile.interests?.length ?? 0) > 0,
+      ].filter(Boolean).length
+    : 0
+  const trustSignals = profile
+    ? [
+        {
+          label: "Recent activity",
+          value: isOnline ? "Online now" : formatLastSeen(profile.last_seen_at),
+          icon: Clock3,
+          active: isOnline || isRecentlySeen(profile.last_seen_at),
+        },
+        {
+          label: "Profile details",
+          value: `${profileDetailsCount}/5 added`,
+          icon: Users,
+          active: profileDetailsCount >= 3,
+        },
+        {
+          label: "Member since",
+          value: formatMemberSince(profile.created_at),
+          icon: CalendarDays,
+          active: true,
+        },
+        {
+          label: "Social link",
+          value: profile.instagram_handle ? "Instagram connected" : "Not connected yet",
+          icon: Instagram,
+          active: Boolean(profile.instagram_handle),
+        },
+      ]
+    : []
 
   const handleSayHi = async () => {
     if (!profile?.id) return
@@ -226,6 +266,37 @@ export default function PublicProfilePage({
               <Users className="w-4 h-4 mx-auto text-primary mb-1" />
               <p className="text-[11px] text-muted-foreground">Meetups</p>
               <p className="text-xs font-medium">Soon</p>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              Trust signals
+            </h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              {trustSignals.map((signal) => (
+                <div
+                  key={signal.label}
+                  className="rounded-2xl border border-border/50 bg-background/40 p-3"
+                >
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span
+                      className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center",
+                        signal.active
+                          ? "bg-primary/10 text-primary"
+                          : "bg-secondary text-muted-foreground"
+                      )}
+                    >
+                      <signal.icon className="w-3.5 h-3.5" />
+                    </span>
+                    {signal.label}
+                  </div>
+                  <p className="text-sm font-medium text-foreground mt-2">{signal.value}</p>
+                </div>
+              ))}
             </div>
           </section>
 
