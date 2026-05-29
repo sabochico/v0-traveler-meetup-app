@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Search, ArrowLeft, Send, Loader2 } from "lucide-react"
+import { Search, ArrowLeft, Send, Loader2, MapPin, Plane, Globe, Sparkles } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { useConversations, useMessages, useSendMessage, Conversation } from "@/hooks/use-messages"
@@ -18,6 +18,14 @@ const MOCK_CONVERSATIONS = [
       display_name: "Mika",
       avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
       is_online: true,
+      last_seen_at: new Date().toISOString(),
+      mood: "social",
+      travel_mode: true,
+      current_city: "Tokyo",
+      current_country: "Japan",
+      location: null,
+      interests: ["Coffee", "Hidden cafes", "Walking"],
+      languages: ["English", "Japanese"],
     },
     last_message: {
       content: "See you at the cafe in 20 min!",
@@ -35,6 +43,14 @@ const MOCK_CONVERSATIONS = [
       display_name: "Leo",
       avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
       is_online: false,
+      last_seen_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      mood: "exploring",
+      travel_mode: false,
+      current_city: "Tokyo",
+      current_country: "Japan",
+      location: null,
+      interests: ["Ramen", "Food markets", "Recommendations"],
+      languages: ["English"],
     },
     last_message: {
       content: "That ramen spot was incredible, thanks for the recommendation",
@@ -52,6 +68,14 @@ const MOCK_CONVERSATIONS = [
       display_name: "Sofia",
       avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
       is_online: true,
+      last_seen_at: new Date().toISOString(),
+      mood: "exploring",
+      travel_mode: true,
+      current_city: "Tokyo",
+      current_country: "Japan",
+      location: null,
+      interests: ["Night walks", "Anime", "Exploring"],
+      languages: ["English", "Spanish"],
     },
     last_message: {
       content: "Are you free tomorrow evening? Want to explore Akihabara",
@@ -208,6 +232,16 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { messages, isLoading, refresh } = useMessages(isMock ? null : conversation.id)
   const { sendMessage, markAsRead } = useSendMessage()
+  const otherUser = conversation.other_user
+  const location =
+    [otherUser?.current_city, otherUser?.current_country].filter(Boolean).join(", ") ||
+    otherUser?.location ||
+    "Location not shared"
+  const contextTags = [
+    ...(otherUser?.interests ?? []).slice(0, 3),
+    ...(otherUser?.languages ?? []).slice(0, 2),
+  ].slice(0, 4)
+  const starter = contextTags[0]
 
   // Initialize with mock messages or real messages
   useEffect(() => {
@@ -358,6 +392,44 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
+          <div className="rounded-3xl border border-border/60 bg-card/70 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                {otherUser?.travel_mode ? (
+                  <Plane className="w-4 h-4 text-primary shrink-0" />
+                ) : (
+                  <Globe className="w-4 h-4 text-primary shrink-0" />
+                )}
+                <p className="text-sm font-medium truncate">
+                  {otherUser?.travel_mode ? "Traveler" : "Local"}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="truncate">{location}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-3">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span>{otherUser?.mood ? `Mood: ${otherUser.mood}` : "Mood not shared"}</span>
+            </div>
+
+            {contextTags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {contextTags.map((tag) => (
+                  <span key={tag} className="px-2 py-1 rounded-full bg-secondary text-xs">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground mt-3">
+              {starter ? `Try asking about ${starter}.` : "Ask what they would like to do today."}
+            </p>
+          </div>
+
           {isLoading && !isMock ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />

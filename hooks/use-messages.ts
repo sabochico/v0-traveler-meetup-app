@@ -57,6 +57,13 @@ export interface Conversation {
     avatar_url: string | null
     is_online: boolean
     last_seen_at: string | null
+    mood: string | null
+    travel_mode: boolean
+    current_city: string | null
+    current_country: string | null
+    location: string | null
+    interests: string[]
+    languages: string[]
   }
   last_message: {
     content: string
@@ -113,7 +120,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
     const { data: otherUser } = await supabase
       .from("profiles")
-      .select("id, display_name, avatar_url, is_online, last_seen_at")
+      .select("id, display_name, avatar_url, is_online, last_seen_at, mood, travel_mode, current_city, current_country, location, interests, languages")
       .eq("id", participants.user_id)
       .maybeSingle()
 
@@ -143,6 +150,13 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
         avatar_url: otherUser?.avatar_url ?? null,
         is_online: Boolean(otherUser?.is_online) || isRecentlySeen(lastSeenAt),
         last_seen_at: lastSeenAt,
+        mood: otherUser?.mood ?? null,
+        travel_mode: otherUser?.travel_mode ?? false,
+        current_city: otherUser?.current_city ?? null,
+        current_country: otherUser?.current_country ?? null,
+        location: otherUser?.location ?? null,
+        interests: otherUser?.interests ?? [],
+        languages: otherUser?.languages ?? [],
       },
       last_message: lastMessages?.[0] ?? null,
       unread_count: unreadCount ?? 0,
