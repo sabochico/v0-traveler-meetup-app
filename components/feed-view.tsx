@@ -87,6 +87,48 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
   )
 }
 
+function TodayPrompt({
+  meetupsCount,
+  savedCount,
+  city,
+  onViewSaved,
+}: {
+  meetupsCount: number
+  savedCount: number
+  city?: string | null
+  onViewSaved: () => void
+}) {
+  const hasMeetups = meetupsCount > 0
+
+  return (
+    <div className="mx-4 mt-3 rounded-2xl border border-border/60 bg-card/70 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-foreground">Today on Drift</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {hasMeetups
+              ? `${meetupsCount} meetup${meetupsCount === 1 ? "" : "s"} ${city ? `near ${city}` : "ready to join"}.`
+              : "No nearby meetups yet. Check saved plans or browse all cities."}
+          </p>
+        </div>
+        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary">
+          {savedCount} saved
+        </span>
+      </div>
+
+      {savedCount > 0 && (
+        <button
+          onClick={onViewSaved}
+          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-primary"
+        >
+          Review saved plans
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const DAILY_LIMIT = 10
@@ -776,6 +818,15 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             />
           )}
         </AnimatePresence>
+
+        {activeTab === "feed" && (
+          <TodayPrompt
+            meetupsCount={filteredMeetups.length}
+            savedCount={savedMeetups.length}
+            city={browseAll ? null : userCity}
+            onViewSaved={() => setActiveTab("saved")}
+          />
+        )}
       </div>
 
       <div className="max-w-lg mx-auto">
