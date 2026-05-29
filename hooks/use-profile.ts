@@ -1,8 +1,16 @@
 "use client"
 
+import { useEffect } from "react"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { Profile, MoodStatus } from "@/lib/types"
+
+const ONLINE_WINDOW_MS = 2 * 60 * 1000
+
+const isRecentlySeen = (lastSeenAt?: string | null) => {
+  if (!lastSeenAt) return false
+  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS
+}
 
 const createFallbackProfile = (id: string): Profile => {
   const now = new Date().toISOString()
@@ -15,7 +23,7 @@ const createFallbackProfile = (id: string): Profile => {
     languages: [],
     mood: "social",
     travel_mode: false,
-    is_online: false,
+    is_online: isRecentlySeen(now),
     anonymous_mode: false,
     current_city: null,
     current_country: null,
@@ -40,11 +48,54 @@ const fetcher = async (): Promise<Profile | null> => {
     .maybeSingle()
 
   if (error) throw error
-  return data ?? createFallbackProfile(user.id)
+
+  if (!data) return createFallbackProfile(user.id)
+
+  return {
+    ...data,
+    is_online: data.is_online || isRecentlySeen(data.last_seen_at),
+  }
 }
 
 export function useProfile() {
   const { data, error, isLoading, mutate } = useSWR("profile", fetcher)
+
+  useEffect(() => {
+    const supabase = createClient()
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    const updatePresence = async (isOnline: boolean) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      await supabase
+        .from("profiles")
+        .update({
+          is_online: isOnline,
+          last_seen_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
+    }
+
+    updatePresence(true)
+
+    intervalId = setInterval(() => {
+      updatePresence(true)
+    }, 30000)
+
+    const handleBeforeUnload = () => {
+      updatePresence(false)
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    return () => {
+      if (intervalId) clearInterval(intervalId)
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      updatePresence(false)
+    }
+  }, [])
 
   return {
     profile: data,
@@ -98,7 +149,6 @@ export function useUpdateProfile() {
   return { updateProfile, updateMood, updateLocation, toggleTravelMode, toggleAnonymousMode }
 }
 
-// Fetch a single public profile by ID
 const supabase = createClient()
 
 export function usePublicProfile(userId: string | null) {
@@ -110,14 +160,21 @@ export function usePublicProfile(userId: string | null) {
         .select("*")
         .eq("id", userId!)
         .maybeSingle()
+
       if (error) return null
-      return (data ?? createFallbackProfile(userId!)) as Profile
+
+      const profile = data ?? createFallbackProfile(userId!)
+
+      return {
+        ...profile,
+        is_online: profile.is_online || isRecentlySeen(profile.last_seen_at),
+      } as Profile
     }
   )
+
   return { profile: data ?? null, isLoading, error }
 }
 
-// Fetch nearby profiles
 const nearbyFetcher = async (): Promise<Profile[]> => {
   const supabase = createClient()
   
@@ -134,7 +191,11 @@ const nearbyFetcher = async (): Promise<Profile[]> => {
     .limit(20)
 
   if (error) throw error
-  return data
+
+  return (data ?? []).map((profile) => ({
+    ...profile,
+    is_online: profile.is_online || isRecentlySeen(profile.last_seen_at),
+  }))
 }
 
 export function useNearbyProfiles() {
