@@ -4,6 +4,29 @@ import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { Profile, MoodStatus } from "@/lib/types"
 
+const createFallbackProfile = (id: string): Profile => {
+  const now = new Date().toISOString()
+  return {
+    id,
+    display_name: null,
+    bio: null,
+    avatar_url: null,
+    interests: [],
+    languages: [],
+    mood: "social",
+    travel_mode: false,
+    is_online: false,
+    anonymous_mode: false,
+    current_city: null,
+    current_country: null,
+    location: null,
+    instagram_handle: null,
+    last_seen_at: now,
+    created_at: now,
+    updated_at: now,
+  }
+}
+
 const fetcher = async (): Promise<Profile | null> => {
   const supabase = createClient()
   
@@ -14,10 +37,10 @@ const fetcher = async (): Promise<Profile | null> => {
     .from("profiles")
     .select("*")
     .eq("id", user.id)
-    .single()
+    .maybeSingle()
 
   if (error) throw error
-  return data
+  return data ?? createFallbackProfile(user.id)
 }
 
 export function useProfile() {
@@ -86,9 +109,9 @@ export function usePublicProfile(userId: string | null) {
         .from("profiles")
         .select("*")
         .eq("id", userId!)
-        .single()
+        .maybeSingle()
       if (error) return null
-      return data as Profile
+      return (data ?? createFallbackProfile(userId!)) as Profile
     }
   )
   return { profile: data ?? null, isLoading, error }

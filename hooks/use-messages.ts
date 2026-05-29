@@ -112,7 +112,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       .from("profiles")
       .select("id, display_name, avatar_url, is_online")
       .eq("id", participants.user_id)
-      .single()
+      .maybeSingle()
 
     // Get last message
     const { data: lastMessages } = await supabase
