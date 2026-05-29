@@ -110,10 +110,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const { profiles, isLoading: profilesLoading } = useNearbyProfiles()
   const { meetups, isLoading: meetupsLoading } = useMeetups()
 
-  const displayProfiles =
-    profiles.length > 0
-      ? profiles.filter((p): p is Profile => p != null)
-      : MOCK_PROFILES
+  const displayProfiles = profiles.length > 0 ? profiles : MOCK_PROFILES
   const isMockData = profiles.length === 0
 
   // Sort meetups newest first
@@ -135,8 +132,8 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
     ? displayProfiles.filter(
         (p) =>
           p.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (p.interests ?? []).some((i) => i.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (p.languages ?? []).some((l) => l.toLowerCase().includes(searchQuery.toLowerCase()))
+          p.interests.some((i) => i.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          p.languages.some((l) => l.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : displayProfiles
 
@@ -274,9 +271,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
   const [messageSent, setMessageSent] = useState(false)
   const [sending, setSending] = useState(false)
   const { startConversation } = useCreateConversation()
-  const mood = (person?.mood as MoodStatus) ?? "exploring"
-  const displayName = person?.display_name ?? "Anonymous"
-  const avatarInitial = (displayName[0] ?? "U").toUpperCase()
+  const mood = (person.mood as MoodStatus) ?? "exploring"
 
   const handleSayHi = async () => {
     if (isMock) {
@@ -290,7 +285,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
 
     try {
       setSending(true)
-      await startConversation(person?.id ?? "")
+      await startConversation(person.id)
       setMessageSent(true)
     } catch (error) {
       console.error("Failed to start conversation:", error)
@@ -302,10 +297,10 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
   return (
     <article className="p-4 rounded-2xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300">
       <div className="flex gap-4">
-        <Link href={isMock ? "#" : `/profile/${person?.id ?? ""}`} className="relative flex-shrink-0">
+        <Link href={isMock ? "#" : `/profile/${person.id}`} className="relative flex-shrink-0">
           <Avatar className="w-16 h-16 ring-2 ring-primary/20">
-            <AvatarImage src={person?.avatar_url ?? undefined} alt={displayName} />
-            <AvatarFallback>{avatarInitial}</AvatarFallback>
+            <AvatarImage src={person.avatar_url ?? undefined} alt={person.display_name ?? "User"} />
+            <AvatarFallback>{(person.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
           </Avatar>
           <span
             className={cn(
@@ -319,19 +314,19 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <Link
-              href={isMock ? "#" : `/profile/${person?.id ?? ""}`}
+              href={isMock ? "#" : `/profile/${person.id}`}
               className="font-medium text-foreground hover:text-primary transition-colors"
             >
-              {displayName}
+              {person.display_name ?? "Anonymous"}
             </Link>
             <span className="text-xs text-primary">Nearby</span>
           </div>
           <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-            {person?.bio ?? "No bio yet"}
+            {person.bio ?? "No bio yet"}
           </p>
 
           <div className="flex flex-wrap gap-1.5">
-            {(person?.interests ?? []).slice(0, 3).map((interest) => (
+            {person.interests.slice(0, 3).map((interest) => (
               <Badge key={interest} variant="secondary" className="text-xs">
                 {interest}
               </Badge>
@@ -342,10 +337,10 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
 
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          {(person?.languages ?? []).slice(0, 3).map((lang, i) => (
+          {person.languages.slice(0, 3).map((lang, i) => (
             <span key={lang}>
               {lang}
-              {i < Math.min((person?.languages ?? []).length, 3) - 1 && <span className="mx-1">·</span>}
+              {i < Math.min(person.languages.length, 3) - 1 && <span className="mx-1">·</span>}
             </span>
           ))}
         </div>
