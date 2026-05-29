@@ -110,7 +110,9 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   }
 
   const handleSubmit = async () => {
-    if (!selectedType || !title || !location) return
+    const trimmedTitle = title.trim()
+    const trimmedLocation = location.trim()
+    if (!selectedType || !trimmedTitle || !trimmedLocation) return
 
     setLoading(true)
     setError(null)
@@ -120,10 +122,10 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
       startsAt.setHours(startsAt.getHours() + selectedTime)
 
       await createMeetup({
-        title,
+        title: trimmedTitle.slice(0, 140),
         category: selectedType,
-        location_name: location,
-        city: cityData?.city ?? location.split(",")[0]?.trim(),
+        location_name: trimmedLocation,
+        city: cityData?.city ?? trimmedLocation.split(",")[0]?.trim(),
         country: cityData?.country,
         starts_at: startsAt.toISOString(),
       })

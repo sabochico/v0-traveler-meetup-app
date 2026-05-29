@@ -33,8 +33,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[upload]", requestId, "user", user.id)
-
     const contentType = request.headers.get("content-type") ?? ""
     let file: File | null = null
 
@@ -72,7 +70,6 @@ export async function POST(request: NextRequest) {
       access: "private",
     })
     const proxyUrl = `/api/blob?url=${encodeURIComponent(blob.url)}`
-    console.log("[upload]", requestId, "ok", blob.url)
     return NextResponse.json({ url: proxyUrl })
   } catch (error) {
     console.error("Upload error:", error)

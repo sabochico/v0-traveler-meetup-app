@@ -32,11 +32,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "otherUserId is required" }, { status: 400 })
     }
 
+    if (otherUserId === user.id) {
+      return NextResponse.json({ error: "Cannot start a conversation with yourself" }, { status: 400 })
+    }
+
     // Service role client bypasses RLS entirely
     const admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
+
+    const { data: otherUser } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", otherUserId)
+      .maybeSingle()
+
+    if (!otherUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
 
     // Check if a conversation already exists between the two users
     const { data: myParticipations } = await admin
