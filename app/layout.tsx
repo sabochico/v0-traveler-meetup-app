@@ -22,10 +22,9 @@ const jetbrains = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Drift - Find Your People Anywhere',
-  description: 'Connect with travelers, expats, and digital nomads nearby for spontaneous coffee meetups and genuine human connection.',
-  keywords: ['travel', 'meetup', 'digital nomad', 'expat', 'coffee', 'connection'],
-  generator: 'v0.app',
+  title: 'Drift - Find people to do something with today',
+  description: 'Meet travelers and locals nearby for spontaneous real-world plans, meetups, and conversations.',
+  keywords: ['travel', 'meetup', 'locals', 'spontaneous plans', 'coffee', 'connection'],
   icons: {
     icon: [
       {

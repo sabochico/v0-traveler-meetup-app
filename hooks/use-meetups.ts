@@ -10,8 +10,28 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
   const { data, error } = await supabase
     .from("meetups")
     .select(`
-      *,
-      creator:profiles!creator_id(*)
+      id,
+      creator_id,
+      title,
+      description,
+      category,
+      location_name,
+      location,
+      city,
+      country,
+      max_attendees,
+      starts_at,
+      ends_at,
+      is_active,
+      created_at,
+      updated_at,
+      creator:profiles!creator_id(
+        id,
+        display_name,
+        avatar_url,
+        mood,
+        languages
+      )
     `)
     .eq("is_active", true)
     .order("created_at", { ascending: false })
