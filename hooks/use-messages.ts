@@ -106,9 +106,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
   if (convError || !conversations) return []
 
-  const fullConversations: Conversation[] = []
-
-  for (const conv of conversations) {
+  const fullConversations = await Promise.all(conversations.map(async (conv) => {
     const { data: participants } = await supabase
       .from("conversation_participants")
       .select("user_id")
@@ -116,31 +114,32 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       .neq("user_id", user.id)
       .single()
 
-    if (!participants) continue
+    if (!participants) return null
 
-    const { data: otherUser } = await supabase
-      .from("profiles")
-      .select("id, display_name, avatar_url, is_online, last_seen_at, mood, travel_mode, current_city, current_country, location, interests, languages")
-      .eq("id", participants.user_id)
-      .maybeSingle()
-
-    const { data: lastMessages } = await supabase
-      .from("messages")
-      .select("content, created_at, sender_id")
-      .eq("conversation_id", conv.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-
-    const { count: unreadCount } = await supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("conversation_id", conv.id)
-      .eq("is_read", false)
-      .neq("sender_id", user.id)
+    const [{ data: otherUser }, { data: lastMessages }, { count: unreadCount }] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, display_name, avatar_url, is_online, last_seen_at, mood, travel_mode, current_city, current_country, location, interests, languages")
+          .eq("id", participants.user_id)
+          .maybeSingle(),
+        supabase
+          .from("messages")
+          .select("content, created_at, sender_id")
+          .eq("conversation_id", conv.id)
+          .order("created_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("conversation_id", conv.id)
+          .eq("is_read", false)
+          .neq("sender_id", user.id),
+      ])
 
     const lastSeenAt = otherUser?.last_seen_at ?? null
 
-    fullConversations.push({
+    return {
       id: conv.id,
       created_at: conv.created_at,
       updated_at: conv.updated_at,
@@ -160,10 +159,10 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       },
       last_message: lastMessages?.[0] ?? null,
       unread_count: unreadCount ?? 0,
-    })
-  }
+    }
+  }))
 
-  return fullConversations
+  return fullConversations.filter((conversation): conversation is Conversation => Boolean(conversation))
 }
 
 export function useConversations() {
