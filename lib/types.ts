@@ -15,7 +15,7 @@ export type MoodStatus = "social" | "working" | "exploring" | "homesick"
 export type MeetupCategory = "coffee" | "food" | "photo" | "walk" | "study" | "gaming" | "explore"
 
 export interface MeetupWithCreator extends Meetup {
-  creator: Profile
+  creator: Profile | null
   attendees?: MeetupAttendee[]
   attendee_count?: number
 }

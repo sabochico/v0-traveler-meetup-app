@@ -164,27 +164,27 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
         >
           <Avatar className="w-11 h-11 ring-2 ring-primary/20">
             <AvatarImage
-              src={meetup.creator.avatar_url ?? undefined}
-              alt={meetup.creator.display_name ?? "User"}
+              src={meetup.creator?.avatar_url ?? undefined}
+              alt={meetup.creator?.display_name ?? "User"}
             />
             <AvatarFallback>
-              {(meetup.creator.display_name ?? "U")[0].toUpperCase()}
+              {(meetup.creator?.display_name ?? "U")[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-medium text-foreground group-hover/creator:text-primary transition-colors">
-                {meetup.creator.display_name ?? "Anonymous"}
+                {meetup.creator?.display_name ?? "Anonymous"}
               </span>
               <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[creatorMood])}>
                 {STATUS_LABELS[creatorMood]}
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-              {meetup.creator.languages?.slice(0, 3).map((lang, i) => (
+              {meetup.creator?.languages?.slice(0, 3).map((lang, i) => (
                 <span key={lang}>
                   {lang}
-                  {i < Math.min(meetup.creator.languages?.length || 0, 3) - 1 && <span className="mx-1">·</span>}
+                  {i < Math.min(meetup.creator?.languages?.length || 0, 3) - 1 && <span className="mx-1">·</span>}
                 </span>
               ))}
             </div>

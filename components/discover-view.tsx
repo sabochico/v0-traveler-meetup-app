@@ -299,8 +299,8 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
       <div className="flex gap-4">
         <Link href={isMock ? "#" : `/profile/${person.id}`} className="relative flex-shrink-0">
           <Avatar className="w-16 h-16 ring-2 ring-primary/20">
-            <AvatarImage src={person.avatar_url ?? undefined} alt={person.display_name ?? "User"} />
-            <AvatarFallback>{(person.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
+            <AvatarImage src={person?.avatar_url ?? undefined} alt={person?.display_name ?? "User"} />
+            <AvatarFallback>{(person?.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
           </Avatar>
           <span
             className={cn(
