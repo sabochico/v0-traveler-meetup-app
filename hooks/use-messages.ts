@@ -118,36 +118,23 @@ export function useConversations() {
   const { data, error, isLoading, mutate } = useSWR("conversations", conversationsFetcher)
 
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null
-    let cancelled = false
-
-    const subscribe = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || cancelled) return
-
-      channel = supabase
-        .channel("conversations:messages")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "messages",
-          },
-          () => {
-            void mutate()
-          }
-        )
-        .subscribe()
-    }
-
-    void subscribe()
+    const channel = supabase
+      .channel("conversations:messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          void mutate()
+        }
+      )
+      .subscribe()
 
     return () => {
-      cancelled = true
-      if (channel) {
-        void supabase.removeChannel(channel)
-      }
+      void supabase.removeChannel(channel)
     }
   }, [mutate])
 
@@ -180,45 +167,32 @@ export function useMessages(conversationId: string | null) {
   useEffect(() => {
     if (!conversationId) return
 
-    let channel: ReturnType<typeof supabase.channel> | null = null
-    let cancelled = false
-
-    const subscribe = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || cancelled) return
-
-      channel = supabase
-        .channel(`messages:${conversationId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "messages",
-            filter: `conversation_id=eq.${conversationId}`,
-          },
-          (payload) => {
-            const newMessage = payload.new as Message
-            void mutate(
-              async (current) => {
-                if (current?.some((m) => m.id === newMessage.id)) return current
-                return messagesFetcher(conversationId)
-              },
-              { revalidate: false }
-            )
-            void globalMutate("conversations")
-          }
-        )
-        .subscribe()
-    }
-
-    void subscribe()
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as Message
+          void mutate(
+            async (current) => {
+              if (current?.some((m) => m.id === newMessage.id)) return current
+              return messagesFetcher(conversationId)
+            },
+            { revalidate: false }
+          )
+          void globalMutate("conversations")
+        }
+      )
+      .subscribe()
 
     return () => {
-      cancelled = true
-      if (channel) {
-        void supabase.removeChannel(channel)
-      }
+      void supabase.removeChannel(channel)
     }
   }, [conversationId, mutate])
 
