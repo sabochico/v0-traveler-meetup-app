@@ -1,12 +1,31 @@
 "use client"
 
-import { use } from "react"
+import { use, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, MapPin, Globe, Instagram, Loader2, Plane } from "lucide-react"
+import {
+  ArrowLeft,
+  MapPin,
+  Globe,
+  Instagram,
+  Loader2,
+  Plane,
+  MessageCircle,
+  Sparkles,
+  Languages,
+  Heart,
+} from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { usePublicProfile } from "@/hooks/use-profile"
+import { useCreateConversation } from "@/hooks/use-messages"
 import { cn } from "@/lib/utils"
+
+const ONLINE_WINDOW_MS = 2 * 60 * 1000
+
+const isRecentlySeen = (lastSeenAt?: string | null) => {
+  if (!lastSeenAt) return false
+  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS
+}
 
 const MOOD_COLORS: Record<string, string> = {
   social: "bg-emerald-500/20 text-emerald-400",
@@ -16,10 +35,10 @@ const MOOD_COLORS: Record<string, string> = {
 }
 
 const MOOD_LABELS: Record<string, string> = {
-  social: "feeling social",
-  working: "working quietly",
-  exploring: "exploring",
-  homesick: "homesick",
+  social: "Feeling social",
+  working: "Working quietly",
+  exploring: "Exploring",
+  homesick: "Homesick",
 }
 
 export default function PublicProfilePage({
@@ -30,10 +49,31 @@ export default function PublicProfilePage({
   const { userId } = use(params)
   const router = useRouter()
   const { profile, isLoading } = usePublicProfile(userId)
+  const { startConversation } = useCreateConversation()
+  const [isStartingChat, setIsStartingChat] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
+
+  const isOnline = Boolean(profile?.is_online) || isRecentlySeen(profile?.last_seen_at)
+  const displayName = profile?.display_name ?? "Anonymous"
+  const initial = displayName[0]?.toUpperCase() ?? "U"
+
+  const handleSayHi = async () => {
+    if (!profile?.id) return
+
+    try {
+      setIsStartingChat(true)
+      setChatError(null)
+      await startConversation(profile.id)
+      router.push("/")
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : "Could not start chat")
+    } finally {
+      setIsStartingChat(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background film-grain">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button
@@ -43,9 +83,17 @@ export default function PublicProfilePage({
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-medium text-foreground">
-            {profile?.display_name ?? "Profile"}
-          </h1>
+
+          <div className="min-w-0">
+            <h1 className="font-medium text-foreground truncate">
+              {profile?.display_name ?? "Profile"}
+            </h1>
+            {profile && (
+              <p className="text-xs text-muted-foreground">
+                {isOnline ? "Online now" : "Offline"}
+              </p>
+            )}
+          </div>
         </div>
       </header>
 
@@ -64,67 +112,112 @@ export default function PublicProfilePage({
           </button>
         </div>
       ) : (
-        <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-          {/* Avatar + Name */}
-          <div className="flex items-center gap-4">
-            <Avatar className="w-20 h-20 ring-4 ring-primary/20">
-              <AvatarImage
-                src={profile.avatar_url ?? undefined}
-                alt={profile.display_name ?? "User"}
-              />
-              <AvatarFallback>
-                {(profile.display_name ?? "U")[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+        <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
+          <section className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="relative">
+                <Avatar className="w-24 h-24 ring-4 ring-primary/20">
+                  <AvatarImage
+                    src={profile.avatar_url ?? undefined}
+                    alt={displayName}
+                  />
+                  <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
+                </Avatar>
 
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-serif font-semibold truncate">
-                {profile.display_name ?? "Anonymous"}
-              </h2>
-
-              {profile.mood && (
                 <span
                   className={cn(
-                    "inline-block text-xs px-2 py-0.5 rounded-full mt-1",
-                    MOOD_COLORS[profile.mood] ?? MOOD_COLORS.exploring
+                    "absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-background",
+                    isOnline ? "bg-emerald-500" : "bg-muted"
                   )}
-                >
-                  {MOOD_LABELS[profile.mood] ?? profile.mood}
-                </span>
-              )}
+                />
+              </div>
 
-              <div className="flex flex-wrap gap-3 mt-2">
-                {(profile.current_city || profile.current_country) && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="w-3 h-3 text-primary" />
-                    <span>
-                      {[profile.current_city, profile.current_country]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </span>
-                  </div>
+              <div className="flex-1 min-w-0 pt-1">
+                <h2 className="text-2xl font-serif font-semibold truncate">
+                  {displayName}
+                </h2>
+
+                <p className="text-sm text-muted-foreground mt-1">
+                  {isOnline ? "Online now" : "Offline"}
+                </p>
+
+                {profile.mood && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full mt-3",
+                      MOOD_COLORS[profile.mood] ?? MOOD_COLORS.exploring
+                    )}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    {MOOD_LABELS[profile.mood] ?? profile.mood}
+                  </span>
                 )}
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {profile.travel_mode ? (
-                    <Plane className="w-3 h-3" />
-                  ) : (
-                    <Globe className="w-3 h-3" />
-                  )}
-                  <span>{profile.travel_mode ? "Traveler" : "Local"}</span>
-                </div>
               </div>
             </div>
-          </div>
 
-          {/* Bio */}
-          {profile.bio && (
-            <p className="text-foreground leading-relaxed text-sm">{profile.bio}</p>
-          )}
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <div className="rounded-2xl bg-secondary/50 p-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  Location
+                </div>
+                <p className="text-sm mt-1">
+                  {[profile.current_city, profile.current_country]
+                    .filter(Boolean)
+                    .join(", ") || "Not shared"}
+                </p>
+              </div>
 
-          {/* Languages */}
-          {(profile.languages?.length ?? 0) > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-foreground mb-2">Languages</h3>
+              <div className="rounded-2xl bg-secondary/50 p-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {profile.travel_mode ? (
+                    <Plane className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Globe className="w-4 h-4 text-primary" />
+                  )}
+                  Mode
+                </div>
+                <p className="text-sm mt-1">
+                  {profile.travel_mode ? "Traveler" : "Local"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSayHi}
+              disabled={isStartingChat}
+              className="mt-5 w-full h-12 rounded-2xl bg-primary text-primary-foreground font-medium flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60 transition"
+            >
+              {isStartingChat ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <MessageCircle className="w-4 h-4" />
+              )}
+              {isStartingChat ? "Starting chat..." : "Say Hi"}
+            </button>
+
+            {chatError && (
+              <p className="text-xs text-red-400 mt-3 text-center">{chatError}</p>
+            )}
+          </section>
+
+          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Heart className="w-4 h-4 text-primary" />
+              About
+            </h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {profile.bio || "No bio yet."}
+            </p>
+          </section>
+
+          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Languages className="w-4 h-4 text-primary" />
+              Languages
+            </h3>
+
+            {(profile.languages?.length ?? 0) > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {profile.languages.map((lang) => (
                   <Badge key={lang} variant="secondary">
@@ -132,13 +225,15 @@ export default function PublicProfilePage({
                   </Badge>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No languages added yet.</p>
+            )}
+          </section>
 
-          {/* Interests */}
-          {(profile.interests?.length ?? 0) > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-foreground mb-2">Interests</h3>
+          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+            <h3 className="text-sm font-semibold mb-3">Interests</h3>
+
+            {(profile.interests?.length ?? 0) > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {profile.interests.map((interest) => (
                   <Badge
@@ -150,20 +245,21 @@ export default function PublicProfilePage({
                   </Badge>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No interests added yet.</p>
+            )}
+          </section>
 
-          {/* Instagram */}
           {profile.instagram_handle && (
-            <div>
-              <h3 className="text-sm font-medium text-foreground mb-2">Social</h3>
+            <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+              <h3 className="text-sm font-semibold mb-3">Social</h3>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Instagram className="w-4 h-4" />
                 <span>@{profile.instagram_handle}</span>
               </div>
-            </div>
+            </section>
           )}
-        </div>
+        </main>
       )}
     </div>
   )
