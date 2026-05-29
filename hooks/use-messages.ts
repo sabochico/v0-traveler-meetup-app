@@ -7,6 +7,13 @@ import { createClient } from "@/lib/supabase/client"
 
 const supabase = createClient()
 
+const ONLINE_WINDOW_MS = 2 * 60 * 1000
+
+const isRecentlySeen = (lastSeenAt?: string | null) => {
+  if (!lastSeenAt) return false
+  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS
+}
+
 /** One shared channel — Supabase rejects .on() after .subscribe() on the same topic. */
 let conversationsMessagesChannel: RealtimeChannel | null = null
 const conversationsMessagesListeners = new Set<() => void>()
@@ -49,6 +56,7 @@ export interface Conversation {
     display_name: string | null
     avatar_url: string | null
     is_online: boolean
+    last_seen_at: string | null
   }
   last_message: {
     content: string
@@ -74,7 +82,6 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  // Get all conversations the user is part of
   const { data: participations, error: partError } = await supabase
     .from("conversation_participants")
     .select("conversation_id")
@@ -84,7 +91,6 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
   const conversationIds = participations.map(p => p.conversation_id)
 
-  // Get conversations with other participants
   const { data: conversations, error: convError } = await supabase
     .from("conversations")
     .select("*")
@@ -93,11 +99,9 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
   if (convError || !conversations) return []
 
-  // Build full conversation objects
   const fullConversations: Conversation[] = []
 
   for (const conv of conversations) {
-    // Get other participant
     const { data: participants } = await supabase
       .from("conversation_participants")
       .select("user_id")
@@ -107,14 +111,12 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
     if (!participants) continue
 
-    // Get other user profile
     const { data: otherUser } = await supabase
       .from("profiles")
-      .select("id, display_name, avatar_url, is_online")
+      .select("id, display_name, avatar_url, is_online, last_seen_at")
       .eq("id", participants.user_id)
       .maybeSingle()
 
-    // Get last message
     const { data: lastMessages } = await supabase
       .from("messages")
       .select("content, created_at, sender_id")
@@ -122,13 +124,14 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       .order("created_at", { ascending: false })
       .limit(1)
 
-    // Get unread count
     const { count: unreadCount } = await supabase
       .from("messages")
       .select("*", { count: "exact", head: true })
       .eq("conversation_id", conv.id)
       .eq("is_read", false)
       .neq("sender_id", user.id)
+
+    const lastSeenAt = otherUser?.last_seen_at ?? null
 
     fullConversations.push({
       id: conv.id,
@@ -138,7 +141,8 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
         id: participants.user_id,
         display_name: otherUser?.display_name ?? null,
         avatar_url: otherUser?.avatar_url ?? null,
-        is_online: otherUser?.is_online ?? false,
+        is_online: Boolean(otherUser?.is_online) || isRecentlySeen(lastSeenAt),
+        last_seen_at: lastSeenAt,
       },
       last_message: lastMessages?.[0] ?? null,
       unread_count: unreadCount ?? 0,
@@ -266,7 +270,6 @@ export function useSendMessage() {
 
     if (error) throw error
 
-    // Update conversation updated_at
     await supabase
       .from("conversations")
       .update({ updated_at: new Date().toISOString() })
