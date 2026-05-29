@@ -41,6 +41,16 @@ const CATEGORY_IMAGES: Record<string, string> = {
   explore: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=600&h=400&fit=crop",
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  coffee: "Coffee",
+  food: "Food",
+  photo: "Photo",
+  walk: "Walk",
+  study: "Study",
+  gaming: "Gaming",
+  explore: "Explore",
+}
+
 function formatTime(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()
@@ -50,6 +60,19 @@ function formatTime(dateString: string): string {
   if (diff < 60 * 60 * 1000) return `${Math.round(diff / (60 * 1000))}m`
   if (diff < 24 * 60 * 60 * 1000) return `${Math.round(diff / (60 * 60 * 1000))}h`
   return "Tomorrow"
+}
+
+function formatMeetupTime(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const tomorrow = new Date(now)
+  tomorrow.setDate(now.getDate() + 1)
+
+  const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  if (date.toDateString() === now.toDateString()) return `Today at ${time}`
+  if (date.toDateString() === tomorrow.toDateString()) return `Tomorrow at ${time}`
+
+  return date.toLocaleDateString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
 }
 
 export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
@@ -71,6 +94,8 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
   
   const creatorMood = (meetup.creator?.mood as MoodStatus) ?? "exploring"
   const categoryImage = CATEGORY_IMAGES[meetup.category] ?? CATEGORY_IMAGES.coffee
+  const categoryLabel = CATEGORY_LABELS[meetup.category] ?? meetup.category
+  const attendeeCount = meetup.attendee_count ?? meetup.attendees?.length ?? 0
 
   const handleLikeToggle = async () => {
     if (!user) return
@@ -139,6 +164,12 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
           </Badge>
         </div>
 
+        <div className="absolute bottom-3 left-3">
+          <Badge className="bg-primary text-primary-foreground border-0">
+            {categoryLabel}
+          </Badge>
+        </div>
+
         {/* Like Button */}
         <button
           onClick={handleLikeToggle}
@@ -195,6 +226,23 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
         <h3 className="text-lg font-medium leading-snug mb-3 text-balance">
           {meetup.title}
         </h3>
+
+        {meetup.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+            {meetup.description}
+          </p>
+        )}
+
+        <div className="flex flex-wrap gap-2 mb-4 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1">
+            <Clock className="w-3.5 h-3.5 text-primary" />
+            {formatMeetupTime(meetup.starts_at)}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1">
+            <Users className="w-3.5 h-3.5 text-primary" />
+            {attendeeCount}/{meetup.max_attendees} going
+          </span>
+        </div>
 
         {/* Location & Actions */}
         <div className="flex items-center justify-between">
