@@ -17,6 +17,7 @@ import { useSaveMeetup, useSavedMeetupsWithDetails } from "@/hooks/use-saved-mee
 import { useProfile, useUpdateProfile, useNearbyProfiles } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
 
 // ─── Profile completion ──────────────────────────────────────────────────────
@@ -721,6 +722,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const { updateMood } = useUpdateProfile()
   const { profiles } = useNearbyProfiles()
   const { isAuthenticated } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (sessionStorage.getItem("drift-profile-banner-dismissed") === "1") {
@@ -750,6 +752,11 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
         const e = error as { code?: string }
         if (e?.code !== "23505") {
           console.error("Failed to save meetup:", error)
+          toast({
+            title: "Meetup was not saved",
+            description: "Please try again.",
+            variant: "destructive",
+          })
         }
       }
     },

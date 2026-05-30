@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { X, MapPin, Loader2, Navigation, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useUpdateProfile } from "@/hooks/use-profile"
+import { useToast } from "@/hooks/use-toast"
 
 interface LocationSelectorProps {
   isOpen: boolean
@@ -34,6 +35,7 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
   const [saving, setSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const { updateProfile } = useUpdateProfile()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (isOpen) {
@@ -51,7 +53,11 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
 
   const handleDetectLocation = async () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser")
+      toast({
+        title: "Location detection unavailable",
+        description: "Please enter your city and country manually.",
+        variant: "destructive",
+      })
       return
     }
 
@@ -75,7 +81,11 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
       setCountry(data.countryName || "")
     } catch (error) {
       console.error("Failed to detect location:", error)
-      alert("Could not detect your location. Please enter it manually.")
+      toast({
+        title: "Could not detect your location",
+        description: "Please enter it manually.",
+        variant: "destructive",
+      })
     } finally {
       setDetecting(false)
     }
@@ -99,7 +109,11 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
       onClose()
     } catch (error) {
       console.error("Failed to update location:", error)
-      alert("Failed to save location. Please try again.")
+      toast({
+        title: "Location was not saved",
+        description: "Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setSaving(false)
     }

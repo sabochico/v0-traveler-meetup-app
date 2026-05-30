@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { useUpdateProfile } from "@/hooks/use-profile"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 import type { Profile } from "@/lib/types"
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -52,6 +53,7 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
   const [activeTab, setActiveTab] = useState<"profile" | "languages" | "interests">("profile")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { updateProfile } = useUpdateProfile()
+  const { toast } = useToast()
 
   if (!isOpen) return null
 
@@ -61,7 +63,11 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be less than 5MB")
+      toast({
+        title: "Photo is too large",
+        description: "Please choose an image under 5MB.",
+        variant: "destructive",
+      })
       return
     }
 
@@ -114,7 +120,11 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
     } catch (error) {
       console.error("Upload error:", error)
       setAvatarUrl(previousAvatarUrl)
-      alert(error instanceof Error ? error.message : "Failed to upload image. Please try again.")
+      toast({
+        title: "Photo upload failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      })
     } finally {
       URL.revokeObjectURL(previewUrl)
       e.target.value = ""
@@ -149,6 +159,11 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
       onClose()
     } catch (error) {
       console.error("Failed to update profile:", error)
+      toast({
+        title: "Profile was not saved",
+        description: "Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setSaving(false)
     }

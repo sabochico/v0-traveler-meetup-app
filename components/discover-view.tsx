@@ -11,6 +11,7 @@ import { useNearbyProfiles } from "@/hooks/use-profile"
 import { useMeetups } from "@/hooks/use-meetups"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 import type { Profile, MoodStatus } from "@/lib/types"
 
 const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
@@ -271,6 +272,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
   const [messageSent, setMessageSent] = useState(false)
   const [sending, setSending] = useState(false)
   const { startConversation } = useCreateConversation()
+  const { toast } = useToast()
 
   const mood = (person.mood as MoodStatus) ?? "exploring"
   const moodStyle = STATUS_STYLES[mood] ?? STATUS_STYLES.exploring
@@ -309,6 +311,11 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
       setMessageSent(true)
     } catch (error) {
       console.error("Failed to start conversation:", error)
+      toast({
+        title: "Could not start conversation",
+        description: "Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setSending(false)
     }

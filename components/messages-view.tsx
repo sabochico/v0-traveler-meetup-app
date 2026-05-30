@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { useConversations, useMessages, useSendMessage, Conversation } from "@/hooks/use-messages"
 import { formatDistanceToNow } from "@/lib/utils"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 // Mock conversations shown when user has no real conversations yet
 const MOCK_CONVERSATIONS = [
@@ -232,6 +233,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { messages, isLoading, refresh } = useMessages(isMock ? null : conversation.id)
   const { sendMessage, markAsRead } = useSendMessage()
+  const { toast } = useToast()
   const otherUser = conversation.other_user
   const location =
     [otherUser?.current_city, otherUser?.current_country].filter(Boolean).join(", ") ||
@@ -323,6 +325,12 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
         await refresh()
       } catch (error) {
         console.error("Failed to send message:", error)
+        setNewMessage(messageContent)
+        toast({
+          title: "Message was not sent",
+          description: "Please try again.",
+          variant: "destructive",
+        })
       }
     }
 

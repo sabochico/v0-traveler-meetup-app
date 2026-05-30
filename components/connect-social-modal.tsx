@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useUpdateProfile } from "@/hooks/use-profile"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 interface ConnectSocialModalProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ export function ConnectSocialModal({
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const { updateProfile } = useUpdateProfile()
+  const { toast } = useToast()
 
   const handleSave = async () => {
     if (!username.trim()) return
@@ -38,6 +40,11 @@ export function ConnectSocialModal({
       }, 1500)
     } catch (error) {
       console.error("Failed to save Instagram handle:", error)
+      toast({
+        title: "Instagram was not saved",
+        description: "Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setSaving(false)
     }
@@ -55,6 +62,11 @@ export function ConnectSocialModal({
       }, 1500)
     } catch (error) {
       console.error("Failed to disconnect Instagram:", error)
+      toast({
+        title: "Instagram was not disconnected",
+        description: "Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setSaving(false)
     }
