@@ -13,7 +13,7 @@ import { MeetupCard } from "./meetup-card"
 import { MoodStatus } from "./mood-status"
 import { EditProfileModal } from "./edit-profile-modal"
 import { useMeetups } from "@/hooks/use-meetups"
-import { useSavedMeetupsWithDetails } from "@/hooks/use-saved-meetups"
+import { useSaveMeetup, useSavedMeetupsWithDetails } from "@/hooks/use-saved-meetups"
 import { useProfile, useUpdateProfile, useNearbyProfiles } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
@@ -117,7 +117,7 @@ function TodayPrompt({
           <p className="text-sm font-medium text-foreground">Today on Drift</p>
           <p className="text-xs text-muted-foreground mt-1">
             {hasMeetups
-              ? `${meetupsCount} meetup${meetupsCount === 1 ? "" : "s"} ${city ? `near ${city}` : "ready to join"}.`
+              ? `${meetupsCount} meetup${meetupsCount === 1 ? "" : "s"} ${city ? `near ${city}` : "ready to save"}.`
               : "No nearby meetups yet. Check saved plans or browse all cities."}
           </p>
         </div>
@@ -245,17 +245,17 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
 ]
 
 function getTodayKey() {
-  return `drift-joins-${new Date().toISOString().split("T")[0]}`
+  return `drift-saves-${new Date().toISOString().split("T")[0]}`
 }
 
-function getJoinsToday(): number {
+function getSavesToday(): number {
   if (typeof window === "undefined") return 0
   return parseInt(localStorage.getItem(getTodayKey()) ?? "0", 10)
 }
 
-function recordJoin(): number {
+function recordSave(): number {
   const key = getTodayKey()
-  const next = getJoinsToday() + 1
+  const next = getSavesToday() + 1
   localStorage.setItem(key, String(next))
   return next
 }
@@ -353,7 +353,7 @@ function MatchCelebration({
           🎉
         </motion.div>
         <h2 className="text-4xl font-serif font-bold text-white mb-3 tracking-tight">
-          You joined! 🎊
+          Saved for later
         </h2>
         <p className="text-white/70 text-base leading-snug mb-4 max-w-[260px] mx-auto">
           {meetup.title}
@@ -515,7 +515,7 @@ function SwipeCard({ meetup, leaving, onDragSwipe, onExitComplete }: SwipeCardPr
         style={{ opacity: joinOpacity }}
       >
         <div className="border-[3px] border-emerald-400 rounded-xl px-4 py-1.5 rotate-[18deg]">
-          <span className="text-emerald-400 text-2xl font-black tracking-widest">JOIN</span>
+          <span className="text-emerald-400 text-2xl font-black tracking-widest">SAVE</span>
         </div>
       </motion.div>
     </motion.div>
@@ -525,21 +525,22 @@ function SwipeCard({ meetup, leaving, onDragSwipe, onExitComplete }: SwipeCardPr
 interface SwipeFeedProps {
   meetups: MeetupWithCreator[]
   isLoading: boolean
+  onSaveMeetup: (meetupId: string) => Promise<void>
 }
 
-function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
+function SwipeFeed({ meetups, isLoading, onSaveMeetup }: SwipeFeedProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [leaving, setLeaving] = useState<"left" | "right" | null>(null)
   const [matchMeetup, setMatchMeetup] = useState<MeetupWithCreator | null>(null)
-  const [joinsToday, setJoinsToday] = useState(0)
+  const [savesToday, setSavesToday] = useState(0)
 
   useEffect(() => {
-    setJoinsToday(getJoinsToday())
-    const t = setTimeout(() => setJoinsToday(0), getMsUntilMidnight())
+    setSavesToday(getSavesToday())
+    const t = setTimeout(() => setSavesToday(0), getMsUntilMidnight())
     return () => clearTimeout(t)
   }, [])
 
-  const limitReached = joinsToday >= DAILY_LIMIT
+  const limitReached = savesToday >= DAILY_LIMIT
   const currentMeetup = meetups[currentIndex]
   const nextMeetup = meetups[currentIndex + 1]
   const allSwiped = currentIndex >= meetups.length
@@ -564,15 +565,18 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
     [limitReached]
   )
 
-  const handleExitComplete = useCallback(() => {
+  const handleExitComplete = useCallback(async () => {
     if (leaving === "right") {
-      const joins = recordJoin()
-      setJoinsToday(joins)
-      if (currentMeetup) setMatchMeetup(currentMeetup)
+      const saves = recordSave()
+      setSavesToday(saves)
+      if (currentMeetup) {
+        await onSaveMeetup(currentMeetup.id)
+        setMatchMeetup(currentMeetup)
+      }
     }
     setLeaving(null)
     setCurrentIndex((i) => i + 1)
-  }, [leaving, currentMeetup])
+  }, [leaving, currentMeetup, onSaveMeetup])
 
   if (isLoading) {
     return (
@@ -666,12 +670,12 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
               <button
                 onClick={() => doSwipe("right")}
                 disabled={!!leaving || limitReached}
-                aria-label="Join"
+                aria-label="Save"
                 className="w-[68px] h-[68px] rounded-full bg-card border-2 border-emerald-500/50 shadow-lg shadow-emerald-500/10 flex items-center justify-center hover:bg-emerald-500/10 hover:border-emerald-500/80 active:scale-90 transition-all duration-150 disabled:opacity-35"
               >
                 <Heart className="w-8 h-8 text-emerald-400" strokeWidth={2.5} />
               </button>
-              <span className="text-xs font-medium text-muted-foreground tracking-wide">Join</span>
+              <span className="text-xs font-medium text-muted-foreground tracking-wide">Save</span>
             </div>
           </div>
 
@@ -680,8 +684,8 @@ function SwipeFeed({ meetups, isLoading }: SwipeFeedProps) {
               <span className="text-destructive/70">Daily limit reached · Resets at midnight</span>
             ) : (
               <>
-                <span className="text-primary font-semibold">{DAILY_LIMIT - joinsToday}</span>
-                {" joins left today"}
+                <span className="text-primary font-semibold">{DAILY_LIMIT - savesToday}</span>
+                {" saves left today"}
               </>
             )}
           </div>
@@ -712,6 +716,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const { meetups, isLoading } = useMeetups()
   const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails()
+  const { saveMeetup } = useSaveMeetup()
   const { profile } = useProfile()
   const { updateMood } = useUpdateProfile()
   const { profiles } = useNearbyProfiles()
@@ -735,6 +740,21 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const handleMoodChange = async (mood: MoodStatusType) => {
     if (isAuthenticated) await updateMood(mood)
   }
+
+  const handleSaveMeetup = useCallback(
+    async (meetupId: string) => {
+      if (!isAuthenticated || meetupId.startsWith("mock-")) return
+      try {
+        await saveMeetup(meetupId)
+      } catch (error) {
+        const e = error as { code?: string }
+        if (e?.code !== "23505") {
+          console.error("Failed to save meetup:", error)
+        }
+      }
+    },
+    [isAuthenticated, saveMeetup]
+  )
 
   const displayMeetups = meetups.length > 0 ? meetups : MOCK_MEETUPS
 
@@ -841,7 +861,11 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
 
       <div className="max-w-lg mx-auto">
         {activeTab === "feed" ? (
-          <SwipeFeed meetups={filteredMeetups} isLoading={isLoading} />
+          <SwipeFeed
+            meetups={filteredMeetups}
+            isLoading={isLoading}
+            onSaveMeetup={handleSaveMeetup}
+          />
         ) : savedLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
