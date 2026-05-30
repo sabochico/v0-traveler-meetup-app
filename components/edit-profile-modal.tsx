@@ -24,8 +24,8 @@ function readFileAsBase64(file: File): Promise<string> {
 }
 
 const SUGGESTED_LANGUAGES = [
-  "English", "日本語", "Español", "Français", "Deutsch", 
-  "中文", "한국어", "Português", "Italiano", "Nederlands"
+  "English", "Japanese", "Spanish", "French", "Deutsch",
+  "Chinese", "Korean", "Portuguese", "Italiano", "Nederlands"
 ]
 
 const SUGGESTED_INTERESTS = [

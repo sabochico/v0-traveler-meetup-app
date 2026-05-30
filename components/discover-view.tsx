@@ -28,7 +28,7 @@ const MOCK_PROFILES: Profile[] = [
     avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
     mood: "social",
     bio: "Digital nomad from Berlin. Love finding hidden cafes.",
-    languages: ["Deutsch", "English", "日本語"],
+    languages: ["Deutsch", "English", "Japanese"],
     interests: ["Photography", "Coffee", "Vinyl"],
     travel_mode: true,
     is_online: true,
@@ -47,7 +47,7 @@ const MOCK_PROFILES: Profile[] = [
     avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
     mood: "exploring",
     bio: "Software engineer exploring Asia for 3 months.",
-    languages: ["English", "Español"],
+    languages: ["English", "Spanish"],
     interests: ["Coding", "Ramen", "Night walks"],
     travel_mode: true,
     is_online: false,
@@ -66,7 +66,7 @@ const MOCK_PROFILES: Profile[] = [
     avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face",
     mood: "working",
     bio: "Freelance writer. Always looking for quiet study spots.",
-    languages: ["한국어", "English"],
+    languages: ["Korean", "English"],
     interests: ["Writing", "Tea", "Bookstores"],
     travel_mode: true,
     is_online: true,
@@ -85,7 +85,7 @@ const MOCK_PROFILES: Profile[] = [
     avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face",
     mood: "homesick",
     bio: "Exchange student from Canada. Missing home but loving Tokyo.",
-    languages: ["English", "Français"],
+    languages: ["English", "French"],
     interests: ["Music", "Gaming", "Anime"],
     travel_mode: true,
     is_online: false,
@@ -177,7 +177,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
             </button>
           </div>
 
-          {/* City filter pills — meetups tab */}
+          {/* City filter pills - meetups tab */}
           {activeTab === "meetups" && cities.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
               <button
@@ -209,7 +209,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
             </div>
           )}
 
-          {/* Search — people tab */}
+          {/* Search - people tab */}
           {activeTab === "people" && (
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

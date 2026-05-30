@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
 
-// ─── Profile completion ──────────────────────────────────────────────────────
+// Profile completion
 
 function calcProfileScore(p: Profile): number {
   let score = 0
@@ -140,7 +140,7 @@ function TodayPrompt({
   )
 }
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// Constants
 
 const DAILY_LIMIT = 10
 
@@ -179,7 +179,7 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
     creator: {
       id: "mock-1", display_name: "Mika",
       avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&crop=face",
-      bio: null, interests: [], languages: ["日本語", "English"],
+      bio: null, interests: [], languages: ["Japanese", "English"],
       mood: "exploring", travel_mode: true, is_online: true,
       anonymous_mode: false, current_city: "Tokyo", current_country: "Japan",
       location: null, instagram_handle: null, last_seen_at: new Date().toISOString(),
@@ -198,7 +198,7 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
     creator: {
       id: "mock-2", display_name: "Leo",
       avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-      bio: null, interests: [], languages: ["English", "한국어"],
+      bio: null, interests: [], languages: ["English", "Korean"],
       mood: "working", travel_mode: true, is_online: false,
       anonymous_mode: false, current_city: "Seoul", current_country: "South Korea",
       location: null, instagram_handle: null, last_seen_at: new Date().toISOString(),
@@ -207,7 +207,7 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
   },
   {
     id: "3", creator_id: "mock-3",
-    title: "First week in Taipei — want to explore night markets!",
+    title: "First week in Taipei - want to explore night markets!",
     description: null, category: "food",
     location_name: "Ximending, Taipei", location: null,
     city: "Taipei", country: "Taiwan", max_attendees: 4,
@@ -217,7 +217,7 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
     creator: {
       id: "mock-3", display_name: "Sofia",
       avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
-      bio: null, interests: [], languages: ["Español", "English", "中文"],
+      bio: null, interests: [], languages: ["Spanish", "English", "Chinese"],
       mood: "social", travel_mode: true, is_online: true,
       anonymous_mode: false, current_city: "Taipei", current_country: "Taiwan",
       location: null, instagram_handle: null, last_seen_at: new Date().toISOString(),
@@ -236,7 +236,7 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
     creator: {
       id: "mock-4", display_name: "Kai",
       avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face",
-      bio: null, interests: [], languages: ["English", "日本語"],
+      bio: null, interests: [], languages: ["English", "Japanese"],
       mood: "homesick", travel_mode: true, is_online: false,
       anonymous_mode: false, current_city: "Tokyo", current_country: "Japan",
       location: null, instagram_handle: null, last_seen_at: new Date().toISOString(),
@@ -351,7 +351,7 @@ function MatchCelebration({
           animate={{ rotate: [0, -14, 14, -8, 8, 0], scale: [1, 1.25, 1] }}
           transition={{ duration: 0.65, delay: 0.25 }}
         >
-          🎉
+          Saved
         </motion.div>
         <h2 className="text-4xl font-serif font-bold text-white mb-3 tracking-tight">
           Saved for later
@@ -436,7 +436,7 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
           </Link>
           {meetup.creator?.languages && meetup.creator.languages.length > 0 && (
             <>
-              <span className="text-white/30 text-sm">·</span>
+              <span className="text-white/30 text-sm">/</span>
               {meetup.creator.languages.slice(0, 2).map((l) => (
                 <span key={l} className="text-white/50 text-xs">
                   {l}
@@ -455,7 +455,7 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
             <MapPin className="w-4 h-4 text-white/45 flex-shrink-0" />
             <span className="truncate">{meetup.location_name ?? meetup.city}</span>
           </span>
-          <span className="flex-shrink-0">🕐 {formatTime(meetup.starts_at)}</span>
+          <span className="flex-shrink-0">{formatTime(meetup.starts_at)}</span>
         </div>
       </div>
     </div>
@@ -590,7 +590,7 @@ function SwipeFeed({ meetups, isLoading, onSaveMeetup }: SwipeFeedProps) {
   if (allSwiped || meetups.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-8">
-        <div className="text-6xl">✨</div>
+        <Sparkles className="w-12 h-12 text-primary" />
         <h3 className="text-xl font-serif font-semibold text-foreground">You&apos;re all caught up</h3>
         <p className="text-sm text-muted-foreground max-w-xs">
           No nearby meetups right now. Check Discover for other cities or create your own.
@@ -682,7 +682,7 @@ function SwipeFeed({ meetups, isLoading, onSaveMeetup }: SwipeFeedProps) {
 
           <div className="text-xs text-muted-foreground/70">
             {limitReached ? (
-              <span className="text-destructive/70">Daily limit reached · Resets at midnight</span>
+              <span className="text-destructive/70">Daily limit reached - resets at midnight</span>
             ) : (
               <>
                 <span className="text-primary font-semibold">{DAILY_LIMIT - savesToday}</span>
@@ -760,7 +760,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
         }
       }
     },
-    [isAuthenticated, saveMeetup]
+    [isAuthenticated, saveMeetup, toast]
   )
 
   const displayMeetups = meetups.length > 0 ? meetups : MOCK_MEETUPS
