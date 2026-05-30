@@ -19,8 +19,8 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-xl border-t border-border z-50">
-      <div className="max-w-lg mx-auto px-4">
-        <div className="flex items-center justify-around py-2">
+      <div className="max-w-lg mx-auto px-2">
+        <div className="flex items-center justify-between py-2">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id || (tab.id === "create" && false)
             const isCreate = tab.id === "create"
@@ -30,7 +30,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all duration-300",
+                  "flex flex-1 flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all duration-300 min-w-0",
                   isCreate && "relative -mt-6",
                   isActive && !isCreate && "text-primary",
                   !isActive && !isCreate && "text-muted-foreground hover:text-foreground"
@@ -44,7 +44,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                 ) : (
                   <>
                     <tab.icon className={cn("w-6 h-6", isActive && "drop-shadow-[0_0_8px_oklch(0.75_0.12_55)]")} />
-                    <span className="text-[10px] font-medium">{tab.label}</span>
+                    <span className="text-[10px] font-medium truncate max-w-full">{tab.label}</span>
                   </>
                 )}
               </button>

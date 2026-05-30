@@ -59,7 +59,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable} bg-background`} suppressHydrationWarning>
-      <body className="font-sans antialiased min-h-screen">
+      <body className="font-sans antialiased min-h-dvh overflow-x-hidden">
         {/* Restore accent color and reduce-motion before first paint */}
         <Script id="appearance-init" strategy="beforeInteractive">{`
           (function(){try{

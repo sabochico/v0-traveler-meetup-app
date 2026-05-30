@@ -5,14 +5,14 @@ import { AlertCircle, ArrowRight, RefreshCw } from "lucide-react"
 
 export default function AuthErrorPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col film-grain">
+    <div className="min-h-dvh bg-background flex flex-col film-grain overflow-x-hidden">
       {/* Header */}
       <header className="p-6">
         <h1 className="text-3xl font-serif font-semibold tracking-tight text-primary">drift</h1>
       </header>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col justify-center px-6 pb-12">
+      <main className="flex-1 flex flex-col justify-center px-6 py-8">
         <div className="max-w-sm mx-auto w-full text-center">
           <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
             <AlertCircle className="w-8 h-8 text-destructive" />

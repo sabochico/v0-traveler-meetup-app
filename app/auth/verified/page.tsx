@@ -55,7 +55,7 @@ export default function VerifiedPage() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden film-grain">
+    <div className="min-h-dvh bg-background flex flex-col items-center justify-center relative overflow-hidden film-grain">
       {/* Animated background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className={cn(

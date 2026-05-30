@@ -37,14 +37,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col film-grain">
+    <div className="min-h-dvh bg-background flex flex-col film-grain overflow-x-hidden">
       {/* Header */}
       <header className="p-6">
         <h1 className="text-3xl font-serif font-semibold tracking-tight text-primary">drift</h1>
       </header>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col justify-center px-6 pb-12">
+      <main className="flex-1 flex flex-col justify-center px-6 py-8">
         <div className="max-w-sm mx-auto w-full">
           <div className="mb-8">
             <h2 className="text-2xl font-serif font-semibold text-foreground mb-2">Welcome back</h2>

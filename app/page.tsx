@@ -37,7 +37,7 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-background flex items-center justify-center film-grain">
+      <main className="min-h-dvh bg-background flex items-center justify-center film-grain overflow-x-hidden">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading drift...</p>
@@ -47,16 +47,16 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-background relative film-grain">
+    <main className="min-h-dvh bg-background relative film-grain overflow-x-hidden">
       {/* Notification bell — fixed top-right, visible on all tabs when signed in */}
       {isAuthenticated && (
-        <div className="fixed top-3 right-3 z-50">
+        <div className="fixed top-[calc(0.75rem+env(safe-area-inset-top))] right-3 z-50">
           <NotificationsBell />
         </div>
       )}
 
       {/* Main Content Area */}
-      <div className="pb-20">
+      <div className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
         {activeTab === "feed" && <FeedView onNavigateToMessages={handleNavigateToMessages} />}
         {activeTab === "discover" && <DiscoverView onNavigateToMessages={handleNavigateToMessages} />}
         {activeTab === "messages" && (
