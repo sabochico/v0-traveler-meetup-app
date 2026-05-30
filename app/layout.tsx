@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#1a1625',
+  themeColor: '#0B0D12',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -64,7 +64,7 @@ export default function RootLayout({
         <Script id="appearance-init" strategy="beforeInteractive">{`
           (function(){try{
             var a=localStorage.getItem('drift-accent');
-            if(a&&a!=='amber')document.documentElement.setAttribute('data-accent',a);
+            if(a&&a!=='blue')document.documentElement.setAttribute('data-accent',a);
             if(localStorage.getItem('drift-reduced-motion')==='true')document.documentElement.classList.add('reduce-motion');
           }catch(e){}}());
         `}</Script>

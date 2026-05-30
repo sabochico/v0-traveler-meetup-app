@@ -11,22 +11,20 @@ interface AppearanceSettingsProps {
 }
 
 const ACCENT_COLORS = [
-  { name: "Amber", value: "amber", color: "bg-amber-500" },
-  { name: "Blue", value: "blue", color: "bg-blue-500" },
-  { name: "Rose", value: "rose", color: "bg-rose-500" },
-  { name: "Emerald", value: "emerald", color: "bg-emerald-500" },
-  { name: "Purple", value: "purple", color: "bg-purple-500" },
-  { name: "Orange", value: "orange", color: "bg-orange-500" },
-  { name: "Pink", value: "pink", color: "bg-pink-500" },
+  { name: "Blue", value: "blue", color: "bg-[#2563FF]" },
+  { name: "Teal", value: "teal", color: "bg-[#00D4CC]" },
+  { name: "Purple", value: "purple", color: "bg-[#6366F1]" },
+  { name: "Green", value: "green", color: "bg-[#10B981]" },
+  { name: "Amber", value: "amber", color: "bg-[#F59E0B]" },
 ]
 
 export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps) {
   const { theme, setTheme } = useTheme()
-  const [accentColor, setAccentColor] = useState("amber")
+  const [accentColor, setAccentColor] = useState("blue")
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
-    const savedAccent = localStorage.getItem("drift-accent") ?? "amber"
+    const savedAccent = localStorage.getItem("drift-accent") ?? "blue"
     const savedMotion = localStorage.getItem("drift-reduced-motion") === "true"
     setAccentColor(savedAccent)
     setReducedMotion(savedMotion)
@@ -37,7 +35,7 @@ export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps)
   const handleAccentChange = (newAccent: string) => {
     setAccentColor(newAccent)
     localStorage.setItem("drift-accent", newAccent)
-    if (newAccent === "amber") {
+    if (newAccent === "blue") {
       document.documentElement.removeAttribute("data-accent")
     } else {
       document.documentElement.setAttribute("data-accent", newAccent)

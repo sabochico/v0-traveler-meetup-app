@@ -38,12 +38,12 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                 aria-label={tab.label}
               >
                 {isCreate ? (
-                  <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-lg glow-amber">
+                  <div className="w-14 h-14 rounded-2xl drift-gradient-button flex items-center justify-center glow-amber">
                     <Plus className="w-7 h-7 text-primary-foreground" />
                   </div>
                 ) : (
                   <>
-                    <tab.icon className={cn("w-6 h-6", isActive && "drop-shadow-[0_0_8px_oklch(0.75_0.12_55)]")} />
+                    <tab.icon className={cn("w-6 h-6", isActive && "drop-shadow-[0_0_8px_rgb(0_212_204_/_0.45)]")} />
                     <span className="text-[10px] font-medium truncate max-w-full">{tab.label}</span>
                   </>
                 )}

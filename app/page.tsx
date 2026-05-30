@@ -10,6 +10,7 @@ import { MessagesView } from "@/components/messages-view"
 import { ProfileView } from "@/components/profile-view"
 import { AuthPrompt } from "@/components/auth-prompt"
 import { NotificationsBell } from "@/components/notifications-bell"
+import { DriftLogo } from "@/components/drift-logo"
 import { Loader2 } from "lucide-react"
 
 export default function Home() {
@@ -37,10 +38,12 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <main className="min-h-dvh bg-background flex items-center justify-center film-grain overflow-x-hidden">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading drift...</p>
+      <main className="min-h-dvh drift-gradient flex items-center justify-center overflow-x-hidden">
+        <div className="text-center text-white">
+          <DriftLogo markClassName="h-20 w-20 mx-auto [&_path]:fill-white" />
+          <h1 className="mt-6 text-4xl font-semibold tracking-tight">Drift</h1>
+          <p className="mt-2 text-sm text-white/85">Find your people.</p>
+          <Loader2 className="w-6 h-6 animate-spin text-white/80 mx-auto mt-8" />
         </div>
       </main>
     )
