@@ -764,11 +764,15 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   )
 
   const displayMeetups = meetups.length > 0 ? meetups : MOCK_MEETUPS
+  const visibleMeetups =
+    isAuthenticated && profile
+      ? displayMeetups.filter((m) => m.creator_id !== profile.id)
+      : displayMeetups
 
   const filteredMeetups =
     browseAll || !userCity
-      ? displayMeetups
-      : displayMeetups.filter((m) => m.city?.toLowerCase() === userCity.toLowerCase())
+      ? visibleMeetups
+      : visibleMeetups.filter((m) => m.city?.toLowerCase() === userCity.toLowerCase())
 
   return (
     <div className="min-h-screen">
