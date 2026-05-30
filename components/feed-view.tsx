@@ -5,7 +5,7 @@ import Link from "next/link"
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion"
 import {
   MapPin, X, Heart, Loader2, Coffee, Camera, Utensils,
-  Moon, BookOpen, Gamepad2, Map, Users, ChevronRight, Sparkles,
+  Moon, BookOpen, Gamepad2, Map, Users, ChevronRight, Sparkles, MessageCircle,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -13,11 +13,12 @@ import { MeetupCard } from "./meetup-card"
 import { MoodStatus } from "./mood-status"
 import { EditProfileModal } from "./edit-profile-modal"
 import { useMeetups } from "@/hooks/use-meetups"
-import { useSaveMeetup, useSavedMeetupsWithDetails } from "@/hooks/use-saved-meetups"
+import { useSavedMeetupsWithDetails } from "@/hooks/use-saved-meetups"
 import { useProfile, useUpdateProfile, useNearbyProfiles } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { useCreateConversation } from "@/hooks/use-messages"
 import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
 
 // Profile completion
@@ -712,6 +713,221 @@ function SwipeFeed({ meetups, isLoading, onSaveMeetup }: SwipeFeedProps) {
   )
 }
 
+function AvailablePeople({
+  profiles,
+  onNavigateToMessages,
+}: {
+  profiles: Profile[]
+  onNavigateToMessages?: (conversationId: string) => void
+}) {
+  const [startingId, setStartingId] = useState<string | null>(null)
+  const { startConversation } = useCreateConversation()
+  const { toast } = useToast()
+
+  const handleSayHi = async (profileId: string) => {
+    try {
+      setStartingId(profileId)
+      const result = await startConversation(profileId)
+      onNavigateToMessages?.(result.conversationId)
+    } catch (error) {
+      console.error("Failed to start conversation:", error)
+      toast({
+        title: "Could not start conversation",
+        description: "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setStartingId(null)
+    }
+  }
+
+  if (profiles.length === 0) {
+    return (
+      <section className="px-4">
+        <div className="rounded-3xl border border-border/60 bg-card/70 p-5 text-center">
+          <Users className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+          <p className="text-sm font-medium text-foreground">No one available nearby yet</p>
+          <p className="text-xs text-muted-foreground mt-1">Check Discover to explore people in other cities.</p>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="px-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-foreground">Available now</h2>
+        <span className="text-xs text-muted-foreground">People nearby</span>
+      </div>
+
+      <div className="space-y-2">
+        {profiles.slice(0, 3).map((person) => {
+          const displayName = person.display_name ?? "Anonymous"
+          const location =
+            [person.current_city, person.current_country].filter(Boolean).join(", ") ||
+            person.location ||
+            "Location not shared"
+
+          return (
+            <div
+              key={person.id}
+              className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3"
+            >
+              <Link href={`/profile/${person.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={person.avatar_url ?? undefined} alt={displayName} />
+                  <AvatarFallback>{displayName[0]?.toUpperCase() ?? "U"}</AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{location}</p>
+                </div>
+              </Link>
+
+              <button
+                onClick={() => handleSayHi(person.id)}
+                disabled={startingId === person.id}
+                className="shrink-0 rounded-full bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-60"
+              >
+                {startingId === person.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Hi
+                  </span>
+                )}
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function TodayHome({
+  meetups,
+  savedMeetups,
+  profiles,
+  isLoading,
+  savedLoading,
+  onNavigateToMessages,
+  onViewSaved,
+  onBrowseAll,
+}: {
+  meetups: MeetupWithCreator[]
+  savedMeetups: MeetupWithCreator[]
+  profiles: Profile[]
+  isLoading: boolean
+  savedLoading: boolean
+  onNavigateToMessages?: (conversationId: string) => void
+  onViewSaved: () => void
+  onBrowseAll: () => void
+}) {
+  const soonMeetups = meetups
+    .slice()
+    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+    .slice(0, 3)
+
+  return (
+    <div className="py-5 space-y-7">
+      <section className="px-4">
+        <div className="rounded-3xl border border-primary/20 bg-primary/8 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Today on Drift</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Find something social to do soon, then message the people going.
+              </p>
+            </div>
+            <Sparkles className="w-5 h-5 text-primary shrink-0" />
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+            <div className="rounded-2xl bg-background/40 p-3">
+              <p className="text-lg font-semibold text-primary">{meetups.length}</p>
+              <p className="text-[11px] text-muted-foreground">nearby</p>
+            </div>
+            <button onClick={onViewSaved} className="rounded-2xl bg-background/40 p-3">
+              <p className="text-lg font-semibold text-primary">{savedMeetups.length}</p>
+              <p className="text-[11px] text-muted-foreground">saved</p>
+            </button>
+            <div className="rounded-2xl bg-background/40 p-3">
+              <p className="text-lg font-semibold text-primary">{profiles.length}</p>
+              <p className="text-[11px] text-muted-foreground">people</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Happening soon</h2>
+          <button onClick={onBrowseAll} className="text-xs font-medium text-primary">
+            Browse all
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : soonMeetups.length === 0 ? (
+          <div className="rounded-3xl border border-border/60 bg-card/70 p-5 text-center">
+            <p className="text-sm font-medium text-foreground">No nearby meetups right now</p>
+            <p className="text-xs text-muted-foreground mt-1">Create one or browse Discover for other cities.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {soonMeetups.map((meetup) => (
+              <MeetupCard
+                key={meetup.id}
+                meetup={meetup}
+                onNavigateToMessages={onNavigateToMessages}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <AvailablePeople profiles={profiles} onNavigateToMessages={onNavigateToMessages} />
+
+      <section className="px-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Saved plans</h2>
+          <button onClick={onViewSaved} className="text-xs font-medium text-primary">
+            View saved
+          </button>
+        </div>
+
+        {savedLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+          </div>
+        ) : savedMeetups.length === 0 ? (
+          <div className="rounded-3xl border border-border/60 bg-card/70 p-5 text-center">
+            <Heart className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+            <p className="text-sm font-medium text-foreground">No saved plans yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Save meetups from Today or Discover to come back to them.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {savedMeetups.slice(0, 2).map((meetup) => (
+              <MeetupCard
+                key={meetup.id}
+                meetup={meetup as MeetupWithCreator}
+                onNavigateToMessages={onNavigateToMessages}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
 interface FeedViewProps {
   onNavigateToMessages?: (conversationId: string) => void
 }
@@ -724,12 +940,10 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const { meetups, isLoading } = useMeetups()
   const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails()
-  const { saveMeetup } = useSaveMeetup()
   const { profile } = useProfile()
   const { updateMood } = useUpdateProfile()
   const { profiles } = useNearbyProfiles()
   const { isAuthenticated } = useAuth()
-  const { toast } = useToast()
 
   useEffect(() => {
     if (sessionStorage.getItem("drift-profile-banner-dismissed") === "1") {
@@ -744,31 +958,11 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
 
   const currentMood = (profile?.mood as MoodStatusType) ?? "exploring"
   const userCity = profile?.current_city
-  const nearbyCount = profiles.length > 0 ? profiles.length : 4
+  const nearbyCount = profiles.length
 
   const handleMoodChange = async (mood: MoodStatusType) => {
     if (isAuthenticated) await updateMood(mood)
   }
-
-  const handleSaveMeetup = useCallback(
-    async (meetupId: string) => {
-      if (!isAuthenticated || meetupId.startsWith("mock-")) return
-      try {
-        await saveMeetup(meetupId)
-      } catch (error) {
-        const e = error as { code?: string }
-        if (e?.code !== "23505") {
-          console.error("Failed to save meetup:", error)
-          toast({
-            title: "Meetup was not saved",
-            description: "Please try again.",
-            variant: "destructive",
-          })
-        }
-      }
-    },
-    [isAuthenticated, saveMeetup, toast]
-  )
 
   const displayMeetups = meetups.length > 0 ? meetups : MOCK_MEETUPS
   const visibleMeetups =
@@ -787,11 +981,11 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h1 className="text-2xl font-serif font-semibold tracking-tight">drift</h1>
+              <h1 className="text-2xl font-serif font-semibold tracking-tight">Today</h1>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {browseAll ? "All cities" : `Near you in ${userCity ?? "your city"}`}
+                  {browseAll ? "All cities" : `Near ${userCity ?? "your city"}`}
                 </span>
                 <span className="flex items-center gap-1 text-emerald-400/80">
                   <Users className="w-3 h-3" />
@@ -812,7 +1006,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
               )}
             >
-              Nearby
+              Today
             </button>
             <button
               onClick={() => setActiveTab("saved")}
@@ -832,8 +1026,8 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             <div className="pt-2">
               <p className="text-xs text-muted-foreground">
                 {browseAll
-                  ? "Browsing meetups from every city. Use Discover to explore people and places."
-                  : "Meetups happening near you right now."}
+                  ? "Actionable meetups from every city."
+                  : "People and plans you can act on today."}
               </p>
 
               {userCity && (
@@ -870,22 +1064,19 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
           )}
         </AnimatePresence>
 
-        {activeTab === "feed" && (
-          <TodayPrompt
-            meetupsCount={filteredMeetups.length}
-            savedCount={savedMeetups.length}
-            city={browseAll ? null : userCity}
-            onViewSaved={() => setActiveTab("saved")}
-          />
-        )}
       </div>
 
       <div className="max-w-lg mx-auto">
         {activeTab === "feed" ? (
-          <SwipeFeed
+          <TodayHome
             meetups={filteredMeetups}
+            savedMeetups={savedMeetups as MeetupWithCreator[]}
+            profiles={profiles}
             isLoading={isLoading}
-            onSaveMeetup={handleSaveMeetup}
+            savedLoading={savedLoading}
+            onNavigateToMessages={onNavigateToMessages}
+            onViewSaved={() => setActiveTab("saved")}
+            onBrowseAll={() => setBrowseAll(true)}
           />
         ) : savedLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -896,7 +1087,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             <Heart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground font-medium">No saved meetups yet</p>
             <p className="text-sm text-muted-foreground/60 mt-1">
-              Swipe right on nearby meetups to save them here.
+              Save meetups from Today or Discover to keep them here.
             </p>
           </div>
         ) : (

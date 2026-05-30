@@ -10,7 +10,7 @@ interface BottomNavProps {
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const tabs = [
-    { id: "feed" as const, icon: Home, label: "Feed" },
+    { id: "feed" as const, icon: Home, label: "Today" },
     { id: "discover" as const, icon: Compass, label: "Discover" },
     { id: "create" as const, icon: Plus, label: "Create" },
     { id: "messages" as const, icon: MessageCircle, label: "Messages" },
