@@ -80,14 +80,14 @@ export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps)
             <label className="text-sm font-medium text-foreground">Theme</label>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { value: "dark", label: "Dark", icon: Moon },
-                { value: "system", label: "System", icon: Monitor },
+                { value: "dark", label: "Dark", description: "Always use dark mode", icon: Moon },
+                { value: "system", label: "System", description: "Follow your phone setting", icon: Monitor },
               ].map((option) => (
                 <button
                   key={option.value}
                   onClick={() => setTheme(option.value)}
                   className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                    "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center",
                     currentTheme === option.value
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50"
@@ -102,6 +102,9 @@ export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps)
                     currentTheme === option.value ? "text-primary" : "text-foreground"
                   )}>
                     {option.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground leading-snug">
+                    {option.description}
                   </span>
                 </button>
               ))}
