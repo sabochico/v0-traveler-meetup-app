@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import { X, Camera, Loader2, Plus, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -38,9 +38,10 @@ interface EditProfileModalProps {
   profile: Profile
   isOpen: boolean
   onClose: () => void
+  initialTab?: "profile" | "languages" | "interests"
 }
 
-export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalProps) {
+export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profile" }: EditProfileModalProps) {
   const [displayName, setDisplayName] = useState(profile.display_name ?? "")
   const [bio, setBio] = useState(profile.bio ?? "")
   const [currentCity, setCurrentCity] = useState(profile.current_city ?? "")
@@ -54,6 +55,10 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { updateProfile } = useUpdateProfile()
   const { toast } = useToast()
+
+  useEffect(() => {
+    if (isOpen) setActiveTab(initialTab)
+  }, [isOpen, initialTab])
 
   if (!isOpen) return null
 

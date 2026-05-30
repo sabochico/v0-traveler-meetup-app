@@ -42,15 +42,21 @@ function getNextProfileStep(p: Profile): string {
   return "Set your mood"
 }
 
+function getNextProfileTab(p: Profile): "profile" | "interests" {
+  if ((p.interests?.length ?? 0) < 3) return "interests"
+  return "profile"
+}
+
 interface ProfileCompletionBannerProps {
   profile: Profile
-  onComplete: () => void
+  onComplete: (tab: "profile" | "interests") => void
   onDismiss: () => void
 }
 
 function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileCompletionBannerProps) {
   const score = calcProfileScore(profile)
   const nextStep = getNextProfileStep(profile)
+  const nextTab = getNextProfileTab(profile)
 
   return (
     <motion.div
@@ -87,7 +93,7 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
         </div>
 
         <button
-          onClick={onComplete}
+          onClick={() => onComplete(nextTab)}
           className="flex items-center justify-between w-full px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/18 active:scale-[0.98] transition-all"
         >
           <span>{nextStep}</span>
@@ -714,6 +720,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [activeTab, setActiveTab] = useState<"feed" | "saved">("feed")
   const [browseAll, setBrowseAll] = useState(false)
   const [showEditProfile, setShowEditProfile] = useState(false)
+  const [editProfileTab, setEditProfileTab] = useState<"profile" | "interests">("profile")
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const { meetups, isLoading } = useMeetups()
   const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails()
@@ -854,7 +861,10 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
           {activeTab === "feed" && isAuthenticated && profile && !bannerDismissed && calcProfileScore(profile) < 80 && (
             <ProfileCompletionBanner
               profile={profile}
-              onComplete={() => setShowEditProfile(true)}
+              onComplete={(tab) => {
+                setEditProfileTab(tab)
+                setShowEditProfile(true)
+              }}
               onDismiss={handleDismissBanner}
             />
           )}
@@ -907,6 +917,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
           profile={profile}
           isOpen={showEditProfile}
           onClose={() => setShowEditProfile(false)}
+          initialTab={editProfileTab}
         />
       )}
     </div>
