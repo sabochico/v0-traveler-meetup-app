@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { X, Bell, MessageCircle, Heart, Users, MapPin, Volume2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -18,7 +17,7 @@ interface NotificationSetting {
 }
 
 export function NotificationsSettings({ isOpen, onClose }: NotificationsSettingsProps) {
-  const [settings, setSettings] = useState<NotificationSetting[]>([
+  const settings: NotificationSetting[] = [
     {
       id: "messages",
       label: "Messages",
@@ -54,25 +53,9 @@ export function NotificationsSettings({ isOpen, onClose }: NotificationsSettings
       icon: Volume2,
       enabled: true,
     },
-  ])
-
-  const [saving, setSaving] = useState(false)
+  ]
 
   if (!isOpen) return null
-
-  const toggleSetting = (id: string) => {
-    setSettings(prev =>
-      prev.map(s => (s.id === id ? { ...s, enabled: !s.enabled } : s))
-    )
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    // In a real app, save to database/localStorage
-    await new Promise(resolve => setTimeout(resolve, 500))
-    setSaving(false)
-    onClose()
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -96,10 +79,16 @@ export function NotificationsSettings({ isOpen, onClose }: NotificationsSettings
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="px-2 pb-2">
+            <p className="text-sm text-muted-foreground">
+              Notification preferences are coming soon. You will still receive important app notifications.
+            </p>
+          </div>
+
           {settings.map((setting) => (
             <div
               key={setting.id}
-              className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors"
+              className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 opacity-75"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -113,11 +102,12 @@ export function NotificationsSettings({ isOpen, onClose }: NotificationsSettings
               
               {/* Toggle Switch */}
               <button
-                onClick={() => toggleSetting(setting.id)}
+                disabled
                 className={cn(
-                  "relative w-12 h-7 rounded-full transition-colors",
+                  "relative w-12 h-7 rounded-full transition-colors cursor-not-allowed",
                   setting.enabled ? "bg-primary" : "bg-muted"
                 )}
+                aria-label={`${setting.label} notifications coming soon`}
               >
                 <div
                   className={cn(
@@ -133,11 +123,10 @@ export function NotificationsSettings({ isOpen, onClose }: NotificationsSettings
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border/50">
           <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:glow-amber transition-all disabled:opacity-50"
+            onClick={onClose}
+            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:glow-amber transition-all"
           >
-            {saving ? "Saving..." : "Save Preferences"}
+            Done
           </button>
         </div>
       </div>
