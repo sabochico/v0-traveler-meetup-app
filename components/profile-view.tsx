@@ -13,9 +13,6 @@ import {
   Moon,
   ChevronRight,
   Plane,
-  Coffee,
-  Utensils,
-  BookOpen,
   LogOut,
   Loader2,
 } from "lucide-react"
@@ -30,13 +27,6 @@ import { LocationSelector } from "@/components/location-selector"
 import { NotificationsSettings } from "@/components/notifications-settings"
 import { AppearanceSettings } from "@/components/appearance-settings"
 import { cn } from "@/lib/utils"
-
-const DEFAULT_BADGES = [
-  { id: "early", label: "Early Drifter", icon: Plane },
-  { id: "coffee", label: "Coffee Lover", icon: Coffee },
-  { id: "foodie", label: "Foodie", icon: Utensils },
-  { id: "bookworm", label: "Bookworm", icon: BookOpen },
-]
 
 export function ProfileView() {
   const { profile, isLoading } = useProfile()
@@ -131,38 +121,6 @@ export function ProfileView() {
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Globe className="w-4 h-4" />
             <span>Traveler</span>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="text-center p-4 rounded-xl bg-card border border-border/50">
-            <p className="text-2xl font-semibold text-primary">0</p>
-            <p className="text-xs text-muted-foreground">Meetups</p>
-          </div>
-          <div className="text-center p-4 rounded-xl bg-card border border-border/50">
-            <p className="text-2xl font-semibold text-primary">0</p>
-            <p className="text-xs text-muted-foreground">Connections</p>
-          </div>
-          <div className="text-center p-4 rounded-xl bg-card border border-border/50">
-            <p className="text-2xl font-semibold text-primary">1</p>
-            <p className="text-xs text-muted-foreground">Cities</p>
-          </div>
-        </div>
-
-        {/* Badges */}
-        <div className="mb-6">
-          <h2 className="text-sm font-medium text-foreground mb-3">Badges</h2>
-          <div className="flex flex-wrap gap-2">
-            {DEFAULT_BADGES.slice(0, 2).map((badge) => (
-              <div
-                key={badge.id}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm"
-              >
-                <badge.icon className="w-3.5 h-3.5" />
-                <span>{badge.label}</span>
-              </div>
-            ))}
           </div>
         </div>
 
