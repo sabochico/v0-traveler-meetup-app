@@ -83,6 +83,7 @@ export default function PublicProfilePage({
   const isOnline = Boolean(profile?.is_online) || isRecentlySeen(profile?.last_seen_at)
   const displayName = profile?.display_name ?? "Anonymous"
   const initial = displayName[0]?.toUpperCase() ?? "U"
+  const instagramUsername = profile?.instagram_handle?.replace(/^@/, "")
 
   const location =
     [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
@@ -353,13 +354,18 @@ export default function PublicProfilePage({
             </div>
           </section>
 
-          {profile.instagram_handle && (
+          {instagramUsername && (
             <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
               <h3 className="text-sm font-semibold mb-3">Social</h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <a
+                href={`https://instagram.com/${instagramUsername}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
                 <Instagram className="w-4 h-4" />
-                <span>@{profile.instagram_handle}</span>
-              </div>
+                <span>@{instagramUsername}</span>
+              </a>
             </section>
           )}
         </main>
