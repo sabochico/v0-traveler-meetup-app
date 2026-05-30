@@ -5,16 +5,12 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
-import { Mail, Lock, User, ArrowRight, Loader2, Ticket } from "lucide-react"
-
-// Default invite code - can be overridden with NEXT_PUBLIC_INVITE_CODE env var
-const VALID_INVITE_CODE = process.env.NEXT_PUBLIC_INVITE_CODE || "AWE"
+import { Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [displayName, setDisplayName] = useState("")
-  const [inviteCode, setInviteCode] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -23,13 +19,6 @@ export default function SignUpPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
-    // Validate invite code first
-    if (inviteCode.toUpperCase() !== VALID_INVITE_CODE.toUpperCase()) {
-      setError("Invalid invite code. Ask a friend for one!")
-      setLoading(false)
-      return
-    }
 
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
@@ -70,22 +59,6 @@ export default function SignUpPage() {
           </div>
 
           <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Invite code</label>
-              <div className="relative">
-                <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Enter your invite code"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                  className="bg-secondary border-0 pl-10 text-foreground placeholder:text-muted-foreground uppercase tracking-wider"
-                  required
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Ask a friend for an invite code to join</p>
-            </div>
-
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Display name</label>
               <div className="relative">
