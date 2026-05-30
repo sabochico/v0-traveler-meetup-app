@@ -202,8 +202,10 @@ export function ProfileView() {
             <div className="flex items-center gap-3">
               <Shield className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium text-foreground">Anonymous Mode</p>
-                <p className="text-xs text-muted-foreground">Hide your profile from discovery</p>
+                <p className="text-sm font-medium text-foreground">Hide from Discover</p>
+                <p className="text-xs text-muted-foreground">
+                  People won&apos;t see you in Discover People. Existing chats still work.
+                </p>
               </div>
             </div>
             <Switch checked={profile?.anonymous_mode ?? false} onCheckedChange={toggleAnonymousMode} />
