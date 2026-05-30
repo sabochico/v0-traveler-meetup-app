@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const blob = await put(filename, file, {
       access: "private",
     })
-    const proxyUrl = `/api/blob?url=${encodeURIComponent(blob.url)}`
+    const proxyUrl = `/api/blob?pathname=${encodeURIComponent(blob.pathname)}`
     return NextResponse.json({ url: proxyUrl })
   } catch (error) {
     console.error("Upload error:", error)
