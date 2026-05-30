@@ -175,7 +175,7 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg bg-card rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-lg bg-card rounded-t-3xl sm:rounded-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] overflow-hidden flex flex-col min-h-0">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
           <h2 className="text-lg font-semibold">Edit Profile</h2>
@@ -207,7 +207,7 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {activeTab === "profile" && (
             <div className="space-y-6">
               {/* Avatar */}
@@ -393,7 +393,7 @@ export function EditProfileModal({ profile, isOpen, onClose }: EditProfileModalP
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/50">
+        <div className="shrink-0 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-border/50 bg-card">
           <button
             onClick={handleSave}
             disabled={saving}
