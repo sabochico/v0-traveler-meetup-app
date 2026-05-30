@@ -4,6 +4,27 @@ import { type NextRequest, NextResponse } from "next/server"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
+const CONVERSATION_LIMIT = 30
+const CONVERSATION_WINDOW_MS = 60 * 60 * 1000
+const conversationRateLimits = new Map<string, { count: number; resetAt: number }>()
+
+function checkConversationRateLimit(userId: string) {
+  const now = Date.now()
+  const current = conversationRateLimits.get(userId)
+
+  if (!current || current.resetAt <= now) {
+    conversationRateLimits.set(userId, { count: 1, resetAt: now + CONVERSATION_WINDOW_MS })
+    return { allowed: true, retryAfter: 0 }
+  }
+
+  if (current.count >= CONVERSATION_LIMIT) {
+    return { allowed: false, retryAfter: Math.ceil((current.resetAt - now) / 1000) }
+  }
+
+  current.count += 1
+  return { allowed: true, retryAfter: 0 }
+}
+
 async function getAuthenticatedUser(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
@@ -24,6 +45,17 @@ export async function POST(request: NextRequest) {
     const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const rateLimit = checkConversationRateLimit(user.id)
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many conversation requests. Please try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfter) },
+        }
+      )
     }
 
     const body = await request.json()

@@ -5,6 +5,27 @@ import { type NextRequest, NextResponse } from "next/server"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
+const UPLOAD_LIMIT = 10
+const UPLOAD_WINDOW_MS = 60 * 60 * 1000
+const uploadRateLimits = new Map<string, { count: number; resetAt: number }>()
+
+function checkUploadRateLimit(userId: string) {
+  const now = Date.now()
+  const current = uploadRateLimits.get(userId)
+
+  if (!current || current.resetAt <= now) {
+    uploadRateLimits.set(userId, { count: 1, resetAt: now + UPLOAD_WINDOW_MS })
+    return { allowed: true, retryAfter: 0 }
+  }
+
+  if (current.count >= UPLOAD_LIMIT) {
+    return { allowed: false, retryAfter: Math.ceil((current.resetAt - now) / 1000) }
+  }
+
+  current.count += 1
+  return { allowed: true, retryAfter: 0 }
+}
+
 async function getAuthenticatedUser(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
@@ -31,6 +52,17 @@ export async function POST(request: NextRequest) {
     if (!user) {
       console.warn("[upload]", requestId, "unauthorized")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const rateLimit = checkUploadRateLimit(user.id)
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many uploads. Please try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfter) },
+        }
+      )
     }
 
     const contentType = request.headers.get("content-type") ?? ""
