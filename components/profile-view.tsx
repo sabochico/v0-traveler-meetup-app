@@ -15,6 +15,8 @@ import {
   Plane,
   LogOut,
   Loader2,
+  FileText,
+  Trash2,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -248,6 +250,45 @@ export function ProfileView() {
             <span className="text-sm font-medium text-foreground">Appearance</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
           </button>
+
+          <a
+            href="/legal/privacy"
+            className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+          >
+            <FileText className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Privacy Policy</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+          </a>
+
+          <a
+            href="/legal/terms"
+            className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+          >
+            <FileText className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Terms of Service</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+          </a>
+
+          <a
+            href="/legal/community"
+            className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
+          >
+            <Shield className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Community Guidelines</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+          </a>
+
+          <a
+            href="mailto:aweandco@gmail.com?subject=Drift%20account%20deletion%20request"
+            className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-destructive/30 transition-colors"
+          >
+            <Trash2 className="w-5 h-5 text-destructive" />
+            <div>
+              <span className="block text-sm font-medium text-foreground">Request account deletion</span>
+              <span className="block text-xs text-muted-foreground">Email support to delete your account</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+          </a>
 
           <button
             onClick={handleSignOut}
