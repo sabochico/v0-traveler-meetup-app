@@ -216,9 +216,9 @@ export function useMessages(conversationId: string | null) {
         (payload) => {
           const newMessage = payload.new as Message
           void mutate(
-            async (current) => {
+            (current) => {
               if (current?.some((m) => m.id === newMessage.id)) return current
-              return messagesFetcher(conversationId)
+              return [...(current ?? []), newMessage]
             },
             { revalidate: false }
           )
@@ -287,6 +287,8 @@ export function useSendMessage() {
       .from("conversations")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", conversationId)
+
+    void globalMutate("conversations")
 
     return data
   }

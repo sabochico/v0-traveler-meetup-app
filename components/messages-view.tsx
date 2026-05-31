@@ -231,7 +231,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     created_at: string
   }>>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { messages, isLoading, refresh } = useMessages(isMock ? null : conversation.id)
+  const { messages, isLoading } = useMessages(isMock ? null : conversation.id)
   const { sendMessage, markAsRead } = useSendMessage()
   const { toast } = useToast()
   const otherUser = conversation.other_user
@@ -293,20 +293,17 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
 
     setSending(true)
     const messageContent = newMessage.trim()
+    const tempId = `local-${Date.now()}`
+    const optimisticMessage = {
+      id: tempId,
+      content: messageContent,
+      sender_id: "me",
+      created_at: new Date().toISOString(),
+    }
     setNewMessage("")
+    setLocalMessages((prev) => [...prev, optimisticMessage])
 
     if (isMock) {
-      // Add message locally for mock mode
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: `local-${Date.now()}`,
-          content: messageContent,
-          sender_id: "me",
-          created_at: new Date().toISOString(),
-        },
-      ])
-      
       // Simulate response after delay
       setTimeout(() => {
         setLocalMessages((prev) => [
@@ -321,10 +318,13 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
       }, 1500)
     } else {
       try {
-        await sendMessage(conversation.id, messageContent)
-        await refresh()
+        const savedMessage = await sendMessage(conversation.id, messageContent)
+        setLocalMessages((prev) =>
+          prev.map((message) => message.id === tempId ? savedMessage : message)
+        )
       } catch (error) {
         console.error("Failed to send message:", error)
+        setLocalMessages((prev) => prev.filter((message) => message.id !== tempId))
         setNewMessage(messageContent)
         toast({
           title: "Message was not sent",
@@ -496,11 +496,10 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
               className="flex-1 bg-secondary border-0"
-              disabled={sending}
             />
             <button
               type="submit"
-              disabled={!newMessage.trim() || sending}
+              disabled={!newMessage.trim()}
               className="p-3 rounded-full bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:glow-amber transition-all"
               aria-label="Send message"
             >
