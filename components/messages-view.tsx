@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import Link from "next/link"
 import { Search, ArrowLeft, Send, Loader2, MapPin, Plane, Globe, Sparkles } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -111,13 +111,19 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
   }, [initialConversationId, conversations])
 
   // Use mock data if no real conversations
-  const displayConversations = conversations.length > 0 ? conversations : MOCK_CONVERSATIONS
+  const displayConversations = useMemo(
+    () => conversations.length > 0 ? conversations : MOCK_CONVERSATIONS,
+    [conversations]
+  )
 
-  const filteredConversations = searchQuery
-    ? displayConversations.filter((c) =>
+  const filteredConversations = useMemo(
+    () => searchQuery
+      ? displayConversations.filter((c) =>
         c.other_user?.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : displayConversations
+      : displayConversations,
+    [displayConversations, searchQuery]
+  )
 
   if (selectedConversation) {
     return (

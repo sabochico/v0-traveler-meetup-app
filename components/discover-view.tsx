@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -112,32 +112,46 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const { profiles, isLoading: profilesLoading } = useNearbyProfiles()
   const { meetups, isLoading: meetupsLoading } = useMeetups()
 
-  const displayProfiles = profiles.length > 0 ? profiles : MOCK_PROFILES
+  const displayProfiles = useMemo(
+    () => profiles.length > 0 ? profiles : MOCK_PROFILES,
+    [profiles]
+  )
   const isMockData = profiles.length === 0
 
   // Sort meetups newest first
-  const sortedMeetups = [...meetups].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  const sortedMeetups = useMemo(
+    () => [...meetups].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    ),
+    [meetups]
   )
 
   // Build unique city list from real meetups
-  const cities = Array.from(
-    new Set(sortedMeetups.map((m) => m.city).filter(Boolean) as string[])
-  ).sort()
+  const cities = useMemo(
+    () => Array.from(
+      new Set(sortedMeetups.map((m) => m.city).filter(Boolean) as string[])
+    ).sort(),
+    [sortedMeetups]
+  )
 
-  const filteredMeetups =
-    cityFilter === "all"
+  const filteredMeetups = useMemo(
+    () => cityFilter === "all"
       ? sortedMeetups
-      : sortedMeetups.filter((m) => m.city?.toLowerCase() === cityFilter.toLowerCase())
+      : sortedMeetups.filter((m) => m.city?.toLowerCase() === cityFilter.toLowerCase()),
+    [cityFilter, sortedMeetups]
+  )
 
-  const filteredProfiles = searchQuery
-    ? displayProfiles.filter(
+  const filteredProfiles = useMemo(
+    () => searchQuery
+      ? displayProfiles.filter(
         (p) =>
           p.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.interests.some((i) => i.toLowerCase().includes(searchQuery.toLowerCase())) ||
           p.languages.some((l) => l.toLowerCase().includes(searchQuery.toLowerCase()))
       )
-    : displayProfiles
+      : displayProfiles,
+    [displayProfiles, searchQuery]
+  )
 
   return (
     <div className="min-h-screen">
