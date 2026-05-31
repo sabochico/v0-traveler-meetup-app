@@ -89,6 +89,32 @@ const MOCK_CONVERSATIONS = [
   },
 ]
 
+function ConversationSkeleton() {
+  return (
+    <div className="max-w-lg mx-auto divide-y divide-border/50">
+      {[0, 1, 2].map((item) => (
+        <div key={item} className="flex items-center gap-4 p-4 animate-pulse">
+          <div className="w-14 h-14 rounded-full bg-secondary" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-28 rounded bg-secondary" />
+            <div className="h-3 w-44 rounded bg-secondary/70" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MessageSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-10 w-2/3 rounded-2xl bg-secondary" />
+      <div className="ml-auto h-10 w-1/2 rounded-2xl bg-secondary" />
+      <div className="h-10 w-3/5 rounded-2xl bg-secondary" />
+    </div>
+  )
+}
+
 interface MessagesViewProps {
   initialConversationId?: string
 }
@@ -157,16 +183,16 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
 
       {/* Conversations */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </div>
+        <ConversationSkeleton />
       ) : (
         <div className="max-w-lg mx-auto divide-y divide-border/50">
           {filteredConversations.length === 0 ? (
             <div className="text-center py-12 px-4">
-              <p className="text-muted-foreground">No conversations yet</p>
+              <p className="text-muted-foreground">
+                {searchQuery ? "No conversations found" : "No conversations yet"}
+              </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Say hi to someone on the Discover page to start chatting
+                {searchQuery ? "Try a different name." : "Say hi to someone on Discover to start chatting."}
               </p>
             </div>
           ) : (
@@ -445,13 +471,21 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
           </div>
 
           {isLoading && !isMock ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
+            <MessageSkeleton />
           ) : localMessages.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No messages yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Send a message to start the conversation</p>
+            <div className="text-center py-12 px-4 rounded-3xl border border-border/60 bg-card/50">
+              <p className="text-foreground font-medium">Start the conversation</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {starter ? `Ask about ${starter} or suggest something nearby.` : "Ask what they would like to do today."}
+              </p>
+              {starter && (
+                <button
+                  onClick={() => setNewMessage(`Hey! I saw you're into ${starter}. Want to do something today?`)}
+                  className="mt-4 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+                >
+                  Use starter
+                </button>
+              )}
             </div>
           ) : (
             localMessages.map((message) => {
