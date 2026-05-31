@@ -2,6 +2,7 @@ import useSWR, { mutate } from "swr"
 import { createClient } from "@/lib/supabase/client"
 
 const supabase = createClient()
+const SWR_OPTIONS = { keepPreviousData: true }
 
 // Fetch user's saved meetup IDs
 export function useSavedMeetups() {
@@ -16,7 +17,7 @@ export function useSavedMeetups() {
 
     if (error) throw error
     return data?.map(s => s.meetup_id) || []
-  })
+  }, SWR_OPTIONS)
 
   return {
     savedMeetupIds: data || [],
@@ -122,7 +123,7 @@ export function useSavedMeetupsWithDetails() {
         },
       }
     }).filter(Boolean) || []
-  })
+  }, SWR_OPTIONS)
 
   return {
     savedMeetups: data || [],
@@ -188,7 +189,7 @@ export function useUserMeetups() {
 
     if (error) throw error
     return data || []
-  })
+  }, SWR_OPTIONS)
 
   return {
     joinedMeetups: data || [],

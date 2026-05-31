@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Profile, MoodStatus } from "@/lib/types"
 
 const ONLINE_WINDOW_MS = 2 * 60 * 1000
+const SWR_OPTIONS = { keepPreviousData: true }
 
 const isRecentlySeen = (lastSeenAt?: string | null) => {
   if (!lastSeenAt) return false
@@ -58,7 +59,7 @@ const fetcher = async (): Promise<Profile | null> => {
 }
 
 export function useProfile() {
-  const { data, error, isLoading, mutate } = useSWR("profile", fetcher)
+  const { data, error, isLoading, mutate } = useSWR("profile", fetcher, SWR_OPTIONS)
 
   useEffect(() => {
     const supabase = createClient()
@@ -169,7 +170,8 @@ export function usePublicProfile(userId: string | null) {
         ...profile,
         is_online: profile.is_online || isRecentlySeen(profile.last_seen_at),
       } as Profile
-    }
+    },
+    SWR_OPTIONS
   )
 
   return { profile: data ?? null, isLoading, error }
@@ -199,7 +201,7 @@ const nearbyFetcher = async (): Promise<Profile[]> => {
 }
 
 export function useNearbyProfiles() {
-  const { data, error, isLoading, mutate } = useSWR("nearby-profiles", nearbyFetcher)
+  const { data, error, isLoading, mutate } = useSWR("nearby-profiles", nearbyFetcher, SWR_OPTIONS)
 
   return {
     profiles: data ?? [],

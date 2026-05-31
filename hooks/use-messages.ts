@@ -84,6 +84,7 @@ export interface Message {
 
 const EMPTY_CONVERSATIONS: Conversation[] = []
 const EMPTY_MESSAGES: Message[] = []
+const SWR_OPTIONS = { keepPreviousData: true }
 
 const conversationsFetcher = async (): Promise<Conversation[]> => {
   const { data: { user } } = await supabase.auth.getUser()
@@ -166,7 +167,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 }
 
 export function useConversations() {
-  const { data, error, isLoading, mutate } = useSWR("conversations", conversationsFetcher)
+  const { data, error, isLoading, mutate } = useSWR("conversations", conversationsFetcher, SWR_OPTIONS)
 
   useEffect(() => {
     return subscribeToConversationMessages(() => {

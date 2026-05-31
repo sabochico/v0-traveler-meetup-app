@@ -4,6 +4,8 @@ import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { MeetupWithCreator } from "@/lib/types"
 
+const SWR_OPTIONS = { keepPreviousData: true }
+
 const fetcher = async (): Promise<MeetupWithCreator[]> => {
   const supabase = createClient()
   
@@ -42,7 +44,7 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
 }
 
 export function useMeetups() {
-  const { data, error, isLoading, mutate } = useSWR("meetups", fetcher)
+  const { data, error, isLoading, mutate } = useSWR("meetups", fetcher, SWR_OPTIONS)
 
   return {
     meetups: data ?? [],
