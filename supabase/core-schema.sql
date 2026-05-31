@@ -202,6 +202,63 @@ create policy "Users can unsave own meetups"
   on public.saved_meetups for delete
   using (auth.uid() = user_id);
 
+-- Safety: user blocks
+create table if not exists public.user_blocks (
+  id          uuid        primary key default gen_random_uuid(),
+  blocker_id uuid        not null references public.profiles(id) on delete cascade,
+  blocked_id uuid        not null references public.profiles(id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  constraint user_blocks_no_self_block check (blocker_id <> blocked_id),
+  constraint user_blocks_unique unique (blocker_id, blocked_id)
+);
+
+create index if not exists user_blocks_blocker_idx
+  on public.user_blocks (blocker_id, created_at desc);
+
+create index if not exists user_blocks_blocked_idx
+  on public.user_blocks (blocked_id);
+
+alter table public.user_blocks enable row level security;
+
+drop policy if exists "Users can read own blocks" on public.user_blocks;
+create policy "Users can read own blocks"
+  on public.user_blocks for select
+  using (auth.uid() = blocker_id);
+
+drop policy if exists "Users can block as themselves" on public.user_blocks;
+create policy "Users can block as themselves"
+  on public.user_blocks for insert
+  with check (auth.uid() = blocker_id);
+
+drop policy if exists "Users can delete own blocks" on public.user_blocks;
+create policy "Users can delete own blocks"
+  on public.user_blocks for delete
+  using (auth.uid() = blocker_id);
+
+-- Safety: user reports
+create table if not exists public.user_reports (
+  id          uuid        primary key default gen_random_uuid(),
+  reporter_id uuid       not null references public.profiles(id) on delete cascade,
+  reported_id uuid       not null references public.profiles(id) on delete cascade,
+  reason      text       not null,
+  details     text,
+  created_at  timestamptz not null default now(),
+  constraint user_reports_no_self_report check (reporter_id <> reported_id)
+);
+
+create index if not exists user_reports_reporter_idx
+  on public.user_reports (reporter_id, created_at desc);
+
+create index if not exists user_reports_reported_idx
+  on public.user_reports (reported_id, created_at desc);
+
+alter table public.user_reports enable row level security;
+
+drop policy if exists "Users can report as themselves" on public.user_reports;
+create policy "Users can report as themselves"
+  on public.user_reports for insert
+  with check (auth.uid() = reporter_id);
+
 -- Conversations
 create table if not exists public.conversations (
   id          uuid        primary key default gen_random_uuid(),

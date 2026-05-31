@@ -10,6 +10,7 @@ import { MeetupCard } from "./meetup-card"
 import { useNearbyProfiles } from "@/hooks/use-profile"
 import { useMeetups } from "@/hooks/use-meetups"
 import { useCreateConversation } from "@/hooks/use-messages"
+import { useBlockedUsers } from "@/hooks/use-user-safety"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Profile, MoodStatus } from "@/lib/types"
@@ -113,19 +114,24 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const [cityFilter, setCityFilter] = useState("all")
   const { profiles, isLoading: profilesLoading } = useNearbyProfiles()
   const { meetups, isLoading: meetupsLoading } = useMeetups()
+  const { blockedUserIdSet } = useBlockedUsers()
 
   const displayProfiles = useMemo(
-    () => profiles.length > 0 ? profiles : SHOW_MOCK_DATA ? MOCK_PROFILES : [],
-    [profiles]
+    () => profiles.length > 0
+      ? profiles.filter((profile) => !blockedUserIdSet.has(profile.id))
+      : SHOW_MOCK_DATA ? MOCK_PROFILES : [],
+    [blockedUserIdSet, profiles]
   )
   const isMockData = SHOW_MOCK_DATA && profiles.length === 0
 
   // Sort meetups newest first
   const sortedMeetups = useMemo(
-    () => [...meetups].sort(
+    () => meetups
+      .filter((meetup) => !blockedUserIdSet.has(meetup.creator_id))
+      .sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     ),
-    [meetups]
+    [blockedUserIdSet, meetups]
   )
 
   // Build unique city list from real meetups

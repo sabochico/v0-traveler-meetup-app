@@ -17,11 +17,16 @@ import {
   Users,
   Clock3,
   ShieldCheck,
+  Flag,
+  Ban,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { usePublicProfile } from "@/hooks/use-profile"
 import { useCreateConversation } from "@/hooks/use-messages"
+import { useAuth } from "@/hooks/use-auth"
+import { useToast } from "@/hooks/use-toast"
+import { useUserSafety } from "@/hooks/use-user-safety"
 import { cn } from "@/lib/utils"
 import { getProfileCompletionScore } from "@/lib/profile-completion"
 
@@ -69,6 +74,15 @@ const MOOD_LABELS: Record<string, string> = {
   homesick: "Homesick",
 }
 
+const REPORT_REASONS = [
+  "Harassment or bullying",
+  "Spam or scam",
+  "Fake profile",
+  "Unsafe meetup behavior",
+  "Inappropriate content",
+  "Other",
+]
+
 export default function PublicProfilePage({
   params,
 }: {
@@ -77,14 +91,22 @@ export default function PublicProfilePage({
   const { userId } = use(params)
   const router = useRouter()
   const { profile, isLoading } = usePublicProfile(userId)
+  const { user, isAuthenticated } = useAuth()
   const { startConversation } = useCreateConversation()
+  const { blockUser, reportUser } = useUserSafety()
+  const { toast } = useToast()
   const [isStartingChat, setIsStartingChat] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportReason, setReportReason] = useState(REPORT_REASONS[0])
+  const [reportDetails, setReportDetails] = useState("")
+  const [safetyLoading, setSafetyLoading] = useState(false)
 
   const isOnline = Boolean(profile?.is_online) || isRecentlySeen(profile?.last_seen_at)
   const displayName = profile?.display_name ?? "Anonymous"
   const initial = displayName[0]?.toUpperCase() ?? "U"
   const instagramUsername = profile?.instagram_handle?.replace(/^@/, "")
+  const canUseSafetyActions = isAuthenticated && Boolean(user) && user?.id !== profile?.id
 
   const location =
     [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
@@ -134,6 +156,45 @@ export default function PublicProfilePage({
       setChatError(error instanceof Error ? error.message : "Could not start chat")
     } finally {
       setIsStartingChat(false)
+    }
+  }
+
+  const handleBlockUser = async () => {
+    if (!profile?.id || !confirm("Block this user? You will no longer see them in Drift.")) return
+
+    try {
+      setSafetyLoading(true)
+      await blockUser(profile.id)
+      toast({ title: "User blocked", description: "They will no longer appear in your Drift experience." })
+      router.back()
+    } catch (error) {
+      toast({
+        title: "Could not block user",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSafetyLoading(false)
+    }
+  }
+
+  const handleReportUser = async () => {
+    if (!profile?.id) return
+
+    try {
+      setSafetyLoading(true)
+      await reportUser(profile.id, reportReason, reportDetails)
+      setShowReportModal(false)
+      setReportDetails("")
+      toast({ title: "Report sent", description: "Thanks for helping keep Drift safe." })
+    } catch (error) {
+      toast({
+        title: "Could not send report",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setSafetyLoading(false)
     }
   }
 
@@ -240,6 +301,27 @@ export default function PublicProfilePage({
 
             {chatError && (
               <p className="text-xs text-red-400 mt-3 text-center">{chatError}</p>
+            )}
+
+            {canUseSafetyActions && (
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  disabled={safetyLoading}
+                  className="h-10 rounded-2xl border border-border/60 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-60"
+                >
+                  <Flag className="w-3.5 h-3.5 inline mr-1" />
+                  Report
+                </button>
+                <button
+                  onClick={handleBlockUser}
+                  disabled={safetyLoading}
+                  className="h-10 rounded-2xl border border-destructive/30 text-xs font-medium text-destructive disabled:opacity-60"
+                >
+                  <Ban className="w-3.5 h-3.5 inline mr-1" />
+                  Block
+                </button>
+              </div>
             )}
           </section>
 
@@ -354,6 +436,64 @@ export default function PublicProfilePage({
             </section>
           )}
         </main>
+      )}
+
+      {showReportModal && profile && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <button
+            aria-label="Close report modal"
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setShowReportModal(false)}
+          />
+          <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card border border-border p-5 space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">Report {displayName}</h2>
+              <p className="text-xs text-muted-foreground mt-1">Reports are private and help keep Drift safe.</p>
+            </div>
+
+            <div className="space-y-2">
+              {REPORT_REASONS.map((reason) => (
+                <button
+                  key={reason}
+                  onClick={() => setReportReason(reason)}
+                  className={cn(
+                    "w-full text-left rounded-2xl border px-3 py-2 text-sm",
+                    reportReason === reason
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/60 text-foreground"
+                  )}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={reportDetails}
+              onChange={(event) => setReportDetails(event.target.value)}
+              placeholder="Optional details"
+              rows={3}
+              className="w-full rounded-2xl bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              maxLength={500}
+            />
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="h-11 rounded-2xl bg-secondary text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReportUser}
+                disabled={safetyLoading}
+                className="h-11 rounded-2xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+              >
+                {safetyLoading ? "Sending..." : "Send report"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation } from "@/hooks/use-messages"
+import { useBlockedUsers } from "@/hooks/use-user-safety"
 import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
 
 // Profile completion
@@ -946,6 +947,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const { updateMood } = useUpdateProfile()
   const { profiles } = useNearbyProfiles()
   const { isAuthenticated } = useAuth()
+  const { blockedUserIdSet } = useBlockedUsers()
 
   useEffect(() => {
     if (sessionStorage.getItem("drift-profile-banner-dismissed") === "1") {
@@ -966,7 +968,9 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
     if (isAuthenticated) await updateMood(mood)
   }
 
-  const displayMeetups = meetups.length > 0 ? meetups : SHOW_MOCK_DATA ? MOCK_MEETUPS : []
+  const displayMeetups = meetups.length > 0
+    ? meetups.filter((meetup) => !blockedUserIdSet.has(meetup.creator_id))
+    : SHOW_MOCK_DATA ? MOCK_MEETUPS : []
   const visibleMeetups =
     isAuthenticated && profile
       ? displayMeetups.filter((m) => m.creator_id !== profile.id)
@@ -1073,7 +1077,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
           <TodayHome
             meetups={filteredMeetups}
             savedMeetups={savedMeetups as MeetupWithCreator[]}
-            profiles={profiles}
+            profiles={profiles.filter((person) => !blockedUserIdSet.has(person.id))}
             isLoading={isLoading}
             savedLoading={savedLoading}
             onNavigateToMessages={onNavigateToMessages}

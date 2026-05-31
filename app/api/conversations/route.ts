@@ -84,6 +84,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
+    const { data: existingBlock } = await admin
+      .from("user_blocks")
+      .select("id")
+      .or(`and(blocker_id.eq.${user.id},blocked_id.eq.${otherUserId}),and(blocker_id.eq.${otherUserId},blocked_id.eq.${user.id})`)
+      .maybeSingle()
+
+    if (existingBlock) {
+      return NextResponse.json({ error: "You cannot message this user" }, { status: 403 })
+    }
+
     // Check if a conversation already exists between the two users
     const { data: myParticipations } = await admin
       .from("conversation_participants")

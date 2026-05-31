@@ -9,6 +9,7 @@ import { useConversations, useMessages, useSendMessage, Conversation } from "@/h
 import { formatDistanceToNow } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { useBlockedUsers } from "@/hooks/use-user-safety"
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
 
@@ -125,6 +126,7 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const { conversations, isLoading } = useConversations()
+  const { blockedUserIdSet } = useBlockedUsers()
   const hasAutoOpened = useRef(false)
 
   // Auto-open a conversation once when navigated here from a meetup join.
@@ -140,8 +142,10 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
 
   // Use mock data if no real conversations
   const displayConversations = useMemo(
-    () => conversations.length > 0 ? conversations : SHOW_MOCK_DATA ? MOCK_CONVERSATIONS : [],
-    [conversations]
+    () => conversations.length > 0
+      ? conversations.filter((conversation) => !blockedUserIdSet.has(conversation.other_user.id))
+      : SHOW_MOCK_DATA ? MOCK_CONVERSATIONS : [],
+    [blockedUserIdSet, conversations]
   )
   const isMockData = SHOW_MOCK_DATA && conversations.length === 0
 
