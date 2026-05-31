@@ -29,6 +29,7 @@ import { LocationSelector } from "@/components/location-selector"
 import { NotificationsSettings } from "@/components/notifications-settings"
 import { AppearanceSettings } from "@/components/appearance-settings"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
 import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
 
 export function ProfileView() {
@@ -41,11 +42,58 @@ export function ProfileView() {
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
   const [showAppearanceModal, setShowAppearanceModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const completionScore = getProfileCompletionScore(profile)
 
   const handleSignOut = async () => {
     setSigningOut(true)
     await signOut()
+  }
+
+  const closeDeleteModal = () => {
+    if (deletingAccount) return
+    setShowDeleteModal(false)
+    setDeleteConfirmText("")
+    setDeleteError(null)
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") return
+
+    setDeletingAccount(true)
+    setDeleteError(null)
+
+    try {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        throw new Error("Please sign in again to delete your account.")
+      }
+
+      const response = await fetch("/api/account", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Could not delete account")
+      }
+
+      await supabase.auth.signOut()
+      window.location.href = "/auth/login"
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Could not delete account")
+      setDeletingAccount(false)
+    }
   }
 
   if (isLoading) {
@@ -273,17 +321,17 @@ export function ProfileView() {
             <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
           </a>
 
-          <a
-            href="mailto:aweandco@gmail.com?subject=Drift%20account%20deletion%20request"
+          <button
+            onClick={() => setShowDeleteModal(true)}
             className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-destructive/30 transition-colors"
           >
             <Trash2 className="w-5 h-5 text-destructive" />
             <div>
-              <span className="block text-sm font-medium text-foreground">Request account deletion</span>
-              <span className="block text-xs text-muted-foreground">Email support to delete your account</span>
+              <span className="block text-sm font-medium text-foreground">Delete account</span>
+              <span className="block text-xs text-muted-foreground">Permanently remove your Drift account</span>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
-          </a>
+          </button>
 
           <button
             onClick={handleSignOut}
@@ -335,6 +383,64 @@ export function ProfileView() {
         isOpen={showAppearanceModal}
         onClose={() => setShowAppearanceModal(false)}
       />
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <button
+            aria-label="Close delete account modal"
+            className="absolute inset-0 bg-black/70"
+            onClick={closeDeleteModal}
+          />
+          <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card border border-border p-5 space-y-4 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-destructive" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Delete account?</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This is permanent. Your profile, meetups, saved plans, messages, reports, and account data will be deleted where Drift stores them.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-3">
+              <p className="text-sm text-foreground">
+                Type <span className="font-semibold">DELETE</span> to confirm.
+              </p>
+            </div>
+
+            <input
+              value={deleteConfirmText}
+              onChange={(event) => setDeleteConfirmText(event.target.value)}
+              disabled={deletingAccount}
+              placeholder="DELETE"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-destructive"
+            />
+
+            {deleteError && (
+              <p className="text-sm text-destructive">{deleteError}</p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={closeDeleteModal}
+                disabled={deletingAccount}
+                className="flex-1 rounded-xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== "DELETE" || deletingAccount}
+                className="flex-1 rounded-xl bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground disabled:opacity-50"
+              >
+                {deletingAccount ? "Deleting..." : "Delete forever"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
