@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { usePublicProfile } from "@/hooks/use-profile"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { cn } from "@/lib/utils"
+import { getProfileCompletionScore } from "@/lib/profile-completion"
 
 const ONLINE_WINDOW_MS = 2 * 60 * 1000
 
@@ -91,15 +92,7 @@ export default function PublicProfilePage({
     "Location not shared"
 
   const hasLocation = location !== "Location not shared"
-  const profileDetailsCount = profile
-    ? [
-        profile.avatar_url,
-        profile.bio,
-        hasLocation,
-        (profile.languages?.length ?? 0) > 0,
-        (profile.interests?.length ?? 0) > 0,
-      ].filter(Boolean).length
-    : 0
+  const completionScore = getProfileCompletionScore(profile)
   const trustSignals = profile
     ? [
         {
@@ -110,9 +103,9 @@ export default function PublicProfilePage({
         },
         {
           label: "Profile details",
-          value: `${profileDetailsCount}/5 added`,
+          value: `${completionScore}% complete`,
           icon: Users,
-          active: profileDetailsCount >= 3,
+          active: completionScore >= 80,
         },
         {
           label: "Member since",
@@ -301,50 +294,42 @@ export default function PublicProfilePage({
             </div>
           </section>
 
-          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+          {profile.bio && <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Heart className="w-4 h-4 text-primary" />
               About
             </h3>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {profile.bio || "No bio yet."}
+              {profile.bio}
             </p>
-          </section>
+          </section>}
 
-          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+          {(profile.languages?.length ?? 0) > 0 && <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Languages className="w-4 h-4 text-primary" />
               Languages
             </h3>
 
-            {(profile.languages?.length ?? 0) > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.languages.map((lang) => (
-                  <Badge key={lang} variant="secondary">
-                    {lang}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No languages added yet.</p>
-            )}
-          </section>
+            <div className="flex flex-wrap gap-2">
+              {profile.languages.map((lang) => (
+                <Badge key={lang} variant="secondary">
+                  {lang}
+                </Badge>
+              ))}
+            </div>
+          </section>}
 
-          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
+          {(profile.interests?.length ?? 0) > 0 && <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
             <h3 className="text-sm font-semibold mb-3">Interests</h3>
 
-            {(profile.interests?.length ?? 0) > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {profile.interests.map((interest) => (
-                  <Badge key={interest} variant="outline" className="border-border text-foreground">
-                    {interest}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No interests added yet.</p>
-            )}
-          </section>
+            <div className="flex flex-wrap gap-2">
+              {profile.interests.map((interest) => (
+                <Badge key={interest} variant="outline" className="border-border text-foreground">
+                  {interest}
+                </Badge>
+              ))}
+            </div>
+          </section>}
 
           <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
             <h3 className="text-sm font-semibold mb-3">Shared vibe</h3>

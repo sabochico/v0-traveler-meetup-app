@@ -13,6 +13,7 @@ import { useCreateConversation } from "@/hooks/use-messages"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Profile, MoodStatus } from "@/lib/types"
+import { getProfileCompletionScore } from "@/lib/profile-completion"
 
 const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   social: { color: "bg-emerald-500", label: "Feeling social" },
@@ -293,6 +294,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
 
   const interests = person.interests ?? []
   const languages = person.languages ?? []
+  const completionScore = getProfileCompletionScore(person)
   const profileHref = isMock ? "#" : `/profile/${person.id}`
 
   const handleSayHi = async () => {
@@ -370,7 +372,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
               </div>
 
               <Badge variant="secondary" className="text-xs shrink-0">
-                {person.travel_mode ? "Traveler" : "Local"}
+                {completionScore}%
               </Badge>
             </div>
 
@@ -381,46 +383,40 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground mt-4 line-clamp-2">
-          {person.bio ?? "No bio yet."}
-        </p>
+        {person.bio && (
+          <p className="text-sm text-muted-foreground mt-4 line-clamp-2">
+            {person.bio}
+          </p>
+        )}
 
         <div className="mt-4 space-y-3">
-          <div>
+          {interests.length > 0 && <div>
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">
               Interests
             </p>
 
-            {interests.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {interests.slice(0, 3).map((interest) => (
-                  <Badge key={interest} variant="outline" className="text-xs">
-                    {interest}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No interests added</p>
-            )}
-          </div>
+            <div className="flex flex-wrap gap-1.5">
+              {interests.slice(0, 3).map((interest) => (
+                <Badge key={interest} variant="outline" className="text-xs">
+                  {interest}
+                </Badge>
+              ))}
+            </div>
+          </div>}
 
-          <div>
+          {languages.length > 0 && <div>
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">
               Languages
             </p>
 
-            {languages.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {languages.slice(0, 3).map((lang) => (
-                  <Badge key={lang} variant="secondary" className="text-xs">
-                    {lang}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No languages added</p>
-            )}
-          </div>
+            <div className="flex flex-wrap gap-1.5">
+              {languages.slice(0, 3).map((lang) => (
+                <Badge key={lang} variant="secondary" className="text-xs">
+                  {lang}
+                </Badge>
+              ))}
+            </div>
+          </div>}
         </div>
       </Link>
 

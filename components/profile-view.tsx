@@ -27,6 +27,7 @@ import { LocationSelector } from "@/components/location-selector"
 import { NotificationsSettings } from "@/components/notifications-settings"
 import { AppearanceSettings } from "@/components/appearance-settings"
 import { cn } from "@/lib/utils"
+import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
 
 export function ProfileView() {
   const { profile, isLoading } = useProfile()
@@ -38,6 +39,7 @@ export function ProfileView() {
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
   const [showAppearanceModal, setShowAppearanceModal] = useState(false)
+  const completionScore = getProfileCompletionScore(profile)
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -105,6 +107,24 @@ export function ProfileView() {
           <p className="text-foreground leading-relaxed">
             {profile?.bio ?? "No bio yet. Tell others about yourself!"}
           </p>
+        </div>
+
+        <div className="mb-6 rounded-2xl border border-primary/25 bg-card/70 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Profile completion</span>
+            <span className="text-sm font-semibold text-primary">{completionScore}%</span>
+          </div>
+          <div className="h-2 rounded-full bg-secondary overflow-hidden">
+            <div className="h-full drift-gradient" style={{ width: `${completionScore}%` }} />
+          </div>
+          {completionScore < 100 && (
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="mt-3 text-xs font-medium text-primary"
+            >
+              {getNextProfileRequirement(profile)}
+            </button>
+          )}
         </div>
 
         {/* Location Info */}

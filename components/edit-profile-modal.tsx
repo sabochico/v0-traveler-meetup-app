@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Profile } from "@/lib/types"
+import { getNextProfileRequirement, isProfileComplete, MIN_BIO_LENGTH, MIN_INTERESTS } from "@/lib/profile-completion"
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -39,9 +40,10 @@ interface EditProfileModalProps {
   isOpen: boolean
   onClose: () => void
   initialTab?: "profile" | "languages" | "interests"
+  setupMode?: boolean
 }
 
-export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profile" }: EditProfileModalProps) {
+export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profile", setupMode = false }: EditProfileModalProps) {
   const [displayName, setDisplayName] = useState(profile.display_name ?? "")
   const [bio, setBio] = useState(profile.bio ?? "")
   const [currentCity, setCurrentCity] = useState(profile.current_city ?? "")
@@ -49,12 +51,25 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? [])
   const [interests, setInterests] = useState<string[]>(profile.interests ?? [])
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url)
+  const [instagramHandle, setInstagramHandle] = useState(profile.instagram_handle ?? "")
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<"profile" | "languages" | "interests">("profile")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { updateProfile } = useUpdateProfile()
   const { toast } = useToast()
+  const draftProfile = {
+    ...profile,
+    display_name: displayName,
+    bio,
+    current_city: currentCity,
+    current_country: currentCountry,
+    languages,
+    interests,
+    avatar_url: avatarUrl,
+    instagram_handle: instagramHandle,
+  }
+  const canSave = !setupMode || isProfileComplete(draftProfile)
 
   useEffect(() => {
     if (isOpen) setActiveTab(initialTab)
@@ -150,6 +165,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
   }
 
   const handleSave = async () => {
+    if (!canSave) return
     setSaving(true)
     try {
       await updateProfile({
@@ -160,6 +176,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         languages,
         interests,
         avatar_url: avatarUrl,
+        instagram_handle: instagramHandle.trim().replace(/^@/, "") || null,
       })
       onClose()
     } catch (error) {
@@ -177,20 +194,27 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={setupMode ? undefined : onClose} />
 
       {/* Modal */}
       <div className="relative w-full max-w-lg bg-card rounded-t-3xl sm:rounded-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] overflow-hidden flex flex-col min-h-0">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
-          <h2 className="text-lg font-semibold">Edit Profile</h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-secondary transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div>
+            <h2 className="text-lg font-semibold">{setupMode ? "Complete your profile" : "Edit Profile"}</h2>
+            {setupMode && (
+              <p className="text-xs text-muted-foreground mt-1">{getNextProfileRequirement(draftProfile)}</p>
+            )}
+          </div>
+          {!setupMode && (
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -278,6 +302,9 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                   maxLength={200}
                 />
                 <p className="text-xs text-muted-foreground text-right">{bio.length}/200</p>
+                {setupMode && bio.trim().length < MIN_BIO_LENGTH && (
+                  <p className="text-xs text-primary">Minimum {MIN_BIO_LENGTH} characters.</p>
+                )}
               </div>
 
               {/* Location */}
@@ -298,6 +325,19 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                     onChange={(e) => setCurrentCountry(e.target.value)}
                     placeholder="Japan"
                     className="bg-secondary border-0"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Instagram</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+                  <Input
+                    value={instagramHandle}
+                    onChange={(e) => setInstagramHandle(e.target.value)}
+                    placeholder="yourusername"
+                    className="bg-secondary border-0 pl-8"
                   />
                 </div>
               </div>
@@ -353,7 +393,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
           {activeTab === "interests" && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Select your interests to connect with like-minded travelers.
+                Select at least {MIN_INTERESTS} interests to connect with like-minded travelers.
               </p>
 
               {/* Selected interests */}
@@ -401,7 +441,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         <div className="shrink-0 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-border/50 bg-card">
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !canSave}
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:glow-amber transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? (
@@ -412,7 +452,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
             ) : (
               <>
                 <Check className="w-4 h-4" />
-                Save Changes
+                {setupMode ? "Complete Profile" : "Save Changes"}
               </>
             )}
           </button>

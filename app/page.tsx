@@ -11,10 +11,14 @@ import { ProfileView } from "@/components/profile-view"
 import { AuthPrompt } from "@/components/auth-prompt"
 import { NotificationsBell } from "@/components/notifications-bell"
 import { DriftLogo } from "@/components/drift-logo"
+import { EditProfileModal } from "@/components/edit-profile-modal"
+import { useProfile } from "@/hooks/use-profile"
+import { isProfileComplete } from "@/lib/profile-completion"
 import { Loader2 } from "lucide-react"
 
 export default function Home() {
-  const { user, isLoading, isAuthenticated } = useAuth()
+  const { isLoading, isAuthenticated } = useAuth()
+  const { profile, isLoading: profileLoading } = useProfile()
   const [activeTab, setActiveTab] = useState<"feed" | "discover" | "create" | "messages" | "profile">("feed")
   const [showCreate, setShowCreate] = useState(false)
   const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
@@ -36,7 +40,7 @@ export default function Home() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && profileLoading)) {
     return (
       <main className="min-h-dvh drift-gradient flex items-center justify-center overflow-x-hidden">
         <div className="text-center text-white">
@@ -45,6 +49,19 @@ export default function Home() {
           <p className="mt-2 text-sm text-white/85">Find your people.</p>
           <Loader2 className="w-6 h-6 animate-spin text-white/80 mx-auto mt-8" />
         </div>
+      </main>
+    )
+  }
+
+  if (isAuthenticated && profile && !isProfileComplete(profile)) {
+    return (
+      <main className="min-h-dvh bg-background film-grain overflow-x-hidden">
+        <EditProfileModal
+          profile={profile}
+          isOpen
+          onClose={() => {}}
+          setupMode
+        />
       </main>
     )
   }
