@@ -15,6 +15,7 @@ import { EditProfileModal } from "@/components/edit-profile-modal"
 import { useProfile } from "@/hooks/use-profile"
 import { isProfileComplete } from "@/lib/profile-completion"
 import { Loader2 } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
 
 export default function Home() {
   const { isLoading, isAuthenticated } = useAuth()
@@ -76,18 +77,27 @@ export default function Home() {
       )}
 
       {/* Main Content Area */}
-      <div className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
-        {activeTab === "feed" && <FeedView onNavigateToMessages={handleNavigateToMessages} />}
-        {activeTab === "discover" && <DiscoverView onNavigateToMessages={handleNavigateToMessages} />}
-        {activeTab === "messages" && (
-          isAuthenticated
-            ? <MessagesView initialConversationId={pendingConversationId} />
-            : <AuthPrompt message="Sign in to see your messages" />
-        )}
-        {activeTab === "profile" && (
-          isAuthenticated ? <ProfileView /> : <AuthPrompt message="Sign in to view your profile" />
-        )}
-      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={activeTab}
+          className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+        >
+          {activeTab === "feed" && <FeedView onNavigateToMessages={handleNavigateToMessages} />}
+          {activeTab === "discover" && <DiscoverView onNavigateToMessages={handleNavigateToMessages} />}
+          {activeTab === "messages" && (
+            isAuthenticated
+              ? <MessagesView initialConversationId={pendingConversationId} />
+              : <AuthPrompt message="Sign in to see your messages" />
+          )}
+          {activeTab === "profile" && (
+            isAuthenticated ? <ProfileView /> : <AuthPrompt message="Sign in to view your profile" />
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       {/* Bottom Navigation */}
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
