@@ -173,6 +173,8 @@ const CONFETTI_COLORS = [
   "#8b5cf6","#ef4444","#06b6d4","#f97316",
 ]
 
+const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+
 const MOCK_MEETUPS: MeetupWithCreator[] = [
   {
     id: "1", creator_id: "mock-1",
@@ -964,7 +966,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
     if (isAuthenticated) await updateMood(mood)
   }
 
-  const displayMeetups = meetups.length > 0 ? meetups : MOCK_MEETUPS
+  const displayMeetups = meetups.length > 0 ? meetups : SHOW_MOCK_DATA ? MOCK_MEETUPS : []
   const visibleMeetups =
     isAuthenticated && profile
       ? displayMeetups.filter((m) => m.creator_id !== profile.id)

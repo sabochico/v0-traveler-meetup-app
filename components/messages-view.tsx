@@ -10,7 +10,9 @@ import { formatDistanceToNow } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
-// Mock conversations shown when user has no real conversations yet
+const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+
+// Mock conversations shown in development when user has no real conversations yet.
 const MOCK_CONVERSATIONS = [
   {
     id: "mock-1",
@@ -138,9 +140,10 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
 
   // Use mock data if no real conversations
   const displayConversations = useMemo(
-    () => conversations.length > 0 ? conversations : MOCK_CONVERSATIONS,
+    () => conversations.length > 0 ? conversations : SHOW_MOCK_DATA ? MOCK_CONVERSATIONS : [],
     [conversations]
   )
+  const isMockData = SHOW_MOCK_DATA && conversations.length === 0
 
   const filteredConversations = useMemo(
     () => searchQuery
@@ -156,7 +159,7 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
       <ChatView
         conversation={selectedConversation}
         onBack={() => setSelectedConversation(null)}
-        isMock={conversations.length === 0}
+        isMock={isMockData}
       />
     )
   }

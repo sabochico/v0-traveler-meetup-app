@@ -60,12 +60,7 @@ export function ProfileView() {
     <div className="min-h-screen pb-8">
       {/* Cover Photo */}
       <div className="relative h-48 overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&h=400&fit=crop"
-          alt="Cover"
-          className="w-full h-full object-cover"
-          crossOrigin="anonymous"
-        />
+        <div className="w-full h-full drift-gradient" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
 
         {/* Settings Button */}

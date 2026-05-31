@@ -22,6 +22,8 @@ const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   homesick: { color: "bg-purple-500", label: "Homesick" },
 }
 
+const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+
 const MOCK_PROFILES: Profile[] = [
   {
     id: "mock-1",
@@ -113,10 +115,10 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const { meetups, isLoading: meetupsLoading } = useMeetups()
 
   const displayProfiles = useMemo(
-    () => profiles.length > 0 ? profiles : MOCK_PROFILES,
+    () => profiles.length > 0 ? profiles : SHOW_MOCK_DATA ? MOCK_PROFILES : [],
     [profiles]
   )
-  const isMockData = profiles.length === 0
+  const isMockData = SHOW_MOCK_DATA && profiles.length === 0
 
   // Sort meetups newest first
   const sortedMeetups = useMemo(
@@ -274,9 +276,20 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
         </div>
       ) : (
         <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-          {filteredProfiles.map((person) => (
-            <PersonCard key={person.id} person={person} isMock={isMockData} />
-          ))}
+          {filteredProfiles.length === 0 ? (
+            <div className="rounded-3xl border border-border/60 bg-card/70 p-6 text-center">
+              <p className="text-sm font-medium text-foreground">
+                {searchQuery ? "No people found" : "No people to show yet"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {searchQuery ? "Try another name, interest, or language." : "Invite friends or check back as more people join Drift."}
+              </p>
+            </div>
+          ) : (
+            filteredProfiles.map((person) => (
+              <PersonCard key={person.id} person={person} isMock={isMockData} />
+            ))
+          )}
         </div>
       )}
     </div>

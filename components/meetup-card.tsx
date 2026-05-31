@@ -31,14 +31,14 @@ const STATUS_LABELS = {
   homesick: "homesick",
 }
 
-const CATEGORY_IMAGES: Record<string, string> = {
-  coffee: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&h=400&fit=crop",
-  food: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop",
-  photo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=400&fit=crop",
-  walk: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=600&h=400&fit=crop",
-  study: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&h=400&fit=crop",
-  gaming: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&h=400&fit=crop",
-  explore: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=600&h=400&fit=crop",
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  coffee: "from-blue-500/50 via-cyan-400/35 to-emerald-400/40",
+  food: "from-amber-500/50 via-orange-400/35 to-blue-500/35",
+  photo: "from-purple-500/50 via-blue-500/35 to-cyan-400/40",
+  walk: "from-slate-700 via-blue-500/35 to-teal-400/40",
+  study: "from-emerald-500/45 via-blue-500/35 to-slate-700",
+  gaming: "from-purple-500/50 via-cyan-400/35 to-blue-500/40",
+  explore: "from-blue-500/50 via-teal-400/40 to-emerald-500/35",
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -93,7 +93,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
   const isCreator = user?.id === meetup.creator_id
   
   const creatorMood = (meetup.creator?.mood as MoodStatus) ?? "exploring"
-  const categoryImage = CATEGORY_IMAGES[meetup.category] ?? CATEGORY_IMAGES.coffee
+  const categoryGradient = CATEGORY_GRADIENTS[meetup.category] ?? CATEGORY_GRADIENTS.coffee
   const categoryLabel = CATEGORY_LABELS[meetup.category] ?? meetup.category
   const attendeeCount = meetup.attendee_count ?? meetup.attendees?.length ?? 0
 
@@ -148,12 +148,8 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
     <article className="group relative rounded-2xl overflow-hidden bg-card border border-border/50 transition-all duration-500 hover:border-primary/30">
       {/* Image */}
       <div className="relative aspect-[16/10] overflow-hidden">
-        <img
-          src={categoryImage}
-          alt={meetup.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          crossOrigin="anonymous"
-        />
+        <div className={cn("absolute inset-0 bg-gradient-to-br transition-transform duration-700 group-hover:scale-105", categoryGradient)} />
+        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_24%),radial-gradient(circle_at_80%_30%,white_0,transparent_18%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
         
         {/* Time Badge */}
