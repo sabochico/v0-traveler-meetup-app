@@ -27,8 +27,13 @@ create table if not exists public.profiles (
   is_online         boolean     not null default false,
   anonymous_mode    boolean     not null default false,
   current_city      text,
+  current_region    text,
   current_country   text,
   location          jsonb,
+  latitude          double precision,
+  longitude         double precision,
+  location_source   text,
+  location_updated_at timestamptz,
   instagram_handle  text,
   last_seen_at      timestamptz not null default now(),
   created_at        timestamptz not null default now(),
@@ -40,6 +45,9 @@ create index if not exists profiles_discovery_idx
 
 create index if not exists profiles_city_idx
   on public.profiles (current_city);
+
+create index if not exists profiles_location_city_idx
+  on public.profiles (current_country, current_city);
 
 drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at
@@ -95,7 +103,10 @@ create table if not exists public.meetups (
   location_name  text,
   location       jsonb,
   city           text,
+  region         text,
   country        text,
+  latitude       double precision,
+  longitude      double precision,
   max_attendees  integer     not null default 4,
   starts_at      timestamptz not null,
   ends_at        timestamptz,
@@ -109,11 +120,26 @@ create table if not exists public.meetups (
 alter table public.meetups
   add column if not exists cover_image_url text;
 
+alter table public.profiles
+  add column if not exists current_region text,
+  add column if not exists latitude double precision,
+  add column if not exists longitude double precision,
+  add column if not exists location_source text,
+  add column if not exists location_updated_at timestamptz;
+
+alter table public.meetups
+  add column if not exists region text,
+  add column if not exists latitude double precision,
+  add column if not exists longitude double precision;
+
 create index if not exists meetups_active_created_idx
   on public.meetups (is_active, created_at desc);
 
 create index if not exists meetups_city_active_idx
   on public.meetups (city, is_active, starts_at);
+
+create index if not exists meetups_location_city_idx
+  on public.meetups (country, city, is_active, starts_at);
 
 create index if not exists meetups_creator_idx
   on public.meetups (creator_id);

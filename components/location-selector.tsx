@@ -5,6 +5,7 @@ import { X, MapPin, Loader2, Navigation, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useUpdateProfile } from "@/hooks/use-profile"
 import { useToast } from "@/hooks/use-toast"
+import { detectCurrentLocation, type DetectedLocation } from "@/lib/location"
 
 interface LocationSelectorProps {
   isOpen: boolean
@@ -31,6 +32,7 @@ const POPULAR_CITIES = [
 export function LocationSelector({ isOpen, onClose, currentCity, currentCountry }: LocationSelectorProps) {
   const [city, setCity] = useState(currentCity || "")
   const [country, setCountry] = useState(currentCountry || "")
+  const [detectedLocation, setDetectedLocation] = useState<DetectedLocation | null>(null)
   const [detecting, setDetecting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -41,6 +43,7 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
     if (isOpen) {
       setCity(currentCity || "")
       setCountry(currentCountry || "")
+      setDetectedLocation(null)
     }
   }, [isOpen, currentCity, currentCountry])
 
@@ -52,33 +55,12 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
   )
 
   const handleDetectLocation = async () => {
-    if (!navigator.geolocation) {
-      toast({
-        title: "Location detection unavailable",
-        description: "Please enter your city and country manually.",
-        variant: "destructive",
-      })
-      return
-    }
-
     setDetecting(true)
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-        })
-      })
-
-      // Use reverse geocoding to get city/country
-      const { latitude, longitude } = position.coords
-      const response = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-      )
-      const data = await response.json()
-      
-      setCity(data.city || data.locality || "")
-      setCountry(data.countryName || "")
+      const detected = await detectCurrentLocation()
+      setCity(detected.city)
+      setCountry(detected.country)
+      setDetectedLocation(detected)
     } catch (error) {
       console.error("Failed to detect location:", error)
       toast({
@@ -94,6 +76,7 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
   const handleSelectCity = (selectedCity: string, selectedCountry: string) => {
     setCity(selectedCity)
     setCountry(selectedCountry)
+    setDetectedLocation(null)
     setSearchQuery("")
   }
 
@@ -105,6 +88,11 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
       await updateProfile({
         current_city: city,
         current_country: country,
+        current_region: detectedLocation?.region ?? null,
+        latitude: detectedLocation?.latitude ?? null,
+        longitude: detectedLocation?.longitude ?? null,
+        location_source: detectedLocation ? "gps" : "manual",
+        location_updated_at: new Date().toISOString(),
       })
       onClose()
     } catch (error) {
@@ -169,7 +157,10 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
               <label className="text-sm font-medium text-foreground">City</label>
               <Input
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
+                onChange={(e) => {
+                  setCity(e.target.value)
+                  setDetectedLocation(null)
+                }}
                 placeholder="Tokyo"
                 className="bg-secondary border-0"
               />
@@ -178,7 +169,10 @@ export function LocationSelector({ isOpen, onClose, currentCity, currentCountry 
               <label className="text-sm font-medium text-foreground">Country</label>
               <Input
                 value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                onChange={(e) => {
+                  setCountry(e.target.value)
+                  setDetectedLocation(null)
+                }}
                 placeholder="Japan"
                 className="bg-secondary border-0"
               />

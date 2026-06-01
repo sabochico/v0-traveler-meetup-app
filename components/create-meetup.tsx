@@ -54,7 +54,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const [citySuggestions, setCitySuggestions] = useState<CityResult[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const [isCitySearching, setIsCitySearching] = useState(false)
-  const [cityData, setCityData] = useState<{ city: string; country?: string } | null>(null)
+  const [cityData, setCityData] = useState<{ city: string; region?: string; country?: string; latitude?: number; longitude?: number } | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { createMeetup } = useCreateMeetup()
@@ -104,7 +104,13 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   const handleSelectCity = (suggestion: CityResult) => {
     setLocation(formatCityLabel(suggestion))
-    setCityData({ city: suggestion.name, country: suggestion.country })
+    setCityData({
+      city: suggestion.name,
+      region: suggestion.admin1,
+      country: suggestion.country,
+      latitude: suggestion.latitude,
+      longitude: suggestion.longitude,
+    })
     setCitySuggestions([])
     setShowDropdown(false)
   }
@@ -126,7 +132,10 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
         category: selectedType,
         location_name: trimmedLocation,
         city: cityData?.city ?? trimmedLocation.split(",")[0]?.trim(),
+        region: cityData?.region,
         country: cityData?.country,
+        latitude: cityData?.latitude,
+        longitude: cityData?.longitude,
         starts_at: startsAt.toISOString(),
       })
 

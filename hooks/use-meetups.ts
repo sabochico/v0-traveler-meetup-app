@@ -22,7 +22,10 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
       location_name,
       location,
       city,
+      region,
       country,
+      latitude,
+      longitude,
       max_attendees,
       starts_at,
       ends_at,
@@ -65,7 +68,10 @@ export function useCreateMeetup() {
     category: string
     location_name?: string
     city?: string
+    region?: string
     country?: string
+    latitude?: number
+    longitude?: number
     starts_at: string
   }) => {
     const supabase = createClient()

@@ -27,8 +27,13 @@ const createFallbackProfile = (id: string): Profile => {
     is_online: isRecentlySeen(now),
     anonymous_mode: false,
     current_city: null,
+    current_region: null,
     current_country: null,
     location: null,
+    latitude: null,
+    longitude: null,
+    location_source: null,
+    location_updated_at: null,
     instagram_handle: null,
     last_seen_at: now,
     created_at: now,
@@ -136,7 +141,12 @@ export function useUpdateProfile() {
   }
 
   const updateLocation = async (city: string, country: string) => {
-    return updateProfile({ current_city: city, current_country: country })
+    return updateProfile({
+      current_city: city,
+      current_country: country,
+      location_source: "manual",
+      location_updated_at: new Date().toISOString(),
+    })
   }
 
   const toggleTravelMode = async (enabled: boolean) => {

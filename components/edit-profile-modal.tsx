@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { X, Camera, Loader2, Plus, Check } from "lucide-react"
+import { X, Camera, Loader2, Plus, Check, Navigation } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Profile } from "@/lib/types"
 import { getNextProfileRequirement, isProfileComplete, MIN_BIO_LENGTH, MIN_INTERESTS } from "@/lib/profile-completion"
+import { detectCurrentLocation, type DetectedLocation } from "@/lib/location"
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -48,14 +49,17 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
   const [bio, setBio] = useState(profile.bio ?? "")
   const [currentCity, setCurrentCity] = useState(profile.current_city ?? "")
   const [currentCountry, setCurrentCountry] = useState(profile.current_country ?? "")
+  const [detectedLocation, setDetectedLocation] = useState<DetectedLocation | null>(null)
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? [])
   const [interests, setInterests] = useState<string[]>(profile.interests ?? [])
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url)
   const [instagramHandle, setInstagramHandle] = useState(profile.instagram_handle ?? "")
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [detectingLocation, setDetectingLocation] = useState(false)
   const [activeTab, setActiveTab] = useState<"profile" | "languages" | "interests">("profile")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const locationPromptedRef = useRef(false)
   const { updateProfile } = useUpdateProfile()
   const { toast } = useToast()
   const draftProfile = {
@@ -74,6 +78,31 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
   useEffect(() => {
     if (isOpen) setActiveTab(initialTab)
   }, [isOpen, initialTab])
+
+  useEffect(() => {
+    if (!isOpen || !setupMode || currentCity || locationPromptedRef.current) return
+    locationPromptedRef.current = true
+    handleDetectLocation()
+  }, [isOpen, setupMode, currentCity])
+
+  const handleDetectLocation = async () => {
+    setDetectingLocation(true)
+    try {
+      const detected = await detectCurrentLocation()
+      setCurrentCity(detected.city)
+      setCurrentCountry(detected.country)
+      setDetectedLocation(detected)
+    } catch (error) {
+      console.error("Failed to detect location:", error)
+      toast({
+        title: "Could not detect your location",
+        description: "Please enter your city manually.",
+        variant: "destructive",
+      })
+    } finally {
+      setDetectingLocation(false)
+    }
+  }
 
   if (!isOpen) return null
 
@@ -173,6 +202,11 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         bio: bio || null,
         current_city: currentCity || null,
         current_country: currentCountry || null,
+        current_region: detectedLocation?.region ?? null,
+        latitude: detectedLocation?.latitude ?? null,
+        longitude: detectedLocation?.longitude ?? null,
+        location_source: detectedLocation ? "gps" : "manual",
+        location_updated_at: new Date().toISOString(),
         languages,
         interests,
         avatar_url: avatarUrl,
@@ -308,24 +342,41 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
               </div>
 
               {/* Location */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">City</label>
-                  <Input
-                    value={currentCity}
-                    onChange={(e) => setCurrentCity(e.target.value)}
-                    placeholder="Tokyo"
-                    className="bg-secondary border-0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Country</label>
-                  <Input
-                    value={currentCountry}
-                    onChange={(e) => setCurrentCountry(e.target.value)}
-                    placeholder="Japan"
-                    className="bg-secondary border-0"
-                  />
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={handleDetectLocation}
+                  disabled={detectingLocation}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-60"
+                >
+                  {detectingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
+                  {detectingLocation ? "Detecting location..." : "Use my current location"}
+                </button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">City</label>
+                    <Input
+                      value={currentCity}
+                      onChange={(e) => {
+                        setCurrentCity(e.target.value)
+                        setDetectedLocation(null)
+                      }}
+                      placeholder="Tokyo"
+                      className="bg-secondary border-0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Country</label>
+                    <Input
+                      value={currentCountry}
+                      onChange={(e) => {
+                        setCurrentCountry(e.target.value)
+                        setDetectedLocation(null)
+                      }}
+                      placeholder="Japan"
+                      className="bg-secondary border-0"
+                    />
+                  </div>
                 </div>
               </div>
 

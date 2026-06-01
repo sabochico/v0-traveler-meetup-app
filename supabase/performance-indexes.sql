@@ -9,12 +9,18 @@ create index if not exists profiles_discovery_idx
 create index if not exists profiles_city_idx
   on public.profiles (current_city);
 
+create index if not exists profiles_location_city_idx
+  on public.profiles (current_country, current_city);
+
 -- Meetups: active feeds, city filtering, creator lookups.
 create index if not exists meetups_active_created_idx
   on public.meetups (is_active, created_at desc);
 
 create index if not exists meetups_city_active_idx
   on public.meetups (city, is_active, starts_at);
+
+create index if not exists meetups_location_city_idx
+  on public.meetups (country, city, is_active, starts_at);
 
 create index if not exists meetups_creator_idx
   on public.meetups (creator_id);

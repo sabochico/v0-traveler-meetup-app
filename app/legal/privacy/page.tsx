@@ -22,7 +22,8 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>
             Location and profile information may be shown to other users so they can discover nearby people and plans.
-            Do not add information to your profile that you do not want other users to see.
+            If you allow location access, Drift may store your approximate coordinates to suggest your city and improve
+            nearby recommendations. Exact coordinates are not shown on your public profile.
           </p>
           <p>
             We use your information to operate Drift, improve the app, prevent abuse, support users, and comply with

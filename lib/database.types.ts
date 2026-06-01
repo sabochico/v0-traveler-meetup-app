@@ -22,8 +22,13 @@ export interface Database {
           is_online: boolean
           anonymous_mode: boolean
           current_city: string | null
+          current_region: string | null
           current_country: string | null
           location: unknown | null
+          latitude: number | null
+          longitude: number | null
+          location_source: string | null
+          location_updated_at: string | null
           instagram_handle: string | null
           last_seen_at: string
           created_at: string
@@ -41,8 +46,13 @@ export interface Database {
           is_online?: boolean
           anonymous_mode?: boolean
           current_city?: string | null
+          current_region?: string | null
           current_country?: string | null
           location?: unknown | null
+          latitude?: number | null
+          longitude?: number | null
+          location_source?: string | null
+          location_updated_at?: string | null
           instagram_handle?: string | null
           last_seen_at?: string
           created_at?: string
@@ -60,8 +70,13 @@ export interface Database {
           is_online?: boolean
           anonymous_mode?: boolean
           current_city?: string | null
+          current_region?: string | null
           current_country?: string | null
           location?: unknown | null
+          latitude?: number | null
+          longitude?: number | null
+          location_source?: string | null
+          location_updated_at?: string | null
           instagram_handle?: string | null
           last_seen_at?: string
           created_at?: string
@@ -79,7 +94,10 @@ export interface Database {
           location_name: string | null
           location: unknown | null
           city: string | null
+          region: string | null
           country: string | null
+          latitude: number | null
+          longitude: number | null
           max_attendees: number
           starts_at: string
           ends_at: string | null
@@ -97,7 +115,10 @@ export interface Database {
           location_name?: string | null
           location?: unknown | null
           city?: string | null
+          region?: string | null
           country?: string | null
+          latitude?: number | null
+          longitude?: number | null
           max_attendees?: number
           starts_at: string
           ends_at?: string | null
@@ -115,7 +136,10 @@ export interface Database {
           location_name?: string | null
           location?: unknown | null
           city?: string | null
+          region?: string | null
           country?: string | null
+          latitude?: number | null
+          longitude?: number | null
           max_attendees?: number
           starts_at?: string
           ends_at?: string | null
