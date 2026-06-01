@@ -113,7 +113,7 @@ export function ProfileView() {
 
         {/* Settings Button */}
         <button
-          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 transition-colors"
+          className="absolute top-[calc(1rem+env(safe-area-inset-top))] right-4 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 transition-colors"
           aria-label="Settings"
         >
           <Settings className="w-5 h-5" />

@@ -9,7 +9,7 @@ export function AuthPrompt({ message }: AuthPromptProps) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
         <div className="max-w-lg mx-auto px-4 py-4">
           <h1 className="text-2xl font-serif font-semibold tracking-tight text-primary">drift</h1>
         </div>

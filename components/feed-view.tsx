@@ -983,7 +983,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>

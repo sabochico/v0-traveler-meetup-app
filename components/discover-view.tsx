@@ -164,7 +164,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
         <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
           <div>
             <h1 className="text-2xl font-serif font-semibold">Explore</h1>
