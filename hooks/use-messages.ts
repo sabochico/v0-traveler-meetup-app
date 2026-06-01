@@ -101,43 +101,65 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
   const { data: conversations, error: convError } = await supabase
     .from("conversations")
-    .select("*")
+    .select("id, created_at, updated_at")
     .in("id", conversationIds)
     .order("updated_at", { ascending: false })
 
   if (convError || !conversations) return []
 
-  const fullConversations = await Promise.all(conversations.map(async (conv) => {
-    const { data: participants } = await supabase
+  const [
+    { data: otherParticipants },
+    { data: recentMessages },
+    { data: unreadMessages },
+  ] = await Promise.all([
+    supabase
       .from("conversation_participants")
-      .select("user_id")
-      .eq("conversation_id", conv.id)
-      .neq("user_id", user.id)
-      .single()
+      .select("conversation_id, user_id")
+      .in("conversation_id", conversationIds)
+      .neq("user_id", user.id),
+    supabase
+      .from("messages")
+      .select("conversation_id, content, created_at, sender_id")
+      .in("conversation_id", conversationIds)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("messages")
+      .select("conversation_id")
+      .in("conversation_id", conversationIds)
+      .eq("is_read", false)
+      .neq("sender_id", user.id),
+  ])
 
-    if (!participants) return null
+  const otherParticipantByConversation = new Map(
+    (otherParticipants ?? []).map((participant) => [participant.conversation_id, participant.user_id])
+  )
+  const otherUserIds = Array.from(new Set((otherParticipants ?? []).map((participant) => participant.user_id)))
+  const { data: otherUsers } = otherUserIds.length
+    ? await supabase
+      .from("profiles")
+      .select("id, display_name, avatar_url, is_online, last_seen_at, mood, travel_mode, current_city, current_country, location, interests, languages")
+      .in("id", otherUserIds)
+    : { data: [] }
+  const profileById = new Map((otherUsers ?? []).map((profile) => [profile.id, profile]))
+  const lastMessageByConversation = new Map<string, NonNullable<typeof recentMessages>[number]>()
+  for (const message of recentMessages ?? []) {
+    if (!lastMessageByConversation.has(message.conversation_id)) {
+      lastMessageByConversation.set(message.conversation_id, message)
+    }
+  }
+  const unreadCountByConversation = new Map<string, number>()
+  for (const message of unreadMessages ?? []) {
+    unreadCountByConversation.set(
+      message.conversation_id,
+      (unreadCountByConversation.get(message.conversation_id) ?? 0) + 1
+    )
+  }
 
-    const [{ data: otherUser }, { data: lastMessages }, { count: unreadCount }] =
-      await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, display_name, avatar_url, is_online, last_seen_at, mood, travel_mode, current_city, current_country, location, interests, languages")
-          .eq("id", participants.user_id)
-          .maybeSingle(),
-        supabase
-          .from("messages")
-          .select("content, created_at, sender_id")
-          .eq("conversation_id", conv.id)
-          .order("created_at", { ascending: false })
-          .limit(1),
-        supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", conv.id)
-          .eq("is_read", false)
-          .neq("sender_id", user.id),
-      ])
+  const fullConversations = conversations.map((conv) => {
+    const otherUserId = otherParticipantByConversation.get(conv.id)
+    if (!otherUserId) return null
 
+    const otherUser = profileById.get(otherUserId)
     const lastSeenAt = otherUser?.last_seen_at ?? null
 
     return {
@@ -145,7 +167,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       created_at: conv.created_at,
       updated_at: conv.updated_at,
       other_user: {
-        id: participants.user_id,
+        id: otherUserId,
         display_name: otherUser?.display_name ?? null,
         avatar_url: otherUser?.avatar_url ?? null,
         is_online: Boolean(otherUser?.is_online) || isRecentlySeen(lastSeenAt),
@@ -158,10 +180,10 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
         interests: otherUser?.interests ?? [],
         languages: otherUser?.languages ?? [],
       },
-      last_message: lastMessages?.[0] ?? null,
-      unread_count: unreadCount ?? 0,
+      last_message: lastMessageByConversation.get(conv.id) ?? null,
+      unread_count: unreadCountByConversation.get(conv.id) ?? 0,
     }
-  }))
+  })
 
   return fullConversations.filter((conversation): conversation is Conversation => Boolean(conversation))
 }
