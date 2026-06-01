@@ -10,6 +10,7 @@ import { useSavedMeetups, useSaveMeetup, useJoinMeetup, useUserMeetups } from "@
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation, useSendMessage } from "@/hooks/use-messages"
+import { getMeetupCoverImage } from "@/lib/meetup-cover-images"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
@@ -96,7 +97,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
   const categoryGradient = CATEGORY_GRADIENTS[meetup.category] ?? CATEGORY_GRADIENTS.coffee
   const categoryLabel = CATEGORY_LABELS[meetup.category] ?? meetup.category
   const attendeeCount = meetup.attendee_count ?? meetup.attendees?.length ?? 0
-  const cardImageUrl = meetup.cover_image_url ?? `/api/meetup-cover?category=${encodeURIComponent(meetup.category)}&seed=${encodeURIComponent(meetup.id)}`
+  const cardImageUrl = meetup.cover_image_url ?? getMeetupCoverImage(meetup.category, meetup.id)
   const [imageFailed, setImageFailed] = useState(false)
 
   useEffect(() => {
@@ -154,7 +155,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
     <article className="group relative rounded-2xl overflow-hidden bg-card border border-border/50 transition-all duration-500 hover:border-primary/30">
       {/* Image */}
       <div className="relative aspect-[16/10] overflow-hidden">
-        {!imageFailed ? (
+        {cardImageUrl && !imageFailed ? (
           <img
             src={cardImageUrl}
             alt={meetup.title}

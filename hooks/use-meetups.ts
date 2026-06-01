@@ -3,6 +3,7 @@
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { MeetupWithCreator } from "@/lib/types"
+import { getRandomMeetupCoverImage } from "@/lib/meetup-cover-images"
 
 const SWR_OPTIONS = { keepPreviousData: true }
 
@@ -72,10 +73,7 @@ export function useCreateMeetup() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
-    const coverImageUrl = await fetch(`/api/meetup-cover?category=${encodeURIComponent(meetup.category)}&random=1&format=json`)
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => data?.imagePath as string | null)
-      .catch(() => null)
+    const coverImageUrl = getRandomMeetupCoverImage(meetup.category)
 
     const { data, error } = await supabase
       .from("meetups")
