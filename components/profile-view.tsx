@@ -43,7 +43,6 @@ export function ProfileView() {
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
   const [showAppearanceModal, setShowAppearanceModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteConfirmText, setDeleteConfirmText] = useState("")
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const completionScore = getProfileCompletionScore(profile)
@@ -56,13 +55,10 @@ export function ProfileView() {
   const closeDeleteModal = () => {
     if (deletingAccount) return
     setShowDeleteModal(false)
-    setDeleteConfirmText("")
     setDeleteError(null)
   }
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "DELETE") return
-
     setDeletingAccount(true)
     setDeleteError(null)
 
@@ -89,6 +85,7 @@ export function ProfileView() {
       }
 
       await supabase.auth.signOut()
+      sessionStorage.setItem("drift_account_deleted", "true")
       window.location.href = "/auth/login"
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : "Could not delete account")
@@ -399,24 +396,21 @@ export function ProfileView() {
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Delete account?</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  This is permanent. Your profile, meetups, saved plans, messages, reports, and account data will be deleted where Drift stores them.
+                  Are you sure you want to permanently delete your account?
                 </p>
               </div>
             </div>
 
             <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-3">
-              <p className="text-sm text-foreground">
-                Type <span className="font-semibold">DELETE</span> to confirm.
-              </p>
+              <p className="text-sm font-medium text-foreground">This action cannot be undone and will permanently remove:</p>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <li>Your profile</li>
+                <li>Messages</li>
+                <li>Meetups you created</li>
+                <li>Saved meetups</li>
+                <li>Account data</li>
+              </ul>
             </div>
-
-            <input
-              value={deleteConfirmText}
-              onChange={(event) => setDeleteConfirmText(event.target.value)}
-              disabled={deletingAccount}
-              placeholder="DELETE"
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-destructive"
-            />
 
             {deleteError && (
               <p className="text-sm text-destructive">{deleteError}</p>
@@ -432,10 +426,11 @@ export function ProfileView() {
               </button>
               <button
                 onClick={handleDeleteAccount}
-                disabled={deleteConfirmText !== "DELETE" || deletingAccount}
-                className="flex-1 rounded-xl bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground disabled:opacity-50"
+                disabled={deletingAccount}
+                className="flex-1 rounded-xl bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {deletingAccount ? "Deleting..." : "Delete forever"}
+                {deletingAccount && <Loader2 className="h-4 w-4 animate-spin" />}
+                {deletingAccount ? "Deleting..." : "Delete Account"}
               </button>
             </div>
           </div>

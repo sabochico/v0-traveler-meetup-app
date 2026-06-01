@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -12,8 +12,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (sessionStorage.getItem("drift_account_deleted") !== "true") return
+    sessionStorage.removeItem("drift_account_deleted")
+    setSuccess("Your account has been deleted.")
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,6 +105,12 @@ export default function LoginPage() {
             {error && (
               <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                 {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm">
+                {success}
               </div>
             )}
 
