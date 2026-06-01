@@ -326,7 +326,7 @@ export function ProfileView() {
             className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-destructive/30 transition-colors"
           >
             <Trash2 className="w-5 h-5 text-destructive" />
-            <div>
+            <div className="text-left">
               <span className="block text-sm font-medium text-foreground">Delete account</span>
               <span className="block text-xs text-muted-foreground">Permanently remove your Drift account</span>
             </div>
