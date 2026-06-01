@@ -17,6 +17,7 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
       title,
       description,
       category,
+      cover_image_url,
       location_name,
       location,
       city,
@@ -71,11 +72,17 @@ export function useCreateMeetup() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
+    const coverImageUrl = await fetch(`/api/meetup-cover?category=${encodeURIComponent(meetup.category)}&random=1&format=json`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => data?.imagePath as string | null)
+      .catch(() => null)
+
     const { data, error } = await supabase
       .from("meetups")
       .insert({
         ...meetup,
         creator_id: user.id,
+        cover_image_url: coverImageUrl,
       })
       .select()
       .single()

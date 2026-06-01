@@ -91,6 +91,7 @@ create table if not exists public.meetups (
   title          text        not null,
   description    text,
   category       text        not null default 'coffee',
+  cover_image_url text,
   location_name  text,
   location       jsonb,
   city           text,
@@ -104,6 +105,9 @@ create table if not exists public.meetups (
   constraint meetups_max_attendees_positive check (max_attendees > 0),
   constraint meetups_title_not_blank check (length(trim(title)) > 0)
 );
+
+alter table public.meetups
+  add column if not exists cover_image_url text;
 
 create index if not exists meetups_active_created_idx
   on public.meetups (is_active, created_at desc);

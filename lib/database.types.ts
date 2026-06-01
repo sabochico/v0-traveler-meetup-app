@@ -75,6 +75,7 @@ export interface Database {
           title: string
           description: string | null
           category: string
+          cover_image_url: string | null
           location_name: string | null
           location: unknown | null
           city: string | null
@@ -92,6 +93,7 @@ export interface Database {
           title: string
           description?: string | null
           category?: string
+          cover_image_url?: string | null
           location_name?: string | null
           location?: unknown | null
           city?: string | null
@@ -109,6 +111,7 @@ export interface Database {
           title?: string
           description?: string | null
           category?: string
+          cover_image_url?: string | null
           location_name?: string | null
           location?: unknown | null
           city?: string | null

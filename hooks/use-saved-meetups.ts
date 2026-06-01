@@ -77,6 +77,7 @@ export function useSavedMeetupsWithDetails() {
           title,
           description,
           category,
+          cover_image_url,
           location_name,
           city,
           country,

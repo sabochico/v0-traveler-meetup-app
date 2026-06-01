@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -96,7 +96,12 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
   const categoryGradient = CATEGORY_GRADIENTS[meetup.category] ?? CATEGORY_GRADIENTS.coffee
   const categoryLabel = CATEGORY_LABELS[meetup.category] ?? meetup.category
   const attendeeCount = meetup.attendee_count ?? meetup.attendees?.length ?? 0
-  const cardImageUrl = meetup.creator?.avatar_url
+  const cardImageUrl = meetup.cover_image_url ?? `/api/meetup-cover?category=${encodeURIComponent(meetup.category)}&seed=${encodeURIComponent(meetup.id)}`
+  const [imageFailed, setImageFailed] = useState(false)
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [cardImageUrl])
 
   const handleLikeToggle = async () => {
     if (!user) return
@@ -149,15 +154,19 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
     <article className="group relative rounded-2xl overflow-hidden bg-card border border-border/50 transition-all duration-500 hover:border-primary/30">
       {/* Image */}
       <div className="relative aspect-[16/10] overflow-hidden">
-        {cardImageUrl ? (
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-            style={{ backgroundImage: `url(${cardImageUrl})` }}
+        {!imageFailed ? (
+          <img
+            src={cardImageUrl}
+            alt={meetup.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <div className={cn("absolute inset-0 bg-gradient-to-br transition-transform duration-700 group-hover:scale-105", categoryGradient)} />
         )}
-        <div className={cn("absolute inset-0", cardImageUrl ? "bg-black/30" : "opacity-30 bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_24%),radial-gradient(circle_at_80%_30%,white_0,transparent_18%)]")} />
+        {imageFailed && (
+          <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_24%),radial-gradient(circle_at_80%_30%,white_0,transparent_18%)]" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
         
         {/* Time Badge */}
