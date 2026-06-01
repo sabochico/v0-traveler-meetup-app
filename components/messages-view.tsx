@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import Link from "next/link"
 import { Search, ArrowLeft, Send, Loader2, MapPin, Plane, Globe, Sparkles } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -269,6 +269,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     sender_id: string
     created_at: string
   }>>([])
+  const [keyboardOffset, setKeyboardOffset] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { messages, isLoading } = useMessages(isMock ? null : conversation.id)
   const { sendMessage, markAsRead } = useSendMessage()
@@ -283,6 +284,9 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     ...(otherUser?.languages ?? []).slice(0, 2),
   ].slice(0, 4)
   const starter = contextTags[0]
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" })
+  }, [])
 
   // Initialize with mock messages or real messages
   useEffect(() => {
@@ -324,8 +328,30 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [localMessages])
+    scrollToBottom()
+  }, [localMessages, scrollToBottom])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+
+    const updateKeyboardOffset = () => {
+      const offset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+      setKeyboardOffset((current) => Math.abs(current - offset) < 1 ? current : offset)
+      requestAnimationFrame(() => scrollToBottom("auto"))
+    }
+
+    updateKeyboardOffset()
+    viewport.addEventListener("resize", updateKeyboardOffset)
+    viewport.addEventListener("scroll", updateKeyboardOffset)
+    window.addEventListener("resize", updateKeyboardOffset)
+
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardOffset)
+      viewport.removeEventListener("scroll", updateKeyboardOffset)
+      window.removeEventListener("resize", updateKeyboardOffset)
+    }
+  }, [scrollToBottom])
 
   const handleSend = async () => {
     if (!newMessage.trim()) return
@@ -377,7 +403,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-[100dvh] flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -437,7 +463,10 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className="flex-1 overflow-y-auto overscroll-contain"
+        style={{ scrollPaddingBottom: keyboardOffset ? keyboardOffset + 96 : 96 }}
+      >
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
           <div className="rounded-3xl border border-border/60 bg-card/70 p-4">
             <div className="flex items-center justify-between gap-3">
@@ -529,8 +558,11 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
       </div>
 
       {/* Input */}
-      <div className="sticky bottom-0 bg-background border-t border-border/50">
-        <div className="max-w-lg mx-auto px-4 py-3">
+      <div
+        className="sticky z-40 bg-background border-t border-border/50"
+        style={{ bottom: keyboardOffset ? `${keyboardOffset}px` : 0 }}
+      >
+        <div className="max-w-lg mx-auto px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           <form
             onSubmit={(e) => {
               e.preventDefault()
