@@ -80,7 +80,7 @@ function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileComp
           <button
             onClick={onDismiss}
             aria-label="Dismiss"
-            className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="min-h-10 min-w-10 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>

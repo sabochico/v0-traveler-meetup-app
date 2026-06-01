@@ -130,7 +130,7 @@ export function ProfileView() {
           </Avatar>
           <button
             onClick={() => setShowEditModal(true)}
-            className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all"
+            className="absolute bottom-0 right-0 w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all"
             aria-label="Change photo"
           >
             <Camera className="w-4 h-4" />

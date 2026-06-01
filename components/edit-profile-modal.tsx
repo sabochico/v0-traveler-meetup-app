@@ -359,7 +359,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                       <Badge
                         key={lang}
                         variant="default"
-                        className="cursor-pointer flex items-center gap-1"
+                        className="min-h-10 cursor-pointer flex items-center gap-1 px-3 py-2"
                         onClick={() => toggleLanguage(lang)}
                       >
                         {lang}
@@ -378,7 +378,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                     <Badge
                       key={lang}
                       variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="min-h-10 cursor-pointer px-3 py-2 hover:bg-primary hover:text-primary-foreground transition-colors"
                       onClick={() => toggleLanguage(lang)}
                     >
                       <Plus className="w-3 h-3 mr-1" />
@@ -405,7 +405,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                       <Badge
                         key={interest}
                         variant="default"
-                        className="cursor-pointer flex items-center gap-1"
+                        className="min-h-10 cursor-pointer flex items-center gap-1 px-3 py-2"
                         onClick={() => toggleInterest(interest)}
                       >
                         {interest}
@@ -424,7 +424,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                     <Badge
                       key={interest}
                       variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="min-h-10 cursor-pointer px-3 py-2 hover:bg-primary hover:text-primary-foreground transition-colors"
                       onClick={() => toggleInterest(interest)}
                     >
                       <Plus className="w-3 h-3 mr-1" />

@@ -188,7 +188,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
         <button
           onClick={handleLikeToggle}
           disabled={savingLike || !user}
-          className="absolute top-3 left-3 w-9 h-9 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-background/80 disabled:opacity-50"
+          className="absolute top-3 left-3 w-11 h-11 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-background/80 disabled:opacity-50"
           aria-label={isLiked ? "Unlike" : "Like"}
         >
           {savingLike ? (

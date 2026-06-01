@@ -161,7 +161,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
                   key={type.id}
                   onClick={() => setSelectedType(type.id)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-300",
+                    "flex min-h-16 flex-col items-center justify-center gap-1.5 p-3 rounded-xl transition-all duration-300",
                     selectedType === type.id
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -213,7 +213,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
                         type="button"
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleSelectCity(s)}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-secondary transition-colors border-b border-border/30 last:border-0"
+                        className="w-full min-h-11 flex items-center gap-2.5 px-4 py-3 text-left hover:bg-secondary transition-colors border-b border-border/30 last:border-0"
                       >
                         <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                         <span className="text-sm text-foreground truncate">{formatCityLabel(s)}</span>
@@ -234,7 +234,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
                   key={time.label}
                   onClick={() => setSelectedTime(time.value)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors",
+                    "flex min-h-11 items-center gap-1.5 px-4 py-2 rounded-full text-sm transition-colors",
                     selectedTime === time.value
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"

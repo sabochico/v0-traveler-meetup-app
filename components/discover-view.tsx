@@ -206,7 +206,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
               <button
                 onClick={() => setCityFilter("all")}
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all",
+                  "min-h-11 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all",
                   cityFilter === "all"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -219,7 +219,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
                   key={city}
                   onClick={() => setCityFilter(city)}
                   className={cn(
-                    "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all",
+                    "flex min-h-11 items-center gap-1 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all",
                     cityFilter === city
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
