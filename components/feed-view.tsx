@@ -17,6 +17,7 @@ import { useSavedMeetupsWithDetails } from "@/hooks/use-saved-meetups"
 import { useProfile, useUpdateProfile, useNearbyProfiles } from "@/hooks/use-profile"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
+import { getMeetupCoverImage } from "@/lib/meetup-cover-images"
 import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { useBlockedUsers } from "@/hooks/use-user-safety"
@@ -388,15 +389,15 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
   const cat = CATEGORY_CONFIG[meetup.category] ?? CATEGORY_CONFIG.explore
   const CatIcon = cat.icon
   const mood = meetup.creator?.mood ?? "exploring"
-  const avatarUrl = meetup.creator?.avatar_url
+  const coverImageUrl = meetup.cover_image_url ?? getMeetupCoverImage(meetup.category, meetup.id)
   const initial = (meetup.creator?.display_name ?? "?")[0].toUpperCase()
 
   return (
     <div className="w-full h-full rounded-3xl overflow-hidden relative bg-zinc-900">
-      {avatarUrl ? (
+      {coverImageUrl ? (
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${avatarUrl})` }}
+          style={{ backgroundImage: `url(${coverImageUrl})` }}
         />
       ) : (
         <>
