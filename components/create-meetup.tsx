@@ -145,13 +145,13 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border p-0 gap-0">
-        <DialogHeader className="p-6 pb-4 border-b border-border/50">
+      <DialogContent className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-[calc(100dvh-0.5rem)] sm:max-h-[90dvh] bg-card border-border p-0 gap-0 rounded-t-3xl sm:rounded-lg overflow-hidden flex flex-col">
+        <DialogHeader className="shrink-0 p-6 pb-4 border-b border-border/50">
           <DialogTitle className="text-xl font-serif">Create a meetup</DialogTitle>
           <p className="text-sm text-muted-foreground">Find someone to share a moment with</p>
         </DialogHeader>
 
-        <div className="p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-6">
           {/* Meetup Type Selection */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">What kind of meetup?</label>
@@ -255,7 +255,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
         </div>
 
         {/* Submit */}
-        <div className="p-6 pt-0">
+        <div className="shrink-0 border-t border-border/50 bg-card p-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button
             onClick={handleSubmit}
             disabled={!selectedType || !title || !location || loading}
