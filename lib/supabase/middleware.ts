@@ -43,6 +43,7 @@ export async function updateSession(request: NextRequest) {
     '/api/account',
     '/profile',
     '/legal',
+    '/support',
   ]
   const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
 
