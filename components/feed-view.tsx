@@ -997,17 +997,17 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-lg mx-auto px-4 py-4">
+        <div className="max-w-lg mx-auto px-4 py-4 pr-[4.75rem] sm:pr-4">
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-2xl font-serif font-semibold tracking-tight">Today</h1>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {browseAll ? "All cities" : `Near ${userCity ?? "your city"}`}
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-serif font-semibold tracking-tight truncate">Today</h1>
+              <div className="flex min-w-0 items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                <span className="flex min-w-0 items-center gap-1">
+                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{browseAll ? "All cities" : `Near ${userCity ?? "your city"}`}</span>
                 </span>
-                <span className="flex items-center gap-1 text-emerald-400/80">
-                  <Users className="w-3 h-3" />
+                <span className="flex flex-shrink-0 items-center gap-1 text-emerald-400/80">
+                  <Users className="w-3 h-3 flex-shrink-0" />
                   {nearbyCount} nearby
                 </span>
               </div>
