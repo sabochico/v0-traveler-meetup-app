@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "Drift",
   webDir: "capacitor-web",
   server: {
-    url: "https://v0-traveler-meetup-app.vercel.app",
+    url: "https://driftapp.me",
     cleartext: false,
   },
 }

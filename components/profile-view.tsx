@@ -3,11 +3,8 @@
 import { useState } from "react"
 import {
   Settings,
-  MapPin,
-  Globe,
   Camera,
   Instagram,
-  Edit3,
   Shield,
   Bell,
   Moon,
@@ -27,8 +24,8 @@ import { EditProfileModal } from "@/components/edit-profile-modal"
 import { ConnectSocialModal } from "@/components/connect-social-modal"
 import { LocationSelector } from "@/components/location-selector"
 import { NotificationsSettings } from "@/components/notifications-settings"
+import { NotificationsBell } from "@/components/notifications-bell"
 import { AppearanceSettings } from "@/components/appearance-settings"
-import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
 
@@ -46,6 +43,12 @@ export function ProfileView() {
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const completionScore = getProfileCompletionScore(profile)
+  const languageCount = profile?.languages?.length ?? 0
+  const interestCount = profile?.interests?.length ?? 0
+  const locationLabel =
+    profile?.current_city && profile?.current_country
+      ? `${profile.current_city}, ${profile.current_country}`
+      : profile?.current_city ?? profile?.current_country ?? "Set location"
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -103,89 +106,104 @@ export function ProfileView() {
 
   return (
     <div className="min-h-screen pb-8">
-      {/* Cover Photo */}
-      <div className="relative h-48 overflow-hidden">
-        <div className="w-full h-full drift-gradient" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+      {/* Profile Hero */}
+      <div className="relative overflow-hidden drift-gradient px-4 pb-5 pt-[calc(1rem+env(safe-area-inset-top))]">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-background/70" />
+        <div className="relative mx-auto max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="rounded-3xl border border-white/15 bg-background/70 p-4 shadow-2xl shadow-primary/20 backdrop-blur-xl">
+            <div className="flex items-start gap-3">
+              <div className="relative flex-shrink-0">
+                <Avatar className="h-20 w-20 ring-2 ring-white/20">
+                  <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.display_name ?? "You"} />
+                  <AvatarFallback>{(profile?.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="absolute -bottom-1 -right-1 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all active:scale-95 hover:glow-amber"
+                  aria-label="Change photo"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+              </div>
 
-        {/* Settings Button */}
-        <button
-          className="absolute top-[calc(1rem+env(safe-area-inset-top))] right-4 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 transition-colors"
-          aria-label="Settings"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
+              <div className="min-w-0 flex-1 pt-0.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium uppercase tracking-wide text-primary">Your Drift</p>
+                    <h1 className="truncate text-2xl font-serif font-semibold text-foreground">
+                      Hey, {profile?.display_name ?? "Drifter"}
+                    </h1>
+                  </div>
+                  <div className="flex flex-shrink-0 items-center gap-1">
+                    <NotificationsBell className="bg-background/50 hover:bg-background/80" />
+                    <button
+                      onClick={() => setShowEditModal(true)}
+                      className="flex h-11 w-11 items-center justify-center rounded-full bg-background/50 text-foreground transition-colors active:scale-95 hover:bg-background/80"
+                      aria-label="Edit profile"
+                    >
+                      <Settings className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                  <Plane className="h-4 w-4 flex-shrink-0 text-primary" />
+                  <span className="flex-shrink-0">Traveler</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="truncate">{locationLabel}</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-foreground/90">
+              {profile?.bio ?? "Add a short bio so people know what you are up for today."}
+            </p>
+
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {completionScore >= 100 ? "Profile Complete" : "Profile completion"}
+                  </p>
+                  {completionScore < 100 && (
+                    <button
+                      onClick={() => setShowEditModal(true)}
+                      className="mt-0.5 text-left text-xs font-medium text-primary"
+                    >
+                      {getNextProfileRequirement(profile)}
+                    </button>
+                  )}
+                </div>
+                <span className="rounded-full bg-primary/15 px-3 py-1 text-sm font-semibold text-primary">
+                  {completionScore}%
+                </span>
+              </div>
+              {completionScore < 100 && (
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full drift-gradient" style={{ width: `${completionScore}%` }} />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-2xl bg-white/5 px-3 py-2 text-center">
+                <p className="text-sm font-semibold text-foreground">Traveler</p>
+                <p className="text-[11px] text-muted-foreground">mode</p>
+              </div>
+              <div className="rounded-2xl bg-white/5 px-3 py-2 text-center">
+                <p className="text-sm font-semibold text-foreground">{languageCount}</p>
+                <p className="text-[11px] text-muted-foreground">languages</p>
+              </div>
+              <div className="rounded-2xl bg-white/5 px-3 py-2 text-center">
+                <p className="text-sm font-semibold text-foreground">{interestCount}</p>
+                <p className="text-[11px] text-muted-foreground">interests</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Profile Info */}
-      <div className="max-w-lg mx-auto px-4 -mt-16 relative">
-        {/* Avatar */}
-        <div className="relative inline-block mb-4">
-          <Avatar className="w-28 h-28 ring-4 ring-background">
-            <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.display_name ?? "You"} />
-            <AvatarFallback>{(profile?.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <button
-            onClick={() => setShowEditModal(true)}
-            className="absolute bottom-0 right-0 w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all"
-            aria-label="Change photo"
-          >
-            <Camera className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Name & Bio */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-serif font-semibold">{profile?.display_name ?? "Drifter"}</h1>
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Edit profile"
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
-          </div>
-          <p className="text-foreground leading-relaxed">
-            {profile?.bio ?? "No bio yet. Tell others about yourself!"}
-          </p>
-        </div>
-
-        <div className="mb-6 rounded-2xl border border-primary/25 bg-card/70 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Profile completion</span>
-            <span className="text-sm font-semibold text-primary">{completionScore}%</span>
-          </div>
-          <div className="h-2 rounded-full bg-secondary overflow-hidden">
-            <div className="h-full drift-gradient" style={{ width: `${completionScore}%` }} />
-          </div>
-          {completionScore < 100 && (
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="mt-3 text-xs font-medium text-primary"
-            >
-              {getNextProfileRequirement(profile)}
-            </button>
-          )}
-        </div>
-
-        {/* Location Info */}
-        <div className="flex flex-wrap gap-4 mb-6 text-sm">
-          <button
-            onClick={() => setShowLocationModal(true)}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
-          >
-            <MapPin className="w-4 h-4 text-primary" />
-            <span>
-              {profile?.current_city ?? "Set"}, {profile?.current_country ?? "Location"}
-            </span>
-          </button>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Globe className="w-4 h-4" />
-            <span>Traveler</span>
-          </div>
-        </div>
-
+      <div className="max-w-lg mx-auto px-4 pt-6 relative">
         {/* Languages */}
         <div className="mb-6">
           <h2 className="text-sm font-medium text-foreground mb-3">Languages</h2>

@@ -16,27 +16,63 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  const isTransientAuthError = (value: unknown) => {
+    const message = value instanceof Error ? value.message : String(value ?? "")
+    return /failed to fetch|network|fetch/i.test(message)
+  }
+
+  const formatAuthError = (value: unknown) => {
+    if (isTransientAuthError(value)) {
+      return "We had trouble connecting. Please try again."
+    }
+
+    return value instanceof Error ? value.message : String(value)
+  }
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
+
     setLoading(true)
     setError(null)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
-          `${window.location.origin}/auth/callback`,
-        data: {
-          display_name: displayName,
+    const signUp = () =>
+      supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+            `${window.location.origin}/auth/callback`,
+          data: {
+            display_name: displayName,
+          },
         },
-      },
-    })
+      })
 
-    if (error) {
-      setError(error.message)
+    let authError: unknown = null
+
+    try {
+      let result = await signUp()
+      if (result.error && isTransientAuthError(result.error)) {
+        result = await signUp()
+      }
+      authError = result.error
+    } catch (error) {
+      if (isTransientAuthError(error)) {
+        try {
+          authError = (await signUp()).error
+        } catch (retryError) {
+          authError = retryError
+        }
+      } else {
+        authError = error
+      }
+    }
+
+    if (authError) {
+      setError(formatAuthError(authError))
       setLoading(false)
       return
     }
@@ -70,6 +106,7 @@ export default function SignUpPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="bg-secondary border-0 pl-10 text-foreground placeholder:text-muted-foreground"
+                  disabled={loading}
                   required
                 />
               </div>
@@ -85,6 +122,7 @@ export default function SignUpPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-secondary border-0 pl-10 text-foreground placeholder:text-muted-foreground"
+                  disabled={loading}
                   required
                 />
               </div>
@@ -100,6 +138,7 @@ export default function SignUpPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-secondary border-0 pl-10 pr-10 text-foreground placeholder:text-muted-foreground"
+                  disabled={loading}
                   minLength={6}
                   required
                 />
@@ -123,6 +162,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
+              aria-busy={loading}
               className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium flex items-center justify-center gap-2 hover:glow-amber transition-all disabled:opacity-50"
             >
               {loading ? (

@@ -14,12 +14,15 @@ import { DriftLogo } from "@/components/drift-logo"
 import { EditProfileModal } from "@/components/edit-profile-modal"
 import { useProfile } from "@/hooks/use-profile"
 import { isProfileComplete } from "@/lib/profile-completion"
+import { getScreenMotion } from "@/lib/motion"
 import { Loader2 } from "lucide-react"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 
 export default function Home() {
   const { isLoading, isAuthenticated } = useAuth()
   const { profile, isLoading: profileLoading } = useProfile()
+  const prefersReducedMotion = useReducedMotion()
+  const screenMotion = getScreenMotion(Boolean(prefersReducedMotion))
   const [activeTab, setActiveTab] = useState<"feed" | "discover" | "create" | "messages" | "profile">("feed")
   const [showCreate, setShowCreate] = useState(false)
   const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
@@ -70,21 +73,21 @@ export default function Home() {
   return (
     <main className="min-h-dvh bg-background relative film-grain overflow-x-hidden">
       {/* Notification bell — fixed top-right, visible on all tabs when signed in */}
-      {isAuthenticated && (
+      {isAuthenticated && activeTab !== "profile" && (
         <div className="fixed top-[calc(0.75rem+env(safe-area-inset-top))] right-3 z-50">
           <NotificationsBell />
         </div>
       )}
 
       {/* Main Content Area */}
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
           key={activeTab}
           className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.16, ease: "easeOut" }}
+          initial={screenMotion.initial}
+          animate={screenMotion.animate}
+          exit={screenMotion.exit}
+          transition={screenMotion.transition}
         >
           {activeTab === "feed" && <FeedView onNavigateToMessages={handleNavigateToMessages} />}
           {activeTab === "discover" && <DiscoverView onNavigateToMessages={handleNavigateToMessages} />}

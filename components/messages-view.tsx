@@ -10,6 +10,8 @@ import { formatDistanceToNow } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useBlockedUsers } from "@/hooks/use-user-safety"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+import { motionEase, quickTransition } from "@/lib/motion"
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
 
@@ -125,6 +127,7 @@ interface MessagesViewProps {
 export function MessagesView({ initialConversationId }: MessagesViewProps) {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const prefersReducedMotion = useReducedMotion()
   const { conversations, isLoading } = useConversations()
   const { blockedUserIdSet } = useBlockedUsers()
   const hasAutoOpened = useRef(false)
@@ -158,18 +161,31 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
     [displayConversations, searchQuery]
   )
 
-  if (selectedConversation) {
-    return (
-      <ChatView
-        conversation={selectedConversation}
-        onBack={() => setSelectedConversation(null)}
-        isMock={isMockData}
-      />
-    )
-  }
-
   return (
-    <div className="min-h-screen">
+    <AnimatePresence mode="popLayout" initial={false}>
+      {selectedConversation ? (
+        <motion.div
+          key={`chat-${selectedConversation.id}`}
+          initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: 28 }}
+          animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: 18 }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.22, ease: motionEase }}
+        >
+          <ChatView
+            conversation={selectedConversation}
+            onBack={() => setSelectedConversation(null)}
+            isMock={isMockData}
+          />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="conversation-list"
+          className="min-h-screen"
+          initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -18 }}
+          animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -12 }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : quickTransition}
+        >
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
@@ -203,10 +219,14 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
               </p>
             </div>
           ) : (
-            filteredConversations.map((conversation) => (
-              <button
+            filteredConversations.map((conversation, index) => (
+              <motion.button
                 key={conversation.id}
                 onClick={() => setSelectedConversation(conversation)}
+                initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                transition={prefersReducedMotion ? { duration: 0.01 } : { ...quickTransition, delay: Math.min(index, 8) * 0.025 }}
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.985 }}
                 className="w-full flex items-center gap-4 p-4 hover:bg-card/50 transition-colors text-left"
               >
                 <div className="relative">
@@ -245,12 +265,14 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
                     {conversation.unread_count}
                   </span>
                 )}
-              </button>
+              </motion.button>
             ))
           )}
         </div>
       )}
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -271,6 +293,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
   }>>([])
   const [keyboardOffset, setKeyboardOffset] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const prefersReducedMotion = useReducedMotion()
   const { messages, isLoading } = useMessages(isMock ? null : conversation.id)
   const { sendMessage, markAsRead } = useSendMessage()
   const { toast } = useToast()
@@ -328,8 +351,8 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    scrollToBottom()
-  }, [localMessages, scrollToBottom])
+    scrollToBottom(prefersReducedMotion ? "auto" : "smooth")
+  }, [localMessages.length, prefersReducedMotion, scrollToBottom])
 
   useEffect(() => {
     const viewport = window.visualViewport
@@ -367,6 +390,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     }
     setNewMessage("")
     setLocalMessages((prev) => [...prev, optimisticMessage])
+    requestAnimationFrame(() => scrollToBottom("auto"))
 
     if (isMock) {
       // Simulate response after delay
@@ -468,7 +492,12 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
         style={{ scrollPaddingBottom: keyboardOffset ? keyboardOffset + 96 : 96 }}
       >
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
-          <div className="rounded-3xl border border-border/60 bg-card/70 p-4">
+          <motion.div
+            className="rounded-3xl border border-border/60 bg-card/70 p-4"
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={prefersReducedMotion ? { duration: 0.01 } : quickTransition}
+          >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
                 {otherUser?.travel_mode ? (
@@ -504,7 +533,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
             <p className="text-xs text-muted-foreground mt-3">
               {starter ? `Try asking about ${starter}.` : "Ask what they would like to do today."}
             </p>
-          </div>
+          </motion.div>
 
           {isLoading && !isMock ? (
             <MessageSkeleton />
@@ -527,8 +556,11 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
             localMessages.map((message) => {
               const isMe = message.sender_id === "me" || message.sender_id !== conversation.other_user?.id
               return (
-                <div
+                <motion.div
                   key={message.id}
+                  initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.985 }}
+                  animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+                  transition={prefersReducedMotion ? { duration: 0.01 } : quickTransition}
                   className={cn("flex", isMe ? "justify-end" : "justify-start")}
                 >
                   <div
@@ -549,7 +581,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
                       {formatDistanceToNow(new Date(message.created_at))}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               )
             })
           )}
@@ -559,7 +591,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
 
       {/* Input */}
       <div
-        className="sticky z-40 bg-background border-t border-border/50"
+        className="sticky z-40 bg-background border-t border-border/50 transition-[bottom] duration-150"
         style={{ bottom: keyboardOffset ? `${keyboardOffset}px` : 0 }}
       >
         <div className="max-w-lg mx-auto px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">

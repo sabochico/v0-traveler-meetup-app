@@ -1,7 +1,9 @@
 "use client"
 
 import { Home, Compass, Plus, MessageCircle, User } from "lucide-react"
+import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { navTransition } from "@/lib/motion"
 
 interface BottomNavProps {
   activeTab: "feed" | "discover" | "create" | "messages" | "profile"
@@ -9,6 +11,7 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+  const prefersReducedMotion = useReducedMotion()
   const tabs = [
     { id: "feed" as const, icon: Home, label: "Today" },
     { id: "discover" as const, icon: Compass, label: "Discover" },
@@ -26,11 +29,12 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             const isCreate = tab.id === "create"
 
             return (
-              <button
+              <motion.button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
                 className={cn(
-                  "flex flex-1 flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all duration-300 min-w-0",
+                  "relative flex flex-1 flex-col items-center gap-1 py-2 px-1 rounded-xl transition-colors duration-200 min-w-0 overflow-hidden",
                   isCreate && "relative -mt-6",
                   isActive && !isCreate && "text-primary",
                   !isActive && !isCreate && "text-muted-foreground hover:text-foreground"
@@ -38,16 +42,26 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                 aria-label={tab.label}
               >
                 {isCreate ? (
-                  <div className="w-14 h-14 rounded-2xl drift-gradient-button flex items-center justify-center glow-amber">
+                  <motion.div
+                    className="w-14 h-14 rounded-2xl drift-gradient-button flex items-center justify-center glow-amber"
+                    whileTap={prefersReducedMotion ? undefined : { scale: 0.94 }}
+                  >
                     <Plus className="w-7 h-7 text-primary-foreground" />
-                  </div>
+                  </motion.div>
                 ) : (
                   <>
-                    <tab.icon className={cn("w-6 h-6", isActive && "drop-shadow-[0_0_8px_rgb(0_212_204_/_0.45)]")} />
-                    <span className="text-[10px] font-medium truncate max-w-full">{tab.label}</span>
+                    {isActive && (
+                      <motion.span
+                        layoutId="bottom-nav-active"
+                        className="absolute inset-x-1 inset-y-1 rounded-2xl border border-primary/20 bg-primary/10"
+                        transition={prefersReducedMotion ? { duration: 0.01 } : navTransition}
+                      />
+                    )}
+                    <tab.icon className={cn("relative z-10 w-6 h-6", isActive && "drop-shadow-[0_0_8px_rgb(0_212_204_/_0.45)]")} />
+                    <span className="relative z-10 text-[10px] font-medium truncate max-w-full">{tab.label}</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             )
           })}
         </div>

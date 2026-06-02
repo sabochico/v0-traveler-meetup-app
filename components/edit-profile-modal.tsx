@@ -85,8 +85,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
     profilePhotos.length >= 2 &&
     bio.trim().length >= MIN_BIO_LENGTH &&
     Boolean(currentCity.trim()) &&
-    Boolean(currentCountry.trim()) &&
-    Boolean(instagramHandle.trim())
+    Boolean(currentCountry.trim())
   const languagesStepComplete = languages.length > 0
   const interestsStepComplete = interests.length >= MIN_INTERESTS
   const canContinueSetup =
@@ -473,6 +472,9 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Instagram</label>
+                <p className="text-xs text-muted-foreground">
+                  Optional - add your Instagram if you'd like people to connect with you outside Drift.
+                </p>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                   <Input

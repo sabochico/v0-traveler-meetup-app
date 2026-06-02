@@ -38,7 +38,6 @@ export async function updateSession(request: NextRequest) {
     '/auth/callback',
     '/auth/sign-up-success',
     '/api/upload',
-    '/api/file',
     '/api/blob',
     '/api/conversations',
     '/api/account',

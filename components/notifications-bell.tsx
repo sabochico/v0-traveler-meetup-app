@@ -78,7 +78,7 @@ export function NotificationsBell({ className }: NotificationsBellProps) {
       <SheetTrigger asChild>
         <button
           className={cn(
-            "relative p-2 rounded-full transition-colors hover:bg-secondary",
+            "relative flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-secondary",
             className
           )}
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
