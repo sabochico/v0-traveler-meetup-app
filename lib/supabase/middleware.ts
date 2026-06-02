@@ -41,6 +41,7 @@ export async function updateSession(request: NextRequest) {
     '/api/file',
     '/api/blob',
     '/api/conversations',
+    '/api/account',
     '/profile',
     '/legal',
   ]
