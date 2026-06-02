@@ -9,6 +9,35 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      launch_waitlist: {
+        Row: {
+          id: string
+          email: string
+          name: string | null
+          city: string | null
+          country: string | null
+          nearest_launch_city: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          name?: string | null
+          city?: string | null
+          country?: string | null
+          nearest_launch_city?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string | null
+          city?: string | null
+          country?: string | null
+          nearest_launch_city?: string | null
+          created_at?: string
+        }
+      }
       profiles: {
         Row: {
           id: string

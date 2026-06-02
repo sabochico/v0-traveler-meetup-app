@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { BottomNav } from "@/components/bottom-nav"
 import { FeedView } from "@/components/feed-view"
@@ -14,6 +15,8 @@ import { DriftLogo } from "@/components/drift-logo"
 import { EditProfileModal } from "@/components/edit-profile-modal"
 import { useProfile } from "@/hooks/use-profile"
 import { isProfileComplete } from "@/lib/profile-completion"
+import { getLaunchCityEligibility, type LocationInput } from "@/lib/launch-cities"
+import { detectCurrentLocation } from "@/lib/location"
 import { getScreenMotion } from "@/lib/motion"
 import { Loader2 } from "lucide-react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
@@ -21,11 +24,70 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 export default function Home() {
   const { isLoading, isAuthenticated } = useAuth()
   const { profile, isLoading: profileLoading } = useProfile()
+  const router = useRouter()
   const prefersReducedMotion = useReducedMotion()
   const screenMotion = getScreenMotion(Boolean(prefersReducedMotion))
   const [activeTab, setActiveTab] = useState<"feed" | "discover" | "create" | "messages" | "profile">("feed")
   const [showCreate, setShowCreate] = useState(false)
   const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
+  const [deviceLocation, setDeviceLocation] = useState<LocationInput | null>(null)
+  const [checkingDeviceLocation, setCheckingDeviceLocation] = useState(false)
+  const [attemptedDeviceLocation, setAttemptedDeviceLocation] = useState(false)
+  const profileLocation: LocationInput | null = profile
+    ? {
+        city: profile.current_city,
+        country: profile.current_country,
+        latitude: profile.latitude,
+        longitude: profile.longitude,
+      }
+    : null
+  const hasProfileLocation =
+    Boolean(profileLocation?.city && profileLocation.country) ||
+    (profileLocation?.latitude != null && profileLocation.longitude != null)
+  const launchEligibility = useMemo(
+    () => getLaunchCityEligibility(hasProfileLocation ? profileLocation : deviceLocation),
+    [deviceLocation, hasProfileLocation, profileLocation]
+  )
+  const shouldGateApp =
+    isAuthenticated &&
+    profile &&
+    isProfileComplete(profile) &&
+    !checkingDeviceLocation &&
+    (hasProfileLocation || attemptedDeviceLocation || Boolean(deviceLocation)) &&
+    !launchEligibility.eligible
+
+  useEffect(() => {
+    if (shouldGateApp && activeTab !== "profile") {
+      router.replace("/waitlist")
+    }
+  }, [activeTab, router, shouldGateApp])
+
+  useEffect(() => {
+    if (
+      !isAuthenticated ||
+      !profile ||
+      !isProfileComplete(profile) ||
+      hasProfileLocation ||
+      deviceLocation ||
+      checkingDeviceLocation ||
+      attemptedDeviceLocation
+    ) {
+      return
+    }
+
+    setAttemptedDeviceLocation(true)
+    setCheckingDeviceLocation(true)
+    detectCurrentLocation()
+      .then((location) => {
+        setDeviceLocation(location)
+      })
+      .catch(() => {
+        setDeviceLocation(null)
+      })
+      .finally(() => {
+        setCheckingDeviceLocation(false)
+      })
+  }, [attemptedDeviceLocation, checkingDeviceLocation, deviceLocation, hasProfileLocation, isAuthenticated, profile])
 
   const handleNavigateToMessages = (conversationId: string) => {
     setPendingConversationId(conversationId)
@@ -33,6 +95,11 @@ export default function Home() {
   }
 
   const handleTabChange = (tab: "feed" | "discover" | "create" | "messages" | "profile") => {
+    if (shouldGateApp && tab !== "profile") {
+      router.push("/waitlist")
+      return
+    }
+
     if (tab === "create") {
       if (!isAuthenticated) {
         setActiveTab("profile")

@@ -606,7 +606,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                         key={`${photo}-${index}`}
                         src={photo}
                         alt={`Profile photo ${index + 1}`}
-                        className="aspect-[3/4] rounded-xl object-cover"
+                        className="aspect-[3/4] h-full w-full rounded-xl object-cover object-center"
                       />
                     ))}
                   </div>
