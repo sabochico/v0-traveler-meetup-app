@@ -20,6 +20,7 @@ const createFallbackProfile = (id: string): Profile => {
     display_name: null,
     bio: null,
     avatar_url: null,
+    profile_photos: [],
     interests: [],
     languages: [],
     mood: "social",

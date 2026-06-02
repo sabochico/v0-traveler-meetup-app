@@ -20,6 +20,7 @@ create table if not exists public.profiles (
   display_name      text,
   bio               text,
   avatar_url        text,
+  profile_photos    text[]      not null default '{}',
   interests         text[]      not null default '{}',
   languages         text[]      not null default '{}',
   mood              text        not null default 'exploring',
@@ -125,7 +126,8 @@ alter table public.profiles
   add column if not exists latitude double precision,
   add column if not exists longitude double precision,
   add column if not exists location_source text,
-  add column if not exists location_updated_at timestamptz;
+  add column if not exists location_updated_at timestamptz,
+  add column if not exists profile_photos text[] not null default '{}';
 
 alter table public.meetups
   add column if not exists region text,

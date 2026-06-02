@@ -15,6 +15,7 @@ export interface Database {
           display_name: string | null
           bio: string | null
           avatar_url: string | null
+          profile_photos: string[]
           interests: string[]
           languages: string[]
           mood: string
@@ -39,6 +40,7 @@ export interface Database {
           display_name?: string | null
           bio?: string | null
           avatar_url?: string | null
+          profile_photos?: string[]
           interests?: string[]
           languages?: string[]
           mood?: string
@@ -63,6 +65,7 @@ export interface Database {
           display_name?: string | null
           bio?: string | null
           avatar_url?: string | null
+          profile_photos?: string[]
           interests?: string[]
           languages?: string[]
           mood?: string

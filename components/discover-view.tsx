@@ -24,9 +24,18 @@ const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
 }
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+const MOCK_PROFILE_META = {
+  profile_photos: [],
+  current_region: null,
+  latitude: null,
+  longitude: null,
+  location_source: null,
+  location_updated_at: null,
+}
 
 const MOCK_PROFILES: Profile[] = [
   {
+    ...MOCK_PROFILE_META,
     id: "mock-1",
     display_name: "Yuki",
     avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
@@ -46,6 +55,7 @@ const MOCK_PROFILES: Profile[] = [
     updated_at: new Date().toISOString(),
   },
   {
+    ...MOCK_PROFILE_META,
     id: "mock-2",
     display_name: "Marcus",
     avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
@@ -65,6 +75,7 @@ const MOCK_PROFILES: Profile[] = [
     updated_at: new Date().toISOString(),
   },
   {
+    ...MOCK_PROFILE_META,
     id: "mock-3",
     display_name: "Hana",
     avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face",
@@ -84,6 +95,7 @@ const MOCK_PROFILES: Profile[] = [
     updated_at: new Date().toISOString(),
   },
   {
+    ...MOCK_PROFILE_META,
     id: "mock-4",
     display_name: "Alex",
     avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face",

@@ -36,6 +36,8 @@ const SUGGESTED_INTERESTS = [
   "Fitness", "Cooking", "Languages", "History", "Nature", "Tech"
 ]
 
+const SETUP_STEPS = ["Profile", "Languages", "Interests", "Review"]
+
 interface EditProfileModalProps {
   profile: Profile
   isOpen: boolean
@@ -53,11 +55,14 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? [])
   const [interests, setInterests] = useState<string[]>(profile.interests ?? [])
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url)
+  const [profilePhotos, setProfilePhotos] = useState<string[]>(profile.profile_photos?.length ? profile.profile_photos : profile.avatar_url ? [profile.avatar_url] : [])
   const [instagramHandle, setInstagramHandle] = useState(profile.instagram_handle ?? "")
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [detectingLocation, setDetectingLocation] = useState(false)
   const [activeTab, setActiveTab] = useState<"profile" | "languages" | "interests">("profile")
+  const [setupStep, setSetupStep] = useState(0)
+  const [uploadPhotoIndex, setUploadPhotoIndex] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const locationPromptedRef = useRef(false)
   const { updateProfile } = useUpdateProfile()
@@ -71,12 +76,29 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
     languages,
     interests,
     avatar_url: avatarUrl,
+    profile_photos: profilePhotos,
     instagram_handle: instagramHandle,
   }
   const canSave = !setupMode || isProfileComplete(draftProfile)
+  const profileStepComplete =
+    Boolean(displayName.trim()) &&
+    profilePhotos.length >= 2 &&
+    bio.trim().length >= MIN_BIO_LENGTH &&
+    Boolean(currentCity.trim()) &&
+    Boolean(currentCountry.trim()) &&
+    Boolean(instagramHandle.trim())
+  const languagesStepComplete = languages.length > 0
+  const interestsStepComplete = interests.length >= MIN_INTERESTS
+  const canContinueSetup =
+    setupStep === 0 ? profileStepComplete :
+    setupStep === 1 ? languagesStepComplete :
+    setupStep === 2 ? interestsStepComplete :
+    canSave
 
   useEffect(() => {
-    if (isOpen) setActiveTab(initialTab)
+    if (!isOpen) return
+    setActiveTab(initialTab)
+    if (setupMode) setSetupStep(0)
   }, [isOpen, initialTab])
 
   useEffect(() => {
@@ -122,8 +144,14 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
 
     setUploading(true)
     const previousAvatarUrl = avatarUrl
+    const previousPhotos = profilePhotos
     const previewUrl = URL.createObjectURL(file)
-    setAvatarUrl(previewUrl)
+    if (uploadPhotoIndex === 0) setAvatarUrl(previewUrl)
+    setProfilePhotos((prev) => {
+      const next = [...prev]
+      next[uploadPhotoIndex] = previewUrl
+      return next.filter(Boolean)
+    })
     try {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
@@ -165,10 +193,16 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
       }
 
       const data = JSON.parse(responseText)
-      setAvatarUrl(data.url)
+      if (uploadPhotoIndex === 0) setAvatarUrl(data.url)
+      setProfilePhotos((prev) => {
+        const next = [...prev]
+        next[uploadPhotoIndex] = data.url
+        return next.filter(Boolean)
+      })
     } catch (error) {
       console.error("Upload error:", error)
       setAvatarUrl(previousAvatarUrl)
+      setProfilePhotos(previousPhotos)
       toast({
         title: "Photo upload failed",
         description: error instanceof Error ? error.message : "Please try again.",
@@ -209,7 +243,8 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         location_updated_at: new Date().toISOString(),
         languages,
         interests,
-        avatar_url: avatarUrl,
+        avatar_url: profilePhotos[0] ?? avatarUrl,
+        profile_photos: profilePhotos,
         instagram_handle: instagramHandle.trim().replace(/^@/, "") || null,
       })
       onClose()
@@ -225,6 +260,16 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
     }
   }
 
+  const handleSetupContinue = () => {
+    if (!canContinueSetup) return
+    setSetupStep((step) => Math.min(step + 1, SETUP_STEPS.length - 1))
+  }
+
+  const showProfileStep = setupMode ? setupStep === 0 : activeTab === "profile"
+  const showLanguagesStep = setupMode ? setupStep === 1 : activeTab === "languages"
+  const showInterestsStep = setupMode ? setupStep === 2 : activeTab === "interests"
+  const showReviewStep = setupMode && setupStep === 3
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
@@ -237,7 +282,9 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
           <div>
             <h2 className="text-lg font-semibold">{setupMode ? "Complete your profile" : "Edit Profile"}</h2>
             {setupMode && (
-              <p className="text-xs text-muted-foreground mt-1">{getNextProfileRequirement(draftProfile)}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Step {setupStep + 1} of {SETUP_STEPS.length} · {SETUP_STEPS[setupStep]}
+              </p>
             )}
           </div>
           {!setupMode && (
@@ -251,66 +298,110 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-border/50">
-          {(["profile", "languages", "interests"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "flex-1 px-4 py-3 text-sm font-medium transition-colors",
-                activeTab === tab
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
+        {setupMode ? (
+          <div className="px-6 py-4 border-b border-border/50">
+            <div className="h-2 rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full drift-gradient transition-all duration-300"
+                style={{ width: `${((setupStep + 1) / SETUP_STEPS.length) * 100}%` }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{getNextProfileRequirement(draftProfile)}</p>
+          </div>
+        ) : (
+          <div className="flex border-b border-border/50">
+            {(["profile", "languages", "interests"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+                  activeTab === tab
+                    ? "text-primary border-b-2 border-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-y-auto p-6">
-          {activeTab === "profile" && (
+          {showProfileStep && (
             <div className="space-y-6">
-              {/* Avatar */}
-              <div className="flex flex-col items-center">
-                <div className="relative">
-                  <Avatar className="w-24 h-24 ring-4 ring-primary/20">
-                    <AvatarImage
-                      src={avatarUrl ?? undefined}
-                      alt={displayName || "Profile"}
-                    />
-                    <AvatarFallback>
-                      {(displayName || "U")[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <label
-                    htmlFor="avatar-file-input"
-                    className={cn(
-                      "absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all cursor-pointer",
-                      uploading && "opacity-50 pointer-events-none"
-                    )}
-                    aria-label="Change photo"
-                  >
-                    {uploading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Camera className="w-4 h-4" />
-                    )}
-                  </label>
-                  <input
-                    id="avatar-file-input"
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {uploading ? "Uploading..." : "Tap to change photo"}
-                </p>
+              <div className={cn("space-y-3", !setupMode && "flex flex-col items-center")}>
+                {setupMode ? (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Profile photos</label>
+                      <p className="mt-1 text-xs text-muted-foreground">Add at least 2 photos so people know who they are meeting.</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[0, 1, 2, 3, 4, 5].map((index) => {
+                        const photo = profilePhotos[index]
+                        return (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => {
+                              setUploadPhotoIndex(index)
+                              fileInputRef.current?.click()
+                            }}
+                            disabled={uploading}
+                            className={cn(
+                              "aspect-[3/4] overflow-hidden rounded-2xl border border-border bg-secondary text-left transition active:scale-[0.98] disabled:opacity-60",
+                              index < 2 && !photo && "border-primary/50"
+                            )}
+                          >
+                            {photo ? (
+                              <img src={photo} alt={`Profile photo ${index + 1}`} className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="flex h-full flex-col items-center justify-center gap-2 px-2 text-center text-xs text-muted-foreground">
+                                <Camera className="h-5 w-5 text-primary" />
+                                Photo {index + 1}{index < 2 ? " required" : ""}
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {uploading ? "Uploading photo..." : `${profilePhotos.length}/2 required photos added`}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Avatar className="w-24 h-24 ring-4 ring-primary/20">
+                        <AvatarImage src={avatarUrl ?? undefined} alt={displayName || "Profile"} />
+                        <AvatarFallback>{(displayName || "U")[0].toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <label
+                        htmlFor="avatar-file-input"
+                        className={cn(
+                          "absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all cursor-pointer",
+                          uploading && "opacity-50 pointer-events-none"
+                        )}
+                        aria-label="Change photo"
+                      >
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {uploading ? "Uploading..." : "Tap to change photo"}
+                    </p>
+                  </>
+                )}
+                <input
+                  id="avatar-file-input"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
               </div>
 
               {/* Name */}
@@ -395,7 +486,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
             </div>
           )}
 
-          {activeTab === "languages" && (
+          {showLanguagesStep && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Select the languages you speak. This helps other travelers find you.
@@ -441,7 +532,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
             </div>
           )}
 
-          {activeTab === "interests" && (
+          {showInterestsStep && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Select at least {MIN_INTERESTS} interests to connect with like-minded travelers.
@@ -486,27 +577,112 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
               </div>
             </div>
           )}
+
+          {showReviewStep && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Review your profile before joining Drift.
+              </p>
+              <div className="rounded-2xl bg-secondary p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-14 w-14">
+                    <AvatarImage src={avatarUrl ?? undefined} alt={displayName || "Profile"} />
+                    <AvatarFallback>{(displayName || "U")[0].toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground truncate">{displayName}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {[currentCity, currentCountry].filter(Boolean).join(", ")}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Photos</p>
+                  <div className="mt-2 grid grid-cols-4 gap-2">
+                    {profilePhotos.slice(0, 4).map((photo, index) => (
+                      <img
+                        key={`${photo}-${index}`}
+                        src={photo}
+                        alt={`Profile photo ${index + 1}`}
+                        className="aspect-[3/4] rounded-xl object-cover"
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Bio</p>
+                  <p className="mt-1 text-sm text-foreground">{bio}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Languages</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {languages.map((language) => <Badge key={language}>{language}</Badge>)}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Interests</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {interests.map((interest) => <Badge key={interest}>{interest}</Badge>)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="shrink-0 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-border/50 bg-card">
-          <button
-            onClick={handleSave}
-            disabled={saving || !canSave}
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:glow-amber transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Check className="w-4 h-4" />
-                {setupMode ? "Complete Profile" : "Save Changes"}
-              </>
-            )}
-          </button>
+          {setupMode ? (
+            <div className="flex gap-3">
+              {setupStep > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSetupStep((step) => Math.max(step - 1, 0))}
+                  disabled={saving}
+                  className="min-h-12 flex-1 rounded-xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:opacity-60"
+                >
+                  Back
+                </button>
+              )}
+              <button
+                onClick={setupStep === SETUP_STEPS.length - 1 ? handleSave : handleSetupContinue}
+                disabled={saving || !canContinueSetup}
+                className="min-h-12 flex-[2] rounded-xl bg-primary text-primary-foreground font-medium hover:glow-amber transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : setupStep === SETUP_STEPS.length - 1 ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Complete Profile
+                  </>
+                ) : (
+                  "Continue"
+                )}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleSave}
+              disabled={saving || !canSave}
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:glow-amber transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Save Changes
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

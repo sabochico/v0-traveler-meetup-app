@@ -28,7 +28,7 @@ import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@
 function calcProfileScore(p: Profile): number {
   let score = 0
   if (p.display_name) score += 20
-  if (p.avatar_url) score += 25
+  if ((p.profile_photos?.length ?? 0) >= 2) score += 25
   if ((p.bio?.length ?? 0) >= 20) score += 20
   if (p.current_city) score += 15
   if ((p.interests?.length ?? 0) >= 3) score += 15
@@ -38,7 +38,7 @@ function calcProfileScore(p: Profile): number {
 
 function getNextProfileStep(p: Profile): string {
   if (!p.display_name) return "Add your name"
-  if (!p.avatar_url) return "Add a profile photo"
+  if ((p.profile_photos?.length ?? 0) < 2) return "Add 2 profile photos"
   if ((p.bio?.length ?? 0) < 20) return "Write a short bio"
   if (!p.current_city) return "Set your city"
   if ((p.interests?.length ?? 0) < 3) return "Add 3 interests"
@@ -176,6 +176,14 @@ const CONFETTI_COLORS = [
 ]
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+const MOCK_PROFILE_META = {
+  profile_photos: [],
+  current_region: null,
+  latitude: null,
+  longitude: null,
+  location_source: null,
+  location_updated_at: null,
+}
 
 const MOCK_MEETUPS: MeetupWithCreator[] = [
   {
@@ -183,11 +191,12 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
     title: "Anyone want to grab coffee in Shibuya?",
     description: null, category: "coffee",
     location_name: "Shibuya, Tokyo", location: null,
-    city: "Tokyo", country: "Japan", max_attendees: 4,
+    city: "Tokyo", region: null, country: "Japan", latitude: null, longitude: null, max_attendees: 4,
     starts_at: new Date().toISOString(), ends_at: null,
     is_active: true,
     created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     creator: {
+      ...MOCK_PROFILE_META,
       id: "mock-1", display_name: "Mika",
       avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&crop=face",
       bio: null, interests: [], languages: ["Japanese", "English"],
@@ -202,11 +211,12 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
     title: "Working remotely in Seoul today, looking for cafe company",
     description: null, category: "coffee",
     location_name: "Hongdae, Seoul", location: null,
-    city: "Seoul", country: "South Korea", max_attendees: 4,
+    city: "Seoul", region: null, country: "South Korea", latitude: null, longitude: null, max_attendees: 4,
     starts_at: new Date(Date.now() + 2 * 3600000).toISOString(), ends_at: null,
     is_active: true,
     created_at: new Date(Date.now() - 2 * 3600000).toISOString(), updated_at: new Date().toISOString(),
     creator: {
+      ...MOCK_PROFILE_META,
       id: "mock-2", display_name: "Leo",
       avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
       bio: null, interests: [], languages: ["English", "Korean"],
@@ -221,11 +231,12 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
     title: "First week in Taipei - want to explore night markets!",
     description: null, category: "food",
     location_name: "Ximending, Taipei", location: null,
-    city: "Taipei", country: "Taiwan", max_attendees: 4,
+    city: "Taipei", region: null, country: "Taiwan", latitude: null, longitude: null, max_attendees: 4,
     starts_at: new Date(Date.now() + 8 * 3600000).toISOString(), ends_at: null,
     is_active: true,
     created_at: new Date(Date.now() - 3 * 3600000).toISOString(), updated_at: new Date().toISOString(),
     creator: {
+      ...MOCK_PROFILE_META,
       id: "mock-3", display_name: "Sofia",
       avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
       bio: null, interests: [], languages: ["Spanish", "English", "Chinese"],
@@ -240,11 +251,12 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
     title: "Late night photography walk through Shinjuku",
     description: null, category: "photo",
     location_name: "Shinjuku, Tokyo", location: null,
-    city: "Tokyo", country: "Japan", max_attendees: 4,
+    city: "Tokyo", region: null, country: "Japan", latitude: null, longitude: null, max_attendees: 4,
     starts_at: new Date(Date.now() + 10 * 3600000).toISOString(), ends_at: null,
     is_active: true,
     created_at: new Date(Date.now() - 4 * 3600000).toISOString(), updated_at: new Date().toISOString(),
     creator: {
+      ...MOCK_PROFILE_META,
       id: "mock-4", display_name: "Kai",
       avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face",
       bio: null, interests: [], languages: ["English", "Japanese"],
