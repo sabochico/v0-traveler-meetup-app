@@ -44,6 +44,7 @@ export async function updateSession(request: NextRequest) {
     '/profile',
     '/legal',
     '/support',
+    '/waitlist',
   ]
   const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
 
