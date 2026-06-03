@@ -6,6 +6,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
+import type { Session } from "@supabase/supabase-js"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -46,6 +47,7 @@ export default function LoginPage() {
     const signIn = () => supabase.auth.signInWithPassword({ email, password })
 
     let authError: unknown = null
+    let authSession: Session | null = null
 
     try {
       let result = await signIn()
@@ -53,10 +55,13 @@ export default function LoginPage() {
         result = await signIn()
       }
       authError = result.error
+      authSession = result.data.session
     } catch (error) {
       if (isTransientAuthError(error)) {
         try {
-          authError = (await signIn()).error
+          const retryResult = await signIn()
+          authError = retryResult.error
+          authSession = retryResult.data.session
         } catch (retryError) {
           authError = retryError
         }
@@ -71,8 +76,17 @@ export default function LoginPage() {
       return
     }
 
-    router.push("/")
-    router.refresh()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!authSession && !session) {
+      setError("We could not keep you signed in. Please try again.")
+      setLoading(false)
+      return
+    }
+
+    router.replace("/")
   }
 
   return (
