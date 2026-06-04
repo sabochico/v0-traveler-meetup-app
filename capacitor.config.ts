@@ -7,6 +7,13 @@ const config: CapacitorConfig = {
   server: {
     url: "https://driftapp.me",
     cleartext: false,
+    allowNavigation: [
+      "driftapp.me",
+      "*.driftapp.me",
+      "*.supabase.co",
+      "api.bigdatacloud.net",
+      "geocoding-api.open-meteo.com",
+    ],
   },
 }
 
