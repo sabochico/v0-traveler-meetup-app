@@ -307,6 +307,10 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     ...(otherUser?.languages ?? []).slice(0, 2),
   ].slice(0, 4)
   const starter = contextTags[0]
+  const composerBottom = keyboardOffset
+    ? `${keyboardOffset}px`
+    : "calc(5.5rem + env(safe-area-inset-bottom))"
+  const scrollBottomPadding = keyboardOffset ? keyboardOffset + 96 : 184
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior, block: "end" })
   }, [])
@@ -426,6 +430,16 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     setSending(false)
   }
 
+  const handleUseStarter = () => {
+    if (!starter) return
+
+    setNewMessage(`Hey! I saw you're into ${starter}. Want to do something today?`)
+    requestAnimationFrame(() => {
+      document.getElementById("message-composer-input")?.focus()
+      scrollToBottom("auto")
+    })
+  }
+
   return (
     <div className="min-h-[100dvh] flex flex-col">
       {/* Header */}
@@ -489,7 +503,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
       {/* Messages */}
       <div
         className="flex-1 overflow-y-auto overscroll-contain"
-        style={{ scrollPaddingBottom: keyboardOffset ? keyboardOffset + 96 : 96 }}
+        style={{ scrollPaddingBottom: scrollBottomPadding }}
       >
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
           <motion.div
@@ -545,7 +559,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
               </p>
               {starter && (
                 <button
-                  onClick={() => setNewMessage(`Hey! I saw you're into ${starter}. Want to do something today?`)}
+                  onClick={handleUseStarter}
                   className="mt-4 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
                 >
                   Use starter
@@ -592,7 +606,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
       {/* Input */}
       <div
         className="sticky z-40 bg-background border-t border-border/50 transition-[bottom] duration-150"
-        style={{ bottom: keyboardOffset ? `${keyboardOffset}px` : 0 }}
+        style={{ bottom: composerBottom }}
       >
         <div className="max-w-lg mx-auto px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           <form
@@ -603,6 +617,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
             className="flex items-center gap-2"
           >
             <Input
+              id="message-composer-input"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
