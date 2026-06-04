@@ -187,7 +187,7 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
           transition={prefersReducedMotion ? { duration: 0.01 } : quickTransition}
         >
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[var(--drift-safe-top)]">
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
           <h1 className="text-2xl font-serif font-semibold">Messages</h1>
 
@@ -454,7 +454,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
   return (
     <div className="min-h-[100dvh] flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[var(--drift-safe-top)]">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={onBack}

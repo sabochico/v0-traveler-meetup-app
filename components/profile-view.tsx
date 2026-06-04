@@ -107,7 +107,7 @@ export function ProfileView() {
   return (
     <div className="min-h-screen pb-8">
       {/* Profile Hero */}
-      <div className="relative overflow-hidden drift-gradient px-4 pb-5 pt-[calc(1rem+env(safe-area-inset-top))]">
+      <div className="relative overflow-hidden drift-gradient px-4 pb-5 pt-[calc(1rem+var(--drift-safe-top))]">
         <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-background/70" />
         <div className="relative mx-auto max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="rounded-3xl border border-white/15 bg-background/70 p-4 shadow-2xl shadow-primary/20 backdrop-blur-xl">

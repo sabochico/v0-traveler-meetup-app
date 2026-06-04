@@ -74,7 +74,7 @@ export default function Home() {
     <main className="min-h-dvh bg-background relative film-grain overflow-x-hidden">
       {/* Notification bell — fixed top-right, visible on all tabs when signed in */}
       {isAuthenticated && activeTab !== "profile" && (
-        <div className="fixed top-[calc(0.75rem+env(safe-area-inset-top))] right-3 z-50">
+        <div className="fixed top-[calc(0.75rem+var(--drift-safe-top))] right-3 z-50">
           <NotificationsBell />
         </div>
       )}

@@ -41,6 +41,7 @@
   --chart-4: var(--drift-green);
   --chart-5: var(--drift-amber);
   --radius: 0.75rem;
+  --drift-safe-top: env(safe-area-inset-top);
   --sidebar: var(--drift-near-black);
   --sidebar-foreground: var(--drift-white);
   --sidebar-primary: var(--drift-blue);
@@ -191,6 +192,12 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --drift-safe-top: max(env(safe-area-inset-top), 3.25rem);
   }
 }
 
