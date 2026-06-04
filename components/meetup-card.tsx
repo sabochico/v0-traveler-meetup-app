@@ -16,6 +16,7 @@ import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 interface MeetupCardProps {
   meetup: MeetupWithCreator
   onNavigateToMessages?: (conversationId: string) => void
+  loadUserState?: boolean
 }
 
 const STATUS_COLORS = {
@@ -76,12 +77,12 @@ function formatMeetupTime(dateString: string): string {
   return date.toLocaleDateString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
 }
 
-export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
+export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true }: MeetupCardProps) {
   const { user } = useAuth()
-  const { savedMeetupIds } = useSavedMeetups()
+  const { savedMeetupIds } = useSavedMeetups({ enabled: loadUserState })
   const { saveMeetup, unsaveMeetup } = useSaveMeetup()
   const { joinMeetup, leaveMeetup } = useJoinMeetup()
-  const { joinedMeetups } = useUserMeetups()
+  const { joinedMeetups } = useUserMeetups({ enabled: loadUserState })
   const { toast } = useToast()
   const { startConversation } = useCreateConversation()
   const { sendMessage } = useSendMessage()

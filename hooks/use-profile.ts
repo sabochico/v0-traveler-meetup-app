@@ -219,8 +219,9 @@ const nearbyFetcher = async (): Promise<Profile[]> => {
   }))
 }
 
-export function useNearbyProfiles() {
-  const { data, error, isLoading, mutate } = useSWR("nearby-profiles", nearbyFetcher, SWR_OPTIONS)
+export function useNearbyProfiles(options: UseProfileOptions = {}) {
+  const enabled = options.enabled ?? true
+  const { data, error, isLoading, mutate } = useSWR(enabled ? "nearby-profiles" : null, nearbyFetcher, SWR_OPTIONS)
 
   return {
     profiles: data ?? [],

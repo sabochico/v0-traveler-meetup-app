@@ -835,6 +835,7 @@ function TodayHome({
   profiles,
   isLoading,
   savedLoading,
+  loadSecondaryData,
   onNavigateToMessages,
   onViewSaved,
   onBrowseAll,
@@ -844,6 +845,7 @@ function TodayHome({
   profiles: Profile[]
   isLoading: boolean
   savedLoading: boolean
+  loadSecondaryData: boolean
   onNavigateToMessages?: (conversationId: string) => void
   onViewSaved: () => void
   onBrowseAll: () => void
@@ -907,6 +909,7 @@ function TodayHome({
               <MeetupCard
                 key={meetup.id}
                 meetup={meetup}
+                loadUserState={loadSecondaryData}
                 onNavigateToMessages={onNavigateToMessages}
               />
             ))}
@@ -940,6 +943,7 @@ function TodayHome({
               <MeetupCard
                 key={meetup.id}
                 meetup={meetup as MeetupWithCreator}
+                loadUserState={loadSecondaryData}
                 onNavigateToMessages={onNavigateToMessages}
               />
             ))}
@@ -960,11 +964,13 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [editProfileTab, setEditProfileTab] = useState<"profile" | "interests">("profile")
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [loadSecondaryData, setLoadSecondaryData] = useState(false)
   const { meetups, isLoading } = useMeetups()
-  const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails()
+  const shouldLoadSavedMeetups = activeTab === "saved" || loadSecondaryData
+  const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails({ enabled: shouldLoadSavedMeetups })
   const { profile } = useProfile()
   const { updateMood } = useUpdateProfile()
-  const { profiles } = useNearbyProfiles()
+  const { profiles } = useNearbyProfiles({ enabled: loadSecondaryData })
   const { isAuthenticated } = useAuth()
   const { blockedUserIdSet } = useBlockedUsers()
 
@@ -972,6 +978,11 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
     if (sessionStorage.getItem("drift-profile-banner-dismissed") === "1") {
       setBannerDismissed(true)
     }
+  }, [])
+
+  useEffect(() => {
+    const timerId = window.setTimeout(() => setLoadSecondaryData(true), 700)
+    return () => window.clearTimeout(timerId)
   }, [])
 
   const handleDismissBanner = () => {
@@ -1099,6 +1110,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             profiles={profiles.filter((person) => !blockedUserIdSet.has(person.id))}
             isLoading={isLoading}
             savedLoading={savedLoading}
+            loadSecondaryData={loadSecondaryData}
             onNavigateToMessages={onNavigateToMessages}
             onViewSaved={() => setActiveTab("saved")}
             onBrowseAll={() => setBrowseAll(true)}
@@ -1121,6 +1133,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
               <MeetupCard
                 key={meetup.id}
                 meetup={meetup as MeetupWithCreator}
+                loadUserState
                 onNavigateToMessages={onNavigateToMessages}
               />
             ))}

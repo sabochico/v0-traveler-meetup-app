@@ -7,6 +7,7 @@ import { useNotifications } from "@/hooks/use-notifications"
 import { formatDistanceToNow } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import type { Notification } from "@/lib/types"
+import { useState } from "react"
 
 const TYPE_ICON: Record<string, React.ReactNode> = {
   meetup_join: <Heart className="w-3.5 h-3.5 text-emerald-400" />,
@@ -64,9 +65,11 @@ interface NotificationsBellProps {
 }
 
 export function NotificationsBell({ className }: NotificationsBellProps) {
-  const { notifications, unreadCount, isLoading, markAllRead } = useNotifications()
+  const [open, setOpen] = useState(false)
+  const { notifications, unreadCount, isLoading, markAllRead } = useNotifications({ enabled: open })
 
   const handleOpen = (open: boolean) => {
+    setOpen(open)
     if (open && unreadCount > 0) {
       // Small delay so the badge is visible briefly before clearing
       setTimeout(markAllRead, 800)

@@ -124,7 +124,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const [activeTab, setActiveTab] = useState<"meetups" | "people">("meetups")
   const [searchQuery, setSearchQuery] = useState("")
   const [cityFilter, setCityFilter] = useState("all")
-  const { profiles, isLoading: profilesLoading } = useNearbyProfiles()
+  const { profiles, isLoading: profilesLoading } = useNearbyProfiles({ enabled: activeTab === "people" })
   const { meetups, isLoading: meetupsLoading } = useMeetups()
   const { blockedUserIdSet } = useBlockedUsers()
 

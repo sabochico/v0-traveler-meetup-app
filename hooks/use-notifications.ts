@@ -23,8 +23,13 @@ const fetcher = async (): Promise<Notification[]> => {
   return (data ?? []) as Notification[]
 }
 
-export function useNotifications() {
-  const { data, error, isLoading, mutate } = useSWR("notifications", fetcher, {
+interface UseNotificationsOptions {
+  enabled?: boolean
+}
+
+export function useNotifications(options: UseNotificationsOptions = {}) {
+  const enabled = options.enabled ?? true
+  const { data, error, isLoading, mutate } = useSWR(enabled ? "notifications" : null, fetcher, {
     refreshInterval: 30_000,
   })
 
