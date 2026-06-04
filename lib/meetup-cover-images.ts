@@ -1,49 +1,49 @@
 const MEETUP_COVER_IMAGES: Record<string, string[]> = {
   coffee: [
-    "/meetups/coffee/coffee 1.jpeg",
-    "/meetups/coffee/coffee 2.jpeg",
-    "/meetups/coffee/coffee 3.jpeg",
-    "/meetups/coffee/coffee 4.png",
+    "/meetups/coffee/coffee 1.webp",
+    "/meetups/coffee/coffee 2.webp",
+    "/meetups/coffee/coffee 3.webp",
+    "/meetups/coffee/coffee 4.webp",
   ],
   food: [
-    "/meetups/food adventure/food 1.png",
-    "/meetups/food adventure/food 2.png",
-    "/meetups/food adventure/food 3.png",
-    "/meetups/food adventure/food 4.png",
-    "/meetups/food adventure/food 5.png",
+    "/meetups/food adventure/food 1.webp",
+    "/meetups/food adventure/food 2.webp",
+    "/meetups/food adventure/food 3.webp",
+    "/meetups/food adventure/food 4.webp",
+    "/meetups/food adventure/food 5.webp",
   ],
   photo: [
-    "/meetups/photography/photo 1.png",
-    "/meetups/photography/photo 2.png",
-    "/meetups/photography/photo 3.png",
-    "/meetups/photography/photo 4.png",
-    "/meetups/photography/photo 5.png",
+    "/meetups/photography/photo 1.webp",
+    "/meetups/photography/photo 2.webp",
+    "/meetups/photography/photo 3.webp",
+    "/meetups/photography/photo 4.webp",
+    "/meetups/photography/photo 5.webp",
   ],
   walk: [
-    "/meetups/night walk/night walk 1.png",
-    "/meetups/night walk/night walk 2.png",
-    "/meetups/night walk/night walk 3.png",
-    "/meetups/night walk/night walk 4.png",
-    "/meetups/night walk/night walk 5.png",
+    "/meetups/night walk/night walk 1.webp",
+    "/meetups/night walk/night walk 2.webp",
+    "/meetups/night walk/night walk 3.webp",
+    "/meetups/night walk/night walk 4.webp",
+    "/meetups/night walk/night walk 5.webp",
   ],
   study: [
-    "/meetups/study session/study 1.png",
-    "/meetups/study session/study 2.png",
-    "/meetups/study session/study 3.png",
-    "/meetups/study session/study 4.png",
+    "/meetups/study session/study 1.webp",
+    "/meetups/study session/study 2.webp",
+    "/meetups/study session/study 3.webp",
+    "/meetups/study session/study 4.webp",
   ],
   gaming: [
-    "/meetups/gaming/gaming 1.png",
-    "/meetups/gaming/gaming 2.png",
-    "/meetups/gaming/gaming 3.png",
-    "/meetups/gaming/gaming 4.png",
-    "/meetups/gaming/gaming 5.png",
+    "/meetups/gaming/gaming 1.webp",
+    "/meetups/gaming/gaming 2.webp",
+    "/meetups/gaming/gaming 3.webp",
+    "/meetups/gaming/gaming 4.webp",
+    "/meetups/gaming/gaming 5.webp",
   ],
   explore: [
-    "/meetups/exploring/exploring 1.png",
-    "/meetups/exploring/exploring 2.png",
-    "/meetups/exploring/exploring 3.png",
-    "/meetups/exploring/explring 4.png",
+    "/meetups/exploring/exploring 1.webp",
+    "/meetups/exploring/exploring 2.webp",
+    "/meetups/exploring/exploring 3.webp",
+    "/meetups/exploring/explring 4.webp",
   ],
 }
 
@@ -65,4 +65,10 @@ export function getRandomMeetupCoverImage(category: string) {
   const images = MEETUP_COVER_IMAGES[category] ?? []
   if (images.length === 0) return null
   return images[Math.floor(Math.random() * images.length)]
+}
+
+export function getOptimizedMeetupCoverImage(imageUrl?: string | null) {
+  if (!imageUrl) return null
+  if (!imageUrl.startsWith("/meetups/")) return imageUrl
+  return imageUrl.replace(/\.(png|jpe?g)$/i, ".webp")
 }

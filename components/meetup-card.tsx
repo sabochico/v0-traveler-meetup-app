@@ -10,7 +10,7 @@ import { useSavedMeetups, useSaveMeetup, useJoinMeetup, useUserMeetups } from "@
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation, useSendMessage } from "@/hooks/use-messages"
-import { getMeetupCoverImage } from "@/lib/meetup-cover-images"
+import { getMeetupCoverImage, getOptimizedMeetupCoverImage } from "@/lib/meetup-cover-images"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
@@ -97,7 +97,7 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
   const categoryGradient = CATEGORY_GRADIENTS[meetup.category] ?? CATEGORY_GRADIENTS.coffee
   const categoryLabel = CATEGORY_LABELS[meetup.category] ?? meetup.category
   const attendeeCount = meetup.attendee_count ?? meetup.attendees?.length ?? 0
-  const cardImageUrl = meetup.cover_image_url ?? getMeetupCoverImage(meetup.category, meetup.id)
+  const cardImageUrl = getOptimizedMeetupCoverImage(meetup.cover_image_url) ?? getMeetupCoverImage(meetup.category, meetup.id)
   const [imageFailed, setImageFailed] = useState(false)
 
   useEffect(() => {
@@ -159,6 +159,10 @@ export function MeetupCard({ meetup, onNavigateToMessages }: MeetupCardProps) {
           <img
             src={cardImageUrl}
             alt={meetup.title}
+            width={960}
+            height={600}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             onError={() => setImageFailed(true)}
           />
