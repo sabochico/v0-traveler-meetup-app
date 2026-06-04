@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { Profile, MoodStatus } from "@/lib/types"
+import { getCachedProfile, setCachedProfile } from "@/lib/profile-cache"
 
 const ONLINE_WINDOW_MS = 2 * 60 * 1000
 const SWR_OPTIONS = { keepPreviousData: true }
@@ -66,12 +67,32 @@ const fetcher = async (): Promise<Profile | null> => {
 
 interface UseProfileOptions {
   enabled?: boolean
+  userId?: string | null
 }
 
 export function useProfile(options: UseProfileOptions = {}) {
   const enabled = options.enabled ?? true
   const key = enabled ? "profile" : null
-  const { data, error, isLoading, mutate } = useSWR(key, fetcher, SWR_OPTIONS)
+  const cachedProfile = getCachedProfile(options.userId)
+  const fallbackData = cachedProfile
+    ? {
+      ...createFallbackProfile(cachedProfile.id),
+      ...cachedProfile,
+      is_online: false,
+      anonymous_mode: false,
+      latitude: null,
+      longitude: null,
+      location_source: null,
+      location_updated_at: null,
+      created_at: cachedProfile.cached_at,
+      updated_at: cachedProfile.cached_at,
+    } satisfies Profile
+    : undefined
+  const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
+    ...SWR_OPTIONS,
+    fallbackData,
+    onSuccess: setCachedProfile,
+  })
 
   useEffect(() => {
     if (!enabled) return
@@ -110,7 +131,7 @@ export function useProfile(options: UseProfileOptions = {}) {
       window.removeEventListener("beforeunload", handleBeforeUnload)
       updatePresence(false)
     }
-  }, [])
+  }, [enabled])
 
   return {
     profile: data,

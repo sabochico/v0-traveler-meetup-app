@@ -19,8 +19,8 @@ import { Bell, Compass, HomeIcon, MessageCircle, Plus, UserIcon } from "lucide-r
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 
 export default function Home() {
-  const { isLoading, isAuthenticated } = useAuth()
-  const { profile, isLoading: profileLoading } = useProfile({ enabled: !isLoading && isAuthenticated })
+  const { user, isLoading, isAuthenticated } = useAuth()
+  const { profile, isLoading: profileLoading } = useProfile({ enabled: !isLoading && isAuthenticated, userId: user?.id })
   const prefersReducedMotion = useReducedMotion()
   const screenMotion = getScreenMotion(Boolean(prefersReducedMotion))
   const [activeTab, setActiveTab] = useState<"feed" | "discover" | "create" | "messages" | "profile">("feed")

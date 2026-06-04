@@ -28,6 +28,7 @@ import { NotificationsBell } from "@/components/notifications-bell"
 import { AppearanceSettings } from "@/components/appearance-settings"
 import { createClient } from "@/lib/supabase/client"
 import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
+import { clearCachedProfile } from "@/lib/profile-cache"
 
 export function ProfileView() {
   const { profile, isLoading } = useProfile()
@@ -88,6 +89,7 @@ export function ProfileView() {
       }
 
       await supabase.auth.signOut()
+      clearCachedProfile()
       sessionStorage.setItem("drift_account_deleted", "true")
       window.location.href = "/auth/login"
     } catch (error) {

@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { User } from "@supabase/supabase-js"
+import { clearCachedProfile } from "@/lib/profile-cache"
 
 const fetcher = async (): Promise<User | null> => {
   const supabase = createClient()
@@ -22,6 +23,7 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) clearCachedProfile()
       mutate(session?.user ?? null, { revalidate: false })
     })
 
@@ -31,6 +33,7 @@ export function useAuth() {
   const signOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
+    clearCachedProfile()
     await mutate(null)
     window.location.href = "/auth/login"
   }
