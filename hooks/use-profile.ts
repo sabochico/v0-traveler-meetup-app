@@ -44,7 +44,7 @@ const createFallbackProfile = (id: string): Profile => {
 
 const fetcher = async (): Promise<Profile | null> => {
   const supabase = createClient()
-  
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
@@ -64,10 +64,18 @@ const fetcher = async (): Promise<Profile | null> => {
   }
 }
 
-export function useProfile() {
-  const { data, error, isLoading, mutate } = useSWR("profile", fetcher, SWR_OPTIONS)
+interface UseProfileOptions {
+  enabled?: boolean
+}
+
+export function useProfile(options: UseProfileOptions = {}) {
+  const enabled = options.enabled ?? true
+  const key = enabled ? "profile" : null
+  const { data, error, isLoading, mutate } = useSWR(key, fetcher, SWR_OPTIONS)
 
   useEffect(() => {
+    if (!enabled) return
+
     const supabase = createClient()
     let intervalId: ReturnType<typeof setInterval> | null = null
 
