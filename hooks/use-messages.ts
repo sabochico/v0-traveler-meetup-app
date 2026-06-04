@@ -294,6 +294,12 @@ export function useSendMessage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
+    console.debug("[Drift messages] insert start", {
+      conversationId,
+      userId: user.id,
+      contentLength: content.trim().length,
+    })
+
     const { data, error } = await supabase
       .from("messages")
       .insert({
@@ -304,7 +310,20 @@ export function useSendMessage() {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("[Drift messages] insert failed", {
+        conversationId,
+        userId: user.id,
+        error,
+      })
+      throw error
+    }
+
+    console.debug("[Drift messages] insert success", {
+      conversationId,
+      userId: user.id,
+      messageId: data.id,
+    })
 
     await supabase
       .from("conversations")

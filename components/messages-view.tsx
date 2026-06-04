@@ -293,6 +293,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
   }>>([])
   const [keyboardOffset, setKeyboardOffset] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const prefersReducedMotion = useReducedMotion()
   const { messages, isLoading } = useMessages(isMock ? null : conversation.id)
   const { sendMessage, markAsRead } = useSendMessage()
@@ -385,6 +386,11 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
 
     setSending(true)
     const messageContent = newMessage.trim()
+    console.debug("[Drift messages] send clicked", {
+      conversationId: conversation.id,
+      isMock,
+      contentLength: messageContent.length,
+    })
     const tempId = `local-${Date.now()}`
     const optimisticMessage = {
       id: tempId,
@@ -412,6 +418,10 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     } else {
       try {
         const savedMessage = await sendMessage(conversation.id, messageContent)
+        console.debug("[Drift messages] message saved", {
+          conversationId: conversation.id,
+          messageId: savedMessage.id,
+        })
         setLocalMessages((prev) =>
           prev.map((message) => message.id === tempId ? savedMessage : message)
         )
@@ -434,8 +444,9 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     if (!starter) return
 
     setNewMessage(`Hey! I saw you're into ${starter}. Want to do something today?`)
+    console.debug("[Drift messages] starter applied", { conversationId: conversation.id, starter })
     requestAnimationFrame(() => {
-      document.getElementById("message-composer-input")?.focus()
+      inputRef.current?.focus()
       scrollToBottom("auto")
     })
   }
@@ -505,7 +516,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
         className="flex-1 overflow-y-auto overscroll-contain"
         style={{ scrollPaddingBottom: scrollBottomPadding }}
       >
-        <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
+        <div className="max-w-lg mx-auto px-4 py-4 space-y-4" style={{ paddingBottom: scrollBottomPadding }}>
           <motion.div
             className="rounded-3xl border border-border/60 bg-card/70 p-4"
             initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
@@ -605,7 +616,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
 
       {/* Input */}
       <div
-        className="sticky z-40 bg-background border-t border-border/50 transition-[bottom] duration-150"
+        className="fixed left-0 right-0 z-[60] bg-background border-t border-border/50 transition-[bottom] duration-150"
         style={{ bottom: composerBottom }}
       >
         <div className="max-w-lg mx-auto px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
@@ -618,6 +629,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
           >
             <Input
               id="message-composer-input"
+              ref={inputRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
@@ -625,7 +637,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
             />
             <button
               type="submit"
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || sending}
               className="p-3 rounded-full bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:glow-amber transition-all"
               aria-label="Send message"
             >
