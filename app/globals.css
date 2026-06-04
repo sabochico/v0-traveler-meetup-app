@@ -202,6 +202,48 @@
 }
 
 @layer utilities {
+  .drift-startup-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    padding: max(2rem, var(--drift-safe-top)) 2rem max(2rem, env(safe-area-inset-bottom));
+    background:
+      radial-gradient(circle at 50% 34%, rgb(255 255 255 / 0.2), transparent 18rem),
+      linear-gradient(135deg, var(--drift-blue), var(--drift-teal));
+    color: var(--drift-white);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 420ms ease, visibility 420ms ease;
+  }
+
+  .drift-ready .drift-startup-splash {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .drift-startup-splash__content {
+    text-align: center;
+    transform: translateY(-2vh);
+  }
+
+  .drift-startup-splash__name {
+    margin-top: 1.25rem;
+    font-size: 2.5rem;
+    line-height: 1;
+    font-weight: 750;
+    letter-spacing: 0;
+  }
+
+  .drift-startup-splash__tagline {
+    margin-top: 0.625rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: rgb(255 255 255 / 0.88);
+  }
+
   .drift-gradient {
     background-image: var(--drift-gradient);
   }

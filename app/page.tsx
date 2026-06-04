@@ -46,12 +46,12 @@ export default function Home() {
 
   if (isLoading || (isAuthenticated && profileLoading)) {
     return (
-      <main className="min-h-dvh drift-gradient flex items-center justify-center overflow-x-hidden">
+      <main className="min-h-dvh drift-gradient flex items-center justify-center overflow-x-hidden px-6 pb-[env(safe-area-inset-bottom)] pt-[var(--drift-safe-top)]">
         <div className="text-center text-white">
           <DriftLogo markClassName="h-20 w-20 mx-auto [&_path]:fill-white" />
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight">Drift</h1>
-          <p className="mt-2 text-sm text-white/85">Find your people.</p>
-          <Loader2 className="w-6 h-6 animate-spin text-white/80 mx-auto mt-8" />
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight">Drift</h1>
+          <p className="mt-2 text-sm font-medium text-white/85">Find your people.</p>
+          <Loader2 className="w-5 h-5 animate-spin text-white/80 mx-auto mt-7" />
         </div>
       </main>
     )

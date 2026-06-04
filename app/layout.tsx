@@ -3,6 +3,7 @@ import { Inter, Playfair_Display, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/theme-provider'
+import { DriftLogo } from '@/components/drift-logo'
 import Script from 'next/script'
 import './globals.css'
 
@@ -61,6 +62,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable} bg-background`} suppressHydrationWarning>
       <body className="font-sans antialiased min-h-dvh overflow-x-hidden">
+        <div id="drift-startup-splash" className="drift-startup-splash" aria-hidden="true">
+          <div className="drift-startup-splash__content">
+            <DriftLogo markClassName="h-20 w-20 mx-auto [&_path]:fill-white" />
+            <p className="drift-startup-splash__name">Drift</p>
+            <p className="drift-startup-splash__tagline">Find your people.</p>
+          </div>
+        </div>
         {/* Restore accent color and reduce-motion before first paint */}
         <Script id="appearance-init" strategy="beforeInteractive">{`
           (function(){try{
@@ -68,6 +76,11 @@ export default function RootLayout({
             if(a&&a!=='blue')document.documentElement.setAttribute('data-accent',a);
             if(localStorage.getItem('drift-reduced-motion')==='true')document.documentElement.classList.add('reduce-motion');
           }catch(e){}}());
+        `}</Script>
+        <Script id="startup-splash-ready" strategy="afterInteractive">{`
+          requestAnimationFrame(function(){
+            document.documentElement.classList.add('drift-ready');
+          });
         `}</Script>
         <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
           {children}
