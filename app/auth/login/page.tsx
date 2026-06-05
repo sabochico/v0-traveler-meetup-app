@@ -43,6 +43,54 @@ export default function LoginPage() {
     setSuccess("Your account has been deleted.")
   }, [])
 
+  useEffect(() => {
+    const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : ""
+    if (!hash) return
+
+    const params = new URLSearchParams(hash)
+    const oauthError = params.get("error_description") ?? params.get("error")
+    const accessToken = params.get("access_token")
+    const refreshToken = params.get("refresh_token")
+
+    if (oauthError) {
+      window.history.replaceState(null, "", window.location.pathname)
+      setError(oauthError)
+      return
+    }
+
+    if (!accessToken || !refreshToken) return
+
+    let active = true
+    setLoading(true)
+    setError(null)
+
+    const finishOAuthLogin = async () => {
+      try {
+        const supabase = createClient()
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        })
+
+        if (error) throw error
+
+        window.history.replaceState(null, "", window.location.pathname)
+        router.replace("/")
+      } catch (error) {
+        if (!active) return
+        window.history.replaceState(null, "", window.location.pathname)
+        setError(formatAuthError(error))
+        setLoading(false)
+      }
+    }
+
+    finishOAuthLogin()
+
+    return () => {
+      active = false
+    }
+  }, [router])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
