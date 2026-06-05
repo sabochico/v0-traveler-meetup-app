@@ -265,8 +265,8 @@
     background-image: linear-gradient(135deg, var(--drift-blue), var(--drift-teal));
     color: var(--drift-white);
     box-shadow:
-      0 10px 24px rgb(37 99 255 / 0.24),
-      0 6px 18px rgb(0 212 204 / 0.12);
+      0 8px 18px rgb(37 99 255 / 0.2),
+      0 4px 12px rgb(0 212 204 / 0.12);
   }
 
   .drift-gradient-highlight {

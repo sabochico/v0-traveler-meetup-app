@@ -3,7 +3,6 @@
 import { Home, Compass, Plus, MessageCircle, User } from "lucide-react"
 import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { navTransition } from "@/lib/motion"
 
 interface BottomNavProps {
   activeTab: "feed" | "discover" | "create" | "messages" | "profile"
@@ -21,9 +20,9 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-card/85 backdrop-blur-2xl">
-      <div className="max-w-lg mx-auto px-3">
-        <div className="flex items-end justify-between pt-2.5 pb-2">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.08] bg-background/78 shadow-[0_-14px_36px_rgb(0_0_0_/_0.22)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/62">
+      <div className="mx-auto max-w-lg px-2.5">
+        <div className="grid h-[66px] grid-cols-5 items-end gap-0.5 pb-2 pt-2">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id || (tab.id === "create" && false)
             const isCreate = tab.id === "create"
@@ -34,31 +33,31 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                 onClick={() => onTabChange(tab.id)}
                 whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
                 className={cn(
-                  "relative flex min-h-[58px] flex-1 flex-col items-center justify-end gap-1 rounded-2xl px-1 pb-1.5 pt-2 transition-colors duration-200 min-w-0 overflow-hidden",
-                  isCreate && "relative -mt-4 pb-0 pt-0 overflow-visible",
+                  "relative flex h-[58px] min-w-0 flex-col items-center justify-end gap-1 rounded-[1.35rem] px-1 pb-1.5 pt-1.5 transition-colors duration-150",
+                  isCreate && "overflow-visible pb-0 pt-0",
                   isActive && !isCreate && "text-primary",
-                  !isActive && !isCreate && "text-muted-foreground hover:text-foreground"
+                  !isActive && !isCreate && "text-muted-foreground/78 hover:text-foreground"
                 )}
                 aria-label={tab.label}
               >
                 {isCreate ? (
                   <motion.div
-                    className="drift-nav-create flex h-12 w-12 items-center justify-center rounded-[1.15rem]"
+                    className="drift-nav-create mb-1 flex h-[50px] w-[50px] items-center justify-center rounded-[1.25rem]"
                     whileTap={prefersReducedMotion ? undefined : { scale: 0.94 }}
                   >
-                    <Plus className="h-6 w-6 text-primary-foreground" strokeWidth={2.5} />
+                    <Plus className="h-6 w-6 text-primary-foreground" strokeWidth={2.35} />
                   </motion.div>
                 ) : (
                   <>
-                    {isActive && (
-                      <motion.span
-                        layoutId="bottom-nav-active"
-                        className="absolute inset-x-1.5 bottom-1 top-1.5 rounded-2xl border border-primary/20 bg-primary/10"
-                        transition={prefersReducedMotion ? { duration: 0.01 } : navTransition}
-                      />
-                    )}
-                    <tab.icon className={cn("relative z-10 h-5.5 w-5.5", isActive && "drop-shadow-[0_0_6px_rgb(0_212_204_/_0.38)]")} />
-                    <span className="relative z-10 text-[10px] font-medium leading-none truncate max-w-full">{tab.label}</span>
+                    <span
+                      className={cn(
+                        "flex h-8 w-11 items-center justify-center rounded-2xl transition-colors duration-150",
+                        isActive && "bg-primary/10 text-primary"
+                      )}
+                    >
+                      <tab.icon className={cn("h-[22px] w-[22px]", isActive && "drop-shadow-[0_0_5px_rgb(0_212_204_/_0.26)]")} strokeWidth={2.15} />
+                    </span>
+                    <span className="max-w-full truncate text-[10px] font-medium leading-none">{tab.label}</span>
                   </>
                 )}
               </motion.button>
