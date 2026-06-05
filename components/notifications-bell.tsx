@@ -97,31 +97,31 @@ export function NotificationsBell({ className }: NotificationsBellProps) {
 
       <SheetContent
         side="right"
-        className="w-full max-w-sm p-0 bg-background border-border/50"
+        className="w-full max-w-sm gap-0 p-0 bg-background border-border/50"
       >
-        <SheetHeader className="px-4 pt-5 pb-3 border-b border-border/50">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-lg font-serif font-semibold">Notifications</SheetTitle>
+        <SheetHeader className="shrink-0 border-b border-border/50 px-5 pb-4 pr-20 pt-[calc(var(--drift-safe-top)+0.875rem)]">
+          <div className="flex min-h-11 items-center justify-between gap-3">
+            <SheetTitle className="truncate text-xl font-semibold leading-tight">Notifications</SheetTitle>
             {unreadCount > 0 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                 {unreadCount} unread
               </span>
             )}
           </div>
         </SheetHeader>
 
-        <div className="overflow-y-auto h-[calc(100vh-80px)]">
+        <div className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
+            <div className="flex min-h-full items-center justify-center py-16">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
-              <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center">
+            <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-20 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
                 <Bell className="w-6 h-6 text-muted-foreground/50" />
               </div>
-              <p className="text-muted-foreground font-medium">No notifications yet</p>
-              <p className="text-sm text-muted-foreground/60">
+              <p className="font-medium text-muted-foreground">No notifications yet</p>
+              <p className="max-w-xs text-sm leading-relaxed text-muted-foreground/60">
                 When someone joins your meetup, you&apos;ll see it here.
               </p>
             </div>
