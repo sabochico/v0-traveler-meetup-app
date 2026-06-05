@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Home, Compass, Plus, MessageCircle, User } from "lucide-react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Haptics, ImpactStyle } from "@capacitor/haptics"
@@ -21,6 +21,7 @@ const bubbleTransition = {
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const prefersReducedMotion = useReducedMotion()
+  const hasMountedRef = useRef(false)
   const tabs = [
     { id: "feed" as const, icon: Home, label: "Today" },
     { id: "discover" as const, icon: Compass, label: "Discover" },
@@ -30,6 +31,10 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   ]
 
   useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true
+      return
+    }
     if (activeTab === "create" || !Capacitor.isNativePlatform()) return
 
     const timer = window.setTimeout(() => {
@@ -44,7 +49,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
       <div className="mx-auto max-w-lg">
         <div className="pointer-events-auto grid h-[74px] grid-cols-5 items-center gap-1 overflow-hidden rounded-[2.15rem] border border-white/[0.11] bg-background/58 px-1.5 shadow-[0_18px_46px_rgb(0_0_0_/_0.32),inset_0_1px_0_rgb(255_255_255_/_0.08)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/42">
           {tabs.map((tab) => {
-            const isActive = activeTab === tab.id || (tab.id === "create" && false)
+            const isActive = activeTab === tab.id
             const isCreate = tab.id === "create"
 
             return (

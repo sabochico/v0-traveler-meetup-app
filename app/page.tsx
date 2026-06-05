@@ -180,29 +180,29 @@ function StartupAppShell() {
         </section>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-lg items-center justify-between px-2 py-2">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(0.55rem+env(safe-area-inset-bottom))]">
+        <div className="pointer-events-auto mx-auto grid h-[74px] max-w-lg grid-cols-5 items-center gap-1 overflow-hidden rounded-[2.15rem] border border-white/[0.11] bg-background/58 px-1.5 shadow-[0_18px_46px_rgb(0_0_0_/_0.32),inset_0_1px_0_rgb(255_255_255_/_0.08)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/42">
           {navItems.map((item) => (
             <div
               key={item.label}
-              className="flex flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-muted-foreground"
+              className="relative flex h-[62px] min-w-0 flex-col items-center justify-center gap-1 rounded-[1.75rem] px-1 text-muted-foreground/78"
             >
-              <div
-                className={
-                  item.create
-                    ? "flex h-14 w-14 -mt-6 items-center justify-center rounded-2xl drift-gradient-button"
-                    : item.active
-                      ? "flex h-9 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"
-                      : "flex h-9 w-14 items-center justify-center"
-                }
-              >
-                <item.icon className={item.create ? "h-7 w-7 text-primary-foreground" : "h-6 w-6"} />
-              </div>
-              {!item.create && <span className="text-[10px] font-medium">{item.label}</span>}
+              {item.create ? (
+                <div className="drift-nav-create flex h-[52px] w-[52px] items-center justify-center rounded-[1.35rem]">
+                  <item.icon className="h-6 w-6 text-primary-foreground" />
+                </div>
+              ) : (
+                <>
+                  {item.active && (
+                    <div className="absolute inset-y-1.5 inset-x-1 rounded-[1.65rem] border border-white/[0.12] bg-white/[0.105] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.11),0_10px_28px_rgb(37_99_255_/_0.14)]" />
+                  )}
+                  <item.icon className="relative h-[22px] w-[22px]" />
+                  <span className="relative max-w-full truncate text-[10px] font-medium leading-none">{item.label}</span>
+                </>
+              )}
             </div>
           ))}
         </div>
-        <div className="h-[env(safe-area-inset-bottom)]" />
       </nav>
     </main>
   )
