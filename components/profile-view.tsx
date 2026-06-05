@@ -109,38 +109,39 @@ export function ProfileView() {
   return (
     <div className="min-h-screen pb-8">
       {/* Profile Hero */}
-      <div className="relative overflow-hidden drift-gradient px-4 pb-5 pt-[calc(1rem+var(--drift-safe-top))]">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-background/70" />
+      <div className="relative overflow-hidden px-4 pb-4 pt-[calc(0.875rem+var(--drift-safe-top))]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(255,255,255,0.18),transparent_22rem),linear-gradient(135deg,rgba(37,99,255,0.92),rgba(0,212,204,0.72))]" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-background" />
         <div className="relative mx-auto max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="rounded-3xl border border-white/15 bg-background/70 p-4 shadow-2xl shadow-primary/20 backdrop-blur-xl">
-            <div className="flex items-start gap-3">
-              <div className="relative flex-shrink-0">
-                <Avatar className="h-20 w-20 ring-2 ring-white/20">
+          <div className="rounded-[2rem] border border-white/14 bg-background/58 p-4 shadow-xl shadow-black/20 backdrop-blur-2xl">
+            <div className="flex items-start gap-3.5">
+              <div className="relative flex-shrink-0 pt-0.5">
+                <Avatar className="h-[4.75rem] w-[4.75rem] ring-2 ring-white/18 shadow-lg shadow-black/25">
                   <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.display_name ?? "You"} />
                   <AvatarFallback>{(profile?.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <button
                   onClick={() => setShowEditModal(true)}
-                  className="absolute -bottom-1 -right-1 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all active:scale-95 hover:glow-amber"
+                  className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full drift-gradient-button text-primary-foreground shadow-md shadow-primary/25 ring-2 ring-background/80 transition-all active:scale-95"
                   aria-label="Change photo"
                 >
                   <Camera className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="min-w-0 flex-1 pt-0.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium uppercase tracking-wide text-primary">Your Drift</p>
-                    <h1 className="truncate text-2xl font-serif font-semibold text-foreground">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/90">Your Drift</p>
+                    <h1 className="mt-0.5 truncate text-[2rem] font-serif font-semibold leading-none text-foreground">
                       Hey, {profile?.display_name ?? "Drifter"}
                     </h1>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-1">
-                    <NotificationsBell className="bg-background/50 hover:bg-background/80" />
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <NotificationsBell className="bg-background/45 hover:bg-background/70" />
                     <button
                       onClick={() => setShowEditModal(true)}
-                      className="flex h-11 w-11 items-center justify-center rounded-full bg-background/50 text-foreground transition-colors active:scale-95 hover:bg-background/80"
+                      className="flex h-11 w-11 items-center justify-center rounded-full bg-background/45 text-foreground transition-colors active:scale-95 hover:bg-background/70"
                       aria-label="Edit profile"
                     >
                       <Settings className="h-5 w-5" />
@@ -148,57 +149,57 @@ export function ProfileView() {
                   </div>
                 </div>
 
-                <div className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                <div className="mt-2 flex min-w-0 items-center gap-1.5 text-sm text-foreground/68">
                   <Plane className="h-4 w-4 flex-shrink-0 text-primary" />
                   <span className="flex-shrink-0">Traveler</span>
-                  <span className="text-muted-foreground/50">·</span>
-                  <span className="truncate">{locationLabel}</span>
+                  <span className="text-foreground/35">·</span>
+                  <span className="min-w-0 truncate">{locationLabel}</span>
                 </div>
               </div>
             </div>
 
-            <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-foreground/90">
+            <p className="mt-4 line-clamp-2 text-[0.95rem] leading-6 text-foreground/88">
               {profile?.bio ?? "Add a short bio so people know what you are up for today."}
             </p>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => completionScore < 100 && setShowEditModal(true)}
+                className="flex min-h-10 flex-1 items-center justify-between gap-3 rounded-full border border-white/10 bg-white/[0.06] px-3.5 text-left"
+              >
+                <span>
+                  <span className="block text-xs font-semibold text-foreground">
                     {completionScore >= 100 ? "Profile Complete" : "Profile completion"}
-                  </p>
+                  </span>
                   {completionScore < 100 && (
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="mt-0.5 text-left text-xs font-medium text-primary"
-                    >
+                    <span className="mt-0.5 block text-[11px] font-medium text-primary">
                       {getNextProfileRequirement(profile)}
-                    </button>
+                    </span>
                   )}
-                </div>
-                <span className="rounded-full bg-primary/15 px-3 py-1 text-sm font-semibold text-primary">
+                </span>
+                <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary">
                   {completionScore}%
                 </span>
-              </div>
+              </button>
               {completionScore < 100 && (
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div className="h-1.5 basis-full overflow-hidden rounded-full bg-white/10">
                   <div className="h-full drift-gradient" style={{ width: `${completionScore}%` }} />
                 </div>
               )}
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <div className="rounded-2xl bg-white/5 px-3 py-2 text-center">
-                <p className="text-sm font-semibold text-foreground">Traveler</p>
-                <p className="text-[11px] text-muted-foreground">mode</p>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-2xl bg-white/[0.055] px-3 py-2">
+                <p className="text-xs font-semibold text-foreground">Traveler</p>
+                <p className="text-[10px] text-foreground/45">mode</p>
               </div>
-              <div className="rounded-2xl bg-white/5 px-3 py-2 text-center">
-                <p className="text-sm font-semibold text-foreground">{languageCount}</p>
-                <p className="text-[11px] text-muted-foreground">languages</p>
+              <div className="rounded-2xl bg-white/[0.055] px-3 py-2">
+                <p className="text-xs font-semibold text-foreground">{languageCount}</p>
+                <p className="text-[10px] text-foreground/45">languages</p>
               </div>
-              <div className="rounded-2xl bg-white/5 px-3 py-2 text-center">
-                <p className="text-sm font-semibold text-foreground">{interestCount}</p>
-                <p className="text-[11px] text-muted-foreground">interests</p>
+              <div className="rounded-2xl bg-white/[0.055] px-3 py-2">
+                <p className="text-xs font-semibold text-foreground">{interestCount}</p>
+                <p className="text-[10px] text-foreground/45">interests</p>
               </div>
             </div>
           </div>
