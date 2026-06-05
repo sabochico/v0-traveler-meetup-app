@@ -238,7 +238,7 @@ export default function PublicProfilePage({
           </button>
         </div>
       ) : (
-        <main className="max-w-lg mx-auto px-4 py-6 space-y-5 pb-24">
+        <main className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-24">
           <section className="rounded-[2rem] border border-border/60 bg-card/80 p-6 shadow-sm text-center">
             <div className="flex justify-center">
               <div className="relative">
@@ -326,28 +326,28 @@ export default function PublicProfilePage({
           </section>
 
           <section className="grid grid-cols-3 gap-3">
-            <div className="rounded-2xl bg-card/70 border border-border/60 p-3 text-center">
-              <CalendarDays className="w-4 h-4 mx-auto text-primary mb-1" />
-              <p className="text-[11px] text-muted-foreground">Member since</p>
-              <p className="text-xs font-medium">{formatMemberSince(profile.created_at)}</p>
+            <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
+              <CalendarDays className="mb-2 h-5 w-5 text-primary" />
+              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">Member since</p>
+              <p className="mt-1 text-[0.95rem] font-semibold leading-tight text-foreground">{formatMemberSince(profile.created_at)}</p>
             </div>
 
-            <div className="rounded-2xl bg-card/70 border border-border/60 p-3 text-center">
-              <Clock3 className="w-4 h-4 mx-auto text-primary mb-1" />
-              <p className="text-[11px] text-muted-foreground">Status</p>
-              <p className="text-xs font-medium">{isOnline ? "Online" : "Away"}</p>
+            <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
+              <Clock3 className="mb-2 h-5 w-5 text-primary" />
+              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">Status</p>
+              <p className="mt-1 text-[0.95rem] font-semibold leading-tight text-foreground">{isOnline ? "Online" : "Away"}</p>
             </div>
 
-            <div className="rounded-2xl bg-card/70 border border-border/60 p-3 text-center">
-              <Users className="w-4 h-4 mx-auto text-primary mb-1" />
-              <p className="text-[11px] text-muted-foreground">Meetups</p>
-              <p className="text-xs font-medium">Soon</p>
+            <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
+              <Users className="mb-2 h-5 w-5 text-primary" />
+              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">Meetups</p>
+              <p className="mt-1 text-[0.95rem] font-semibold leading-tight text-foreground">Soon</p>
             </div>
           </section>
 
-          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-primary" />
+          <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+            <h3 className="mb-4 flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
+              <ShieldCheck className="h-5 w-5 text-primary" />
               Trust signals
             </h3>
 
@@ -355,40 +355,42 @@ export default function PublicProfilePage({
               {trustSignals.map((signal) => (
                 <div
                   key={signal.label}
-                  className="rounded-2xl border border-border/50 bg-background/40 p-3"
+                  className="flex min-h-[118px] flex-col justify-between rounded-[1.35rem] border border-border/50 bg-background/42 p-4"
                 >
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2.5">
                     <span
                       className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center",
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
                         signal.active
                           ? "bg-primary/10 text-primary"
                           : "bg-secondary text-muted-foreground"
                       )}
                     >
-                      <signal.icon className="w-3.5 h-3.5" />
+                      <signal.icon className="h-4 w-4" />
                     </span>
-                    {signal.label}
+                    <span className="min-w-0 text-[11px] font-medium uppercase tracking-[0.08em] leading-tight text-muted-foreground/78">
+                      {signal.label}
+                    </span>
                   </div>
-                  <p className="text-sm font-medium text-foreground mt-2">{signal.value}</p>
+                  <p className="mt-3 text-[1.05rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">{signal.value}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          {profile.bio && <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Heart className="w-4 h-4 text-primary" />
+          {profile.bio && <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
+              <Heart className="h-5 w-5 text-primary" />
               About
             </h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
+            <p className="text-[0.95rem] leading-7 text-muted-foreground">
               {profile.bio}
             </p>
           </section>}
 
-          {(profile.languages?.length ?? 0) > 0 && <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Languages className="w-4 h-4 text-primary" />
+          {(profile.languages?.length ?? 0) > 0 && <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
+              <Languages className="h-5 w-5 text-primary" />
               Languages
             </h3>
 
@@ -401,8 +403,8 @@ export default function PublicProfilePage({
             </div>
           </section>}
 
-          {(profile.interests?.length ?? 0) > 0 && <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
-            <h3 className="text-sm font-semibold mb-3">Interests</h3>
+          {(profile.interests?.length ?? 0) > 0 && <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+            <h3 className="mb-3 text-base font-semibold tracking-[-0.01em]">Interests</h3>
 
             <div className="flex flex-wrap gap-2">
               {profile.interests.map((interest) => (
@@ -413,17 +415,17 @@ export default function PublicProfilePage({
             </div>
           </section>}
 
-          <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
-            <h3 className="text-sm font-semibold mb-3">Shared vibe</h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
+          <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+            <h3 className="mb-3 text-base font-semibold tracking-[-0.01em]">Shared vibe</h3>
+            <div className="space-y-2 text-[0.95rem] leading-6 text-muted-foreground">
               <p>Mutual interests will appear here soon.</p>
               <p>Shared meetup history will appear here soon.</p>
             </div>
           </section>
 
           {instagramUsername && (
-            <section className="rounded-3xl border border-border/60 bg-card/70 p-5">
-              <h3 className="text-sm font-semibold mb-3">Social</h3>
+            <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+              <h3 className="mb-3 text-base font-semibold tracking-[-0.01em]">Social</h3>
               <a
                 href={`https://instagram.com/${instagramUsername}`}
                 target="_blank"
