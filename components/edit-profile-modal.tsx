@@ -302,12 +302,12 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={setupMode ? undefined : onClose} />
+      <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={setupMode ? undefined : onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg bg-card rounded-t-3xl sm:rounded-2xl max-h-[100dvh] sm:max-h-[90dvh] overflow-hidden flex flex-col min-h-0">
+      <div className="relative w-full max-w-lg bg-card/96 rounded-t-[1.75rem] sm:rounded-2xl max-h-[100dvh] sm:max-h-[90dvh] overflow-hidden flex flex-col min-h-0 shadow-2xl shadow-black/20 backdrop-blur-xl">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 border-b border-border/50 px-6 pb-4 pt-[calc(var(--drift-safe-top)+0.875rem)] sm:pt-4">
+        <div className="flex items-center justify-between gap-4 border-b border-border/40 px-5 pb-3.5 pt-[calc(var(--drift-safe-top)+0.75rem)] sm:pt-4">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold">{setupMode ? "Complete your profile" : "Edit Profile"}</h2>
             {setupMode && (
@@ -319,7 +319,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
           {!setupMode && (
             <button
               onClick={onClose}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-foreground/85 transition-colors active:scale-95 hover:bg-secondary hover:text-foreground"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-foreground/82 transition-colors active:scale-95 hover:bg-secondary/80 hover:text-foreground"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -328,7 +328,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         </div>
 
         {setupMode ? (
-          <div className="px-6 py-4 border-b border-border/50">
+          <div className="px-5 py-3.5 border-b border-border/40">
             <div className="h-2 rounded-full bg-secondary overflow-hidden">
               <div
                 className="h-full rounded-full drift-gradient transition-all duration-300"
@@ -357,9 +357,9 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         )}
 
         {/* Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5">
           {showProfileStep && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div className={cn("space-y-3", !setupMode && "flex flex-col items-center")}>
                 {setupMode ? (
                   <>
@@ -662,7 +662,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-border/50 bg-card">
+        <div className="shrink-0 px-5 pt-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))] border-t border-border/40 bg-card/96 backdrop-blur-xl">
           {setupMode ? (
             <div className="flex gap-3">
               {setupStep > 0 && (

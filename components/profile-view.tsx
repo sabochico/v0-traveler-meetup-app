@@ -109,31 +109,31 @@ export function ProfileView() {
   return (
     <div className="min-h-screen pb-8">
       {/* Profile Hero */}
-      <div className="relative overflow-hidden px-4 pb-4 pt-[calc(0.875rem+var(--drift-safe-top))]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(255,255,255,0.18),transparent_22rem),linear-gradient(135deg,rgba(37,99,255,0.92),rgba(0,212,204,0.72))]" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-background" />
+      <div className="relative overflow-hidden px-4 pb-3 pt-[calc(0.75rem+var(--drift-safe-top))]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(255,255,255,0.14),transparent_20rem),linear-gradient(135deg,rgba(37,99,255,0.82),rgba(0,212,204,0.64))]" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-background" />
         <div className="relative mx-auto max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="rounded-[2rem] border border-white/14 bg-background/58 p-4 shadow-xl shadow-black/20 backdrop-blur-2xl">
-            <div className="flex items-start gap-3.5">
+          <div className="rounded-[1.75rem] border border-white/12 bg-background/52 p-3.5 shadow-lg shadow-black/15 backdrop-blur-2xl">
+            <div className="flex items-start gap-3">
               <div className="relative flex-shrink-0 pt-0.5">
-                <Avatar className="h-[4.75rem] w-[4.75rem] ring-2 ring-white/18 shadow-lg shadow-black/25">
+                <Avatar className="h-[4.35rem] w-[4.35rem] ring-2 ring-white/16 shadow-md shadow-black/20">
                   <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.display_name ?? "You"} />
                   <AvatarFallback>{(profile?.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <button
                   onClick={() => setShowEditModal(true)}
-                  className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full drift-gradient-button text-primary-foreground shadow-md shadow-primary/25 ring-2 ring-background/80 transition-all active:scale-95"
+                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full drift-gradient-button text-primary-foreground ring-2 ring-background/80 transition-all active:scale-95"
                   aria-label="Change photo"
                 >
-                  <Camera className="h-4 w-4" />
+                  <Camera className="h-3.5 w-3.5" />
                 </button>
               </div>
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2.5">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/90">Your Drift</p>
-                    <h1 className="mt-0.5 truncate text-[2rem] font-serif font-semibold leading-none text-foreground">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/85">Your Drift</p>
+                    <h1 className="mt-0.5 truncate text-[1.85rem] font-serif font-semibold leading-none text-foreground">
                       Hey, {profile?.display_name ?? "Drifter"}
                     </h1>
                   </div>
@@ -141,7 +141,7 @@ export function ProfileView() {
                     <NotificationsBell className="bg-background/45 hover:bg-background/70" />
                     <button
                       onClick={() => setShowEditModal(true)}
-                      className="flex h-11 w-11 items-center justify-center rounded-full bg-background/45 text-foreground transition-colors active:scale-95 hover:bg-background/70"
+                      className="flex h-11 w-11 items-center justify-center rounded-full bg-background/38 text-foreground transition-colors active:scale-95 hover:bg-background/65"
                       aria-label="Edit profile"
                     >
                       <Settings className="h-5 w-5" />
@@ -149,7 +149,7 @@ export function ProfileView() {
                   </div>
                 </div>
 
-                <div className="mt-2 flex min-w-0 items-center gap-1.5 text-sm text-foreground/68">
+                <div className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[13px] text-foreground/64">
                   <Plane className="h-4 w-4 flex-shrink-0 text-primary" />
                   <span className="flex-shrink-0">Traveler</span>
                   <span className="text-foreground/35">·</span>
@@ -158,14 +158,14 @@ export function ProfileView() {
               </div>
             </div>
 
-            <p className="mt-4 line-clamp-2 text-[0.95rem] leading-6 text-foreground/88">
+            <p className="mt-3.5 line-clamp-2 text-[0.92rem] leading-6 text-foreground/84">
               {profile?.bio ?? "Add a short bio so people know what you are up for today."}
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="mt-3.5 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => completionScore < 100 && setShowEditModal(true)}
-                className="flex min-h-10 flex-1 items-center justify-between gap-3 rounded-full border border-white/10 bg-white/[0.06] px-3.5 text-left"
+                className="flex min-h-9 flex-1 items-center justify-between gap-3 rounded-full border border-white/10 bg-white/[0.045] px-3.5 text-left"
               >
                 <span>
                   <span className="block text-xs font-semibold text-foreground">
@@ -188,16 +188,16 @@ export function ProfileView() {
               )}
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-2xl bg-white/[0.055] px-3 py-2">
+            <div className="mt-2.5 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-[1.1rem] bg-white/[0.045] px-3 py-2">
                 <p className="text-xs font-semibold text-foreground">Traveler</p>
                 <p className="text-[10px] text-foreground/45">mode</p>
               </div>
-              <div className="rounded-2xl bg-white/[0.055] px-3 py-2">
+              <div className="rounded-[1.1rem] bg-white/[0.045] px-3 py-2">
                 <p className="text-xs font-semibold text-foreground">{languageCount}</p>
                 <p className="text-[10px] text-foreground/45">languages</p>
               </div>
-              <div className="rounded-2xl bg-white/[0.055] px-3 py-2">
+              <div className="rounded-[1.1rem] bg-white/[0.045] px-3 py-2">
                 <p className="text-xs font-semibold text-foreground">{interestCount}</p>
                 <p className="text-[10px] text-foreground/45">interests</p>
               </div>
@@ -206,9 +206,9 @@ export function ProfileView() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 pt-6 relative">
+      <div className="max-w-lg mx-auto px-4 pt-5 relative">
         {/* Languages */}
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 className="text-sm font-medium text-foreground mb-3">Languages</h2>
           <div className="flex flex-wrap gap-2">
             {(profile?.languages?.length ?? 0) > 0 ? (
@@ -230,7 +230,7 @@ export function ProfileView() {
         </div>
 
         {/* Interests */}
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 className="text-sm font-medium text-foreground mb-3">Interests</h2>
           <div className="flex flex-wrap gap-2">
             {(profile?.interests?.length ?? 0) > 0 ? (
@@ -252,7 +252,7 @@ export function ProfileView() {
         </div>
 
         {/* Social Links */}
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 className="text-sm font-medium text-foreground mb-3">Social</h2>
           <button 
             onClick={() => setShowSocialModal(true)}
@@ -267,7 +267,7 @@ export function ProfileView() {
         </div>
 
         {/* Settings */}
-        <div className="space-y-4">
+          <div className="space-y-3">
           <h2 className="text-sm font-medium text-foreground">Settings</h2>
 
           <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-border/50">
