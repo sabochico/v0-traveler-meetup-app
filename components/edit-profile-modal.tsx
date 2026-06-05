@@ -127,6 +127,32 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
 
   if (!isOpen) return null
 
+  const openPhotoPicker = (index: number) => {
+    if (uploading) return
+    setUploadPhotoIndex(index)
+
+    const input = fileInputRef.current
+    if (!input || typeof input.click !== "function") {
+      toast({
+        title: "Photo picker unavailable",
+        description: "Please choose a photo from your library instead.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      input.click()
+    } catch (error) {
+      console.error("Photo picker failed:", error)
+      toast({
+        title: "Could not open photos",
+        description: "Please check camera or photo permissions and try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -344,10 +370,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                           <button
                             key={index}
                             type="button"
-                            onClick={() => {
-                              setUploadPhotoIndex(index)
-                              fileInputRef.current?.click()
-                            }}
+                            onClick={() => openPhotoPicker(index)}
                             disabled={uploading}
                             className={cn(
                               "aspect-[3/4] overflow-hidden rounded-2xl border border-border bg-secondary text-left transition active:scale-[0.98] disabled:opacity-60",
@@ -377,8 +400,10 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                         <AvatarImage src={avatarUrl ?? undefined} alt={displayName || "Profile"} />
                         <AvatarFallback>{(displayName || "U")[0].toUpperCase()}</AvatarFallback>
                       </Avatar>
-                      <label
-                        htmlFor="avatar-file-input"
+                      <button
+                        type="button"
+                        onClick={() => openPhotoPicker(0)}
+                        disabled={uploading}
                         className={cn(
                           "absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:glow-amber transition-all cursor-pointer",
                           uploading && "opacity-50 pointer-events-none"
@@ -386,7 +411,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                         aria-label="Change photo"
                       >
                         {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-                      </label>
+                      </button>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                       {uploading ? "Uploading..." : "Tap to change photo"}
