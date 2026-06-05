@@ -1,9 +1,17 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { AlertCircle, ArrowRight, RefreshCw } from "lucide-react"
 
 export default function AuthErrorPage() {
+  const [message, setMessage] = useState("We couldn't complete the authentication process. This could be due to an expired link or a temporary issue.")
+
+  useEffect(() => {
+    const authMessage = new URLSearchParams(window.location.search).get("message")
+    if (authMessage) setMessage(authMessage)
+  }, [])
+
   return (
     <div className="min-h-dvh bg-background flex flex-col film-grain overflow-x-hidden">
       {/* Header */}
@@ -21,9 +29,7 @@ export default function AuthErrorPage() {
           <h2 className="text-2xl font-serif font-semibold text-foreground mb-3">
             Something went wrong
           </h2>
-          <p className="text-muted-foreground mb-8">
-            We couldn&apos;t complete the authentication process. This could be due to an expired link or a temporary issue.
-          </p>
+          <p className="text-muted-foreground mb-8">{message}</p>
 
           <div className="space-y-3">
             <Link

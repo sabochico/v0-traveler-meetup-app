@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
+import { SocialAuthButtons } from "@/components/social-auth-buttons"
 import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function SignUpPage() {
@@ -15,6 +16,12 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const focusEmailSignUp = () => {
+    const input = document.getElementById("signup-display-name")
+    input?.scrollIntoView({ behavior: "smooth", block: "center" })
+    input?.focus()
+  }
 
   const isTransientAuthError = (value: unknown) => {
     const message = value instanceof Error ? value.message : String(value ?? "")
@@ -95,12 +102,21 @@ export default function SignUpPage() {
             <p className="text-muted-foreground">Create an account to find travelers nearby</p>
           </div>
 
+          <SocialAuthButtons emailLabel="Continue with email" onEmailClick={focusEmailSignUp} />
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border/70" />
+            <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border/70" />
+          </div>
+
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Display name</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  id="signup-display-name"
                   type="text"
                   placeholder="What should we call you?"
                   value={displayName}

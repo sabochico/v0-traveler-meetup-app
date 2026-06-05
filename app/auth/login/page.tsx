@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
+import { SocialAuthButtons } from "@/components/social-auth-buttons"
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
 import type { Session } from "@supabase/supabase-js"
 
@@ -16,6 +17,12 @@ export default function LoginPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const focusEmailLogin = () => {
+    const input = document.getElementById("login-email")
+    input?.scrollIntoView({ behavior: "smooth", block: "center" })
+    input?.focus()
+  }
 
   const isTransientAuthError = (value: unknown) => {
     const message = value instanceof Error ? value.message : String(value ?? "")
@@ -104,12 +111,21 @@ export default function LoginPage() {
             <p className="text-muted-foreground">Sign in to find your next coffee buddy</p>
           </div>
 
+          <SocialAuthButtons emailLabel="Log in with email" onEmailClick={focusEmailLogin} />
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border/70" />
+            <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border/70" />
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  id="login-email"
                   type="email"
                   placeholder="you@example.com"
                   value={email}
