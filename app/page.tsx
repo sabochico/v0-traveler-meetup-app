@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { BottomNav } from "@/components/bottom-nav"
 import { FeedView } from "@/components/feed-view"
@@ -26,6 +26,12 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"feed" | "discover" | "create" | "messages" | "profile">("feed")
   const [showCreate, setShowCreate] = useState(false)
   const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (sessionStorage.getItem("drift-open-tab") !== "profile") return
+    sessionStorage.removeItem("drift-open-tab")
+    setActiveTab("profile")
+  }, [])
 
   const handleNavigateToMessages = (conversationId: string) => {
     setPendingConversationId(conversationId)

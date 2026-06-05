@@ -1,13 +1,8 @@
+import { LegalPage } from "../legal-page"
+
 export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-dvh bg-background px-5 py-8 text-foreground">
-      <div className="mx-auto max-w-2xl space-y-6">
-        <div>
-          <p className="text-sm text-muted-foreground">Last updated: May 31, 2026</p>
-          <h1 className="mt-2 text-3xl font-semibold">Privacy Policy</h1>
-        </div>
-
-        <section className="space-y-3 text-sm leading-6 text-muted-foreground">
+    <LegalPage title="Privacy Policy" updatedAt="May 31, 2026">
           <p>
             Drift helps travelers and locals meet in real life. We collect the information needed to run accounts,
             profiles, discovery, meetups, messaging, notifications, and safety features.
@@ -32,8 +27,6 @@ export default function PrivacyPolicyPage() {
           <p>
             To request support, data access, or account deletion, contact <a className="text-primary" href="mailto:aweandco@gmail.com">aweandco@gmail.com</a>.
           </p>
-        </section>
-      </div>
-    </main>
+    </LegalPage>
   )
 }

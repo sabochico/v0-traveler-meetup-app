@@ -1,13 +1,8 @@
+import { LegalPage } from "../legal-page"
+
 export default function TermsPage() {
   return (
-    <main className="min-h-dvh bg-background px-5 py-8 text-foreground">
-      <div className="mx-auto max-w-2xl space-y-6">
-        <div>
-          <p className="text-sm text-muted-foreground">Last updated: May 31, 2026</p>
-          <h1 className="mt-2 text-3xl font-semibold">Terms of Service</h1>
-        </div>
-
-        <section className="space-y-3 text-sm leading-6 text-muted-foreground">
+    <LegalPage title="Terms of Service" updatedAt="May 31, 2026">
           <p>
             By using Drift, you agree to use the app respectfully, legally, and safely. You are responsible for your
             account, profile, messages, meetups, and interactions with other users.
@@ -31,8 +26,6 @@ export default function TermsPage() {
           <p>
             Questions or account requests can be sent to <a className="text-primary" href="mailto:aweandco@gmail.com">aweandco@gmail.com</a>.
           </p>
-        </section>
-      </div>
-    </main>
+    </LegalPage>
   )
 }
