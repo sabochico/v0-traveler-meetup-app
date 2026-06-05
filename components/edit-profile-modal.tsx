@@ -305,10 +305,10 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={setupMode ? undefined : onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg bg-card rounded-t-3xl sm:rounded-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] overflow-hidden flex flex-col min-h-0">
+      <div className="relative w-full max-w-lg bg-card rounded-t-3xl sm:rounded-2xl max-h-[100dvh] sm:max-h-[90dvh] overflow-hidden flex flex-col min-h-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
-          <div>
+        <div className="flex items-center justify-between gap-4 border-b border-border/50 px-6 pb-4 pt-[calc(var(--drift-safe-top)+0.875rem)] sm:pt-4">
+          <div className="min-w-0">
             <h2 className="text-lg font-semibold">{setupMode ? "Complete your profile" : "Edit Profile"}</h2>
             {setupMode && (
               <p className="text-xs text-muted-foreground mt-1">
@@ -319,7 +319,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
           {!setupMode && (
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-secondary transition-colors"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-foreground/85 transition-colors active:scale-95 hover:bg-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
