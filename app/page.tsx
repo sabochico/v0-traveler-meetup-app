@@ -14,16 +14,15 @@ import { DriftLogo } from "@/components/drift-logo"
 import { EditProfileModal } from "@/components/edit-profile-modal"
 import { useProfile } from "@/hooks/use-profile"
 import { isProfileComplete } from "@/lib/profile-completion"
-import { getScreenMotion } from "@/lib/motion"
 import { Bell, Compass, HomeIcon, MessageCircle, Plus, UserIcon } from "lucide-react"
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+
+type AppTab = "feed" | "discover" | "create" | "messages" | "profile"
 
 export default function Home() {
   const { user, isLoading, isAuthenticated } = useAuth()
   const { profile, isLoading: profileLoading } = useProfile({ enabled: !isLoading && isAuthenticated, userId: user?.id })
-  const prefersReducedMotion = useReducedMotion()
-  const screenMotion = getScreenMotion(Boolean(prefersReducedMotion))
-  const [activeTab, setActiveTab] = useState<"feed" | "discover" | "create" | "messages" | "profile">("feed")
+  const [activeTab, setActiveTab] = useState<AppTab>("feed")
+  const [mountedTabs, setMountedTabs] = useState<Set<AppTab>>(() => new Set(["feed"]))
   const [showCreate, setShowCreate] = useState(false)
   const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
 
@@ -33,12 +32,21 @@ export default function Home() {
     setActiveTab("profile")
   }, [])
 
+  useEffect(() => {
+    setMountedTabs((current) => {
+      if (current.has(activeTab)) return current
+      const next = new Set(current)
+      next.add(activeTab)
+      return next
+    })
+  }, [activeTab])
+
   const handleNavigateToMessages = (conversationId: string) => {
     setPendingConversationId(conversationId)
     setActiveTab("messages")
   }
 
-  const handleTabChange = (tab: "feed" | "discover" | "create" | "messages" | "profile") => {
+  const handleTabChange = (tab: AppTab) => {
     if (tab === "create") {
       if (!isAuthenticated) {
         setActiveTab("profile")
@@ -77,27 +85,31 @@ export default function Home() {
       )}
 
       {/* Main Content Area */}
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.div
-          key={activeTab}
-          className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
-          initial={screenMotion.initial}
-          animate={screenMotion.animate}
-          exit={screenMotion.exit}
-          transition={screenMotion.transition}
-        >
-          {activeTab === "feed" && <FeedView onNavigateToMessages={handleNavigateToMessages} />}
-          {activeTab === "discover" && <DiscoverView onNavigateToMessages={handleNavigateToMessages} />}
-          {activeTab === "messages" && (
-            isAuthenticated
+      <div className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+        {mountedTabs.has("feed") && (
+          <section className={activeTab === "feed" ? "block" : "hidden"} aria-hidden={activeTab !== "feed"}>
+            <FeedView onNavigateToMessages={handleNavigateToMessages} />
+          </section>
+        )}
+        {mountedTabs.has("discover") && (
+          <section className={activeTab === "discover" ? "block" : "hidden"} aria-hidden={activeTab !== "discover"}>
+            <DiscoverView onNavigateToMessages={handleNavigateToMessages} />
+          </section>
+        )}
+        {mountedTabs.has("messages") && (
+          <section className={activeTab === "messages" ? "block" : "hidden"} aria-hidden={activeTab !== "messages"}>
+            {isAuthenticated
               ? <MessagesView initialConversationId={pendingConversationId} />
               : <AuthPrompt message="Sign in to see your messages" />
-          )}
-          {activeTab === "profile" && (
-            isAuthenticated ? <ProfileView /> : <AuthPrompt message="Sign in to view your profile" />
-          )}
-        </motion.div>
-      </AnimatePresence>
+            }
+          </section>
+        )}
+        {mountedTabs.has("profile") && (
+          <section className={activeTab === "profile" ? "block" : "hidden"} aria-hidden={activeTab !== "profile"}>
+            {isAuthenticated ? <ProfileView /> : <AuthPrompt message="Sign in to view your profile" />}
+          </section>
+        )}
+      </div>
 
       {/* Bottom Navigation */}
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
