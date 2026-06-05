@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/theme-provider'
 import { DriftLogo } from '@/components/drift-logo'
+import { NativeOAuthListener } from '@/components/native-oauth-listener'
 import Script from 'next/script'
 import './globals.css'
 
@@ -83,6 +84,7 @@ export default function RootLayout({
           });
         `}</Script>
         <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
+          <NativeOAuthListener />
           {children}
           <Toaster />
         </ThemeProvider>
