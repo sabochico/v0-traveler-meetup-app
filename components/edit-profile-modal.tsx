@@ -26,14 +26,18 @@ function readFileAsBase64(file: File): Promise<string> {
 }
 
 const SUGGESTED_LANGUAGES = [
-  "English", "Japanese", "Spanish", "French", "Deutsch",
-  "Chinese", "Korean", "Portuguese", "Italiano", "Nederlands"
+  "English", "Japanese", "Chinese", "Korean", "Spanish",
+  "French", "German", "Portuguese", "Italian", "Thai",
+  "Vietnamese", "Indonesian", "Arabic", "Hindi", "Tagalog"
 ]
 
 const SUGGESTED_INTERESTS = [
-  "Photography", "Coffee", "Food", "Art", "Music", "Reading",
-  "Hiking", "Gaming", "Travel", "Writing", "Coding", "Film",
-  "Fitness", "Cooking", "Languages", "History", "Nature", "Tech"
+  "Coffee", "Food", "Night Markets", "Photography", "Hiking",
+  "Museums", "Bars", "Live Music", "Karaoke", "Gaming",
+  "Anime", "K-pop", "Language Exchange", "Fitness", "Running",
+  "Dancing", "Shopping", "Art", "Tech", "Startups",
+  "Study Sessions", "Coworking", "Travel", "Hidden Gems", "Beach Days",
+  "Nature", "Movies", "Board Games", "Festivals", "Street Food"
 ]
 
 const SETUP_STEPS = ["Profile", "Languages", "Interests", "Review"]
@@ -528,7 +532,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                       <Badge
                         key={lang}
                         variant="default"
-                        className="min-h-10 cursor-pointer flex items-center gap-1 px-3 py-2"
+                        className="min-h-10 cursor-pointer rounded-full border border-primary/25 bg-[linear-gradient(135deg,rgba(37,99,255,0.22),rgba(0,212,204,0.16))] px-3.5 py-2 text-sm font-medium text-foreground shadow-sm shadow-primary/10 transition active:scale-[0.98]"
                         onClick={() => toggleLanguage(lang)}
                       >
                         {lang}
@@ -547,7 +551,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                     <Badge
                       key={lang}
                       variant="outline"
-                      className="min-h-10 cursor-pointer px-3 py-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="min-h-10 cursor-pointer rounded-full border-border/70 bg-white/[0.03] px-3.5 py-2 text-sm text-foreground/90 transition-all active:scale-[0.98] hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
                       onClick={() => toggleLanguage(lang)}
                     >
                       <Plus className="w-3 h-3 mr-1" />
@@ -574,7 +578,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                       <Badge
                         key={interest}
                         variant="default"
-                        className="min-h-10 cursor-pointer flex items-center gap-1 px-3 py-2"
+                        className="min-h-10 cursor-pointer rounded-full border border-primary/25 bg-[linear-gradient(135deg,rgba(37,99,255,0.22),rgba(0,212,204,0.16))] px-3.5 py-2 text-sm font-medium text-foreground shadow-sm shadow-primary/10 transition active:scale-[0.98]"
                         onClick={() => toggleInterest(interest)}
                       >
                         {interest}
@@ -593,7 +597,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
                     <Badge
                       key={interest}
                       variant="outline"
-                      className="min-h-10 cursor-pointer px-3 py-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="min-h-10 cursor-pointer rounded-full border-border/70 bg-white/[0.03] px-3.5 py-2 text-sm text-foreground/90 transition-all active:scale-[0.98] hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
                       onClick={() => toggleInterest(interest)}
                     >
                       <Plus className="w-3 h-3 mr-1" />
