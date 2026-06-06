@@ -155,10 +155,26 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   )
 
   const filteredMeetups = useMemo(
-    () => cityFilter === "all"
-      ? sortedMeetups
-      : sortedMeetups.filter((m) => m.city?.toLowerCase() === cityFilter.toLowerCase()),
-    [cityFilter, sortedMeetups]
+    () => {
+      const query = searchQuery.trim().toLowerCase()
+      const byCity = cityFilter === "all"
+        ? sortedMeetups
+        : sortedMeetups.filter((m) => m.city?.toLowerCase() === cityFilter.toLowerCase())
+
+      if (!query) return byCity
+
+      return byCity.filter((m) =>
+        [
+          m.title,
+          m.description,
+          m.category,
+          m.city,
+          m.country,
+          m.location_name,
+        ].filter(Boolean).some((value) => String(value).toLowerCase().includes(query))
+      )
+    },
+    [cityFilter, searchQuery, sortedMeetups]
   )
 
   const filteredProfiles = useMemo(
@@ -176,8 +192,8 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[var(--drift-safe-top)]">
-        <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-background/86 pt-[var(--drift-safe-top)] shadow-[0_10px_30px_rgb(0_0_0_/_0.16)] backdrop-blur-2xl">
+        <div className="max-w-lg mx-auto px-4 py-3.5 space-y-3">
           <div>
             <h1 className="text-2xl font-serif font-semibold">Explore</h1>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -191,10 +207,10 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
             <button
               onClick={() => setActiveTab("meetups")}
               className={cn(
-                "flex-1 py-2 text-sm font-medium rounded-lg transition-colors",
+                "flex-1 min-h-11 rounded-2xl py-2 text-sm font-semibold transition-colors",
                 activeTab === "meetups"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  : "bg-white/[0.06] text-secondary-foreground hover:bg-white/[0.09]"
               )}
             >
               Meetups
@@ -202,14 +218,24 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
             <button
               onClick={() => setActiveTab("people")}
               className={cn(
-                "flex-1 py-2 text-sm font-medium rounded-lg transition-colors",
+                "flex-1 min-h-11 rounded-2xl py-2 text-sm font-semibold transition-colors",
                 activeTab === "people"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  : "bg-white/[0.06] text-secondary-foreground hover:bg-white/[0.09]"
               )}
             >
               People
             </button>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={activeTab === "meetups" ? "Search meetups, cities, or plans..." : "Search by name, interest, or language..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-11 rounded-2xl border border-white/[0.06] bg-white/[0.06] pl-10 text-foreground placeholder:text-muted-foreground"
+            />
           </div>
 
           {/* City filter pills - meetups tab */}
@@ -218,10 +244,10 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
               <button
                 onClick={() => setCityFilter("all")}
                 className={cn(
-                  "min-h-11 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all",
+                  "min-h-10 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                   cityFilter === "all"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    : "bg-white/[0.07] text-secondary-foreground hover:bg-white/[0.1]"
                 )}
               >
                 All cities
@@ -231,10 +257,10 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
                   key={city}
                   onClick={() => setCityFilter(city)}
                   className={cn(
-                    "flex min-h-11 items-center gap-1 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all",
+                    "flex min-h-10 items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
                     cityFilter === city
                       ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      : "bg-white/[0.07] text-secondary-foreground hover:bg-white/[0.1]"
                   )}
                 >
                   <MapPin className="w-3 h-3" />
@@ -244,47 +270,40 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
             </div>
           )}
 
-          {/* Search - people tab */}
-          {activeTab === "people" && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, interest, or language..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-secondary border-0 pl-10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-          )}
         </div>
       </header>
 
       {/* Content */}
       {activeTab === "meetups" ? (
         meetupsLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
+          <MeetupFeedSkeleton />
         ) : filteredMeetups.length === 0 ? (
-          <div className="text-center py-12 space-y-2">
+          <div className="mx-auto max-w-lg px-4 py-12 pb-[calc(8rem+env(safe-area-inset-bottom))] text-center space-y-2">
             <p className="text-muted-foreground">
-              {cityFilter !== "all"
+              {searchQuery
+                ? "No meetups match your search."
+                : cityFilter !== "all"
                 ? `No meetups in ${cityFilter} yet.`
                 : "No meetups yet worldwide. Be the first to create one!"}
             </p>
-            {cityFilter !== "all" && (
+            {(cityFilter !== "all" || searchQuery) && (
               <button
-                onClick={() => setCityFilter("all")}
+                onClick={() => {
+                  setCityFilter("all")
+                  setSearchQuery("")
+                }}
                 className="text-sm text-primary hover:underline"
               >
-                Show all cities
+                Clear filters
               </button>
             )}
           </div>
         ) : (
-          <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
-            {filteredMeetups.map((meetup) => (
-              <MeetupCard key={meetup.id} meetup={meetup} onNavigateToMessages={onNavigateToMessages} />
+          <div className="max-w-lg mx-auto px-4 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom))] space-y-5">
+            {filteredMeetups.map((meetup, index) => (
+              <div key={meetup.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${Math.min(index, 4) * 45}ms` }}>
+                <MeetupCard meetup={meetup} onNavigateToMessages={onNavigateToMessages} />
+              </div>
             ))}
           </div>
         )
@@ -293,7 +312,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+        <div className="max-w-lg mx-auto px-4 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom))] space-y-4">
           {filteredProfiles.length === 0 ? (
             <div className="rounded-3xl border border-border/60 bg-card/70 p-6 text-center">
               <p className="text-sm font-medium text-foreground">
@@ -310,6 +329,35 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function MeetupFeedSkeleton() {
+  return (
+    <div className="mx-auto max-w-lg px-4 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom))] space-y-5">
+      {[0, 1, 2].map((item) => (
+        <div
+          key={item}
+          className="overflow-hidden rounded-[1.5rem] border border-white/[0.06] bg-card/80 shadow-[0_18px_42px_rgb(0_0_0_/_0.2)]"
+        >
+          <div className="aspect-[16/10] animate-pulse bg-secondary/70" />
+          <div className="space-y-4 p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-full bg-secondary animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-28 rounded-full bg-secondary animate-pulse" />
+                <div className="h-3 w-40 rounded-full bg-secondary/80 animate-pulse" />
+              </div>
+            </div>
+            <div className="h-5 w-4/5 rounded-full bg-secondary animate-pulse" />
+            <div className="flex gap-2">
+              <div className="h-7 w-32 rounded-full bg-secondary/80 animate-pulse" />
+              <div className="h-7 w-24 rounded-full bg-secondary/80 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

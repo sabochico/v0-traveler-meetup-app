@@ -153,9 +153,9 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   }
 
   return (
-    <article className="group relative rounded-2xl overflow-hidden bg-card border border-border/50 transition-all duration-500 hover:border-primary/30">
+    <article className="group relative overflow-hidden rounded-[1.5rem] border border-white/[0.06] bg-card/88 shadow-[0_18px_42px_rgb(0_0_0_/_0.22)] transition-colors duration-300 hover:border-primary/25">
       {/* Image */}
-      <div className="relative aspect-[16/10] overflow-hidden">
+      <div className="relative aspect-[16/10] overflow-hidden bg-secondary/40">
         {cardImageUrl && !imageFailed ? (
           <img
             src={cardImageUrl}
@@ -164,11 +164,11 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
             height={600}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className={cn("absolute inset-0 bg-gradient-to-br transition-transform duration-700 group-hover:scale-105", categoryGradient)} />
+          <div className={cn("absolute inset-0 bg-gradient-to-br transition-transform duration-500 group-hover:scale-[1.025]", categoryGradient)} />
         )}
         {imageFailed && (
           <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_24%),radial-gradient(circle_at_80%_30%,white_0,transparent_18%)]" />
@@ -177,14 +177,14 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
         
         {/* Time Badge */}
         <div className="absolute top-3 right-3">
-          <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-foreground border-0">
+          <Badge variant="secondary" className="border-0 bg-background/78 text-foreground shadow-sm shadow-black/20 backdrop-blur-md">
             <Clock className="w-3 h-3 mr-1" />
             {formatTime(meetup.starts_at)}
           </Badge>
         </div>
 
         <div className="absolute bottom-3 left-3">
-          <Badge className="bg-primary text-primary-foreground border-0">
+          <Badge className="border-0 bg-primary text-primary-foreground shadow-sm shadow-black/20">
             {categoryLabel}
           </Badge>
         </div>
@@ -193,7 +193,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
         <button
           onClick={handleLikeToggle}
           disabled={savingLike || !user}
-          className="absolute top-3 left-3 w-11 h-11 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-background/80 disabled:opacity-50"
+          className="absolute top-3 left-3 w-11 h-11 rounded-full bg-background/58 backdrop-blur-md flex items-center justify-center transition-colors hover:bg-background/78 disabled:opacity-50"
           aria-label={isLiked ? "Unlike" : "Like"}
         >
           {savingLike ? (
@@ -242,7 +242,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
         </Link>
 
         {/* Title */}
-        <h3 className="text-lg font-medium leading-snug mb-3 text-balance">
+        <h3 className="text-[1.05rem] font-semibold leading-snug mb-3 text-balance">
           {meetup.title}
         </h3>
 
@@ -253,25 +253,25 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
         )}
 
         <div className="flex flex-wrap gap-2 mb-4 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1">
             <Clock className="w-3.5 h-3.5 text-primary" />
             {formatMeetupTime(meetup.starts_at)}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1">
             <Users className="w-3.5 h-3.5 text-primary" />
             {attendeeCount}/{meetup.max_attendees} going
           </span>
         </div>
 
         {/* Location & Actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{meetup.location_name ?? `${meetup.city}, ${meetup.country}`}</span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="w-4 h-4 shrink-0" />
+            <span className="truncate">{meetup.location_name ?? `${meetup.city}, ${meetup.country}`}</span>
           </div>
           
           {isCreator ? (
-            <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted text-muted-foreground text-sm font-medium">
+            <div className="flex shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/[0.06] text-muted-foreground text-sm font-medium">
               <Users className="w-4 h-4" />
               <span>Your meetup</span>
             </div>
@@ -279,7 +279,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
             <button 
               onClick={handleJoinToggle}
               disabled={joiningMeetup}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-medium transition-all hover:bg-emerald-500/30"
+              className="flex shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-medium transition-colors hover:bg-emerald-500/30"
             >
               {joiningMeetup ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -292,7 +292,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
             <button 
               onClick={handleJoinToggle}
               disabled={joiningMeetup || !user}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium transition-all hover:glow-amber disabled:opacity-50"
+              className="flex shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium transition-opacity hover:opacity-95 disabled:opacity-50"
             >
               {joiningMeetup ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
