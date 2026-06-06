@@ -4,6 +4,9 @@ import { useState } from "react"
 import type React from "react"
 import { Loader2, Mail } from "lucide-react"
 import type { Provider } from "@supabase/supabase-js"
+import { useRouter } from "next/navigation"
+import { Capacitor } from "@capacitor/core"
+import { AppleSignIn, ErrorCode, SignInScope } from "@capawesome/capacitor-apple-sign-in"
 import { createClient } from "@/lib/supabase/client"
 import { getAuthRedirectUrl, isNativeRuntime } from "@/lib/auth-redirect"
 import { cn } from "@/lib/utils"
@@ -40,7 +43,8 @@ function getProviderOptions(provider: SocialProvider) {
   if (provider !== "facebook") return {}
 
   return {
-    scopes: "email,public_profile",
+    // Facebook email requires Meta approval before requesting it in production.
+    scopes: "public_profile",
     queryParams: {
       display: isNativeRuntime() ? "touch" : "page",
     },
@@ -49,6 +53,10 @@ function getProviderOptions(provider: SocialProvider) {
 
 function getOAuthErrorMessage(provider: SocialProvider, error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? "")
+
+  if (provider === "apple") {
+    return "Apple login could not start. Please try again or continue with email."
+  }
 
   if (provider === "facebook") {
     if (/provider.*not enabled|unsupported provider|validation_failed/i.test(message)) {
@@ -61,9 +69,25 @@ function getOAuthErrorMessage(provider: SocialProvider, error: unknown) {
   return message || "Could not start social login. Please try again."
 }
 
+function isNativeIosRuntime() {
+  return isNativeRuntime() && Capacitor.getPlatform() === "ios"
+}
+
+function createNonce() {
+  const bytes = new Uint8Array(16)
+  window.crypto.getRandomValues(bytes)
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
+}
+
+function isAppleSignInCancelled(error: unknown) {
+  const value = error as { code?: string; message?: string }
+  return value?.code === ErrorCode.SignInCanceled || /cancel/i.test(value?.message ?? "")
+}
+
 export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButtonsProps) {
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleOAuth = async (provider: SocialProvider) => {
     if (loadingProvider) return
@@ -73,6 +97,30 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
 
     try {
       const supabase = createClient()
+
+      if (provider === "apple" && isNativeIosRuntime()) {
+        const nonce = createNonce()
+        const credential = await AppleSignIn.signIn({
+          scopes: [SignInScope.Email, SignInScope.FullName],
+          nonce,
+        })
+
+        if (!credential.idToken) {
+          throw new Error("Apple did not return an identity token.")
+        }
+
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: "apple",
+          token: credential.idToken,
+          nonce,
+        })
+
+        if (error) throw error
+
+        router.replace("/")
+        return
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -84,6 +132,7 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
       if (error) throw error
     } catch (error) {
       setLoadingProvider(null)
+      if (provider === "apple" && isAppleSignInCancelled(error)) return
       setError(getOAuthErrorMessage(provider, error))
     }
   }
