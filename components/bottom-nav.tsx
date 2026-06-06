@@ -14,9 +14,9 @@ interface BottomNavProps {
 
 const bubbleTransition = {
   type: "spring",
-  stiffness: 520,
-  damping: 38,
-  mass: 0.72,
+  stiffness: 470,
+  damping: 34,
+  mass: 0.78,
 } as const
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
@@ -47,10 +47,11 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(0.55rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-lg">
-        <div className="pointer-events-auto grid h-[74px] grid-cols-5 items-center gap-1 overflow-hidden rounded-[2.15rem] border border-white/[0.11] bg-background/58 px-1.5 shadow-[0_18px_46px_rgb(0_0_0_/_0.32),inset_0_1px_0_rgb(255_255_255_/_0.08)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/42">
+        <div className="pointer-events-auto grid h-[76px] grid-cols-5 items-center gap-1 overflow-hidden rounded-[2.35rem] border border-white/[0.13] bg-[#10131a]/72 px-1.5 shadow-[0_18px_46px_rgb(0_0_0_/_0.38),inset_0_1px_0_rgb(255_255_255_/_0.12)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[#10131a]/58">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id
             const isCreate = tab.id === "create"
+            const badgeCount = 0 as number
 
             return (
               <motion.button
@@ -60,8 +61,8 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                 className={cn(
                   "relative flex h-[62px] min-w-0 flex-col items-center justify-center gap-1 rounded-[1.75rem] px-1 transition-colors duration-150",
                   isCreate && "overflow-visible pb-0 pt-0",
-                  isActive && !isCreate && "text-primary",
-                  !isActive && !isCreate && "text-muted-foreground/78 hover:text-foreground"
+                  isActive && !isCreate && "text-[var(--drift-purple)]",
+                  !isActive && !isCreate && "text-white/62 hover:text-white/86"
                 )}
                 aria-label={tab.label}
               >
@@ -77,19 +78,24 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                     {isActive && (
                       <motion.span
                         layoutId="bottom-nav-bubble"
-                        className="absolute inset-y-1.5 inset-x-1 rounded-[1.65rem] border border-white/[0.12] bg-white/[0.105] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.11),0_10px_28px_rgb(37_99_255_/_0.14)] backdrop-blur-xl"
+                        className="absolute inset-y-1.5 inset-x-1 rounded-[1.85rem] border border-white/[0.14] bg-white/[0.13] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.16),0_10px_26px_rgb(99_102_241_/_0.18)] backdrop-blur-xl"
                         transition={prefersReducedMotion ? { duration: 0.01 } : bubbleTransition}
                       />
                     )}
                     <motion.span
                       animate={{
-                        scale: isActive ? 1.07 : 1,
-                        opacity: isActive ? 1 : 0.72,
+                        scale: isActive ? 1.08 : 1,
+                        opacity: isActive ? 1 : 0.76,
                       }}
                       transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.18 }}
                       className="relative z-10 flex h-7 items-center justify-center"
                     >
-                      <tab.icon className={cn("h-[22px] w-[22px]", isActive && "drop-shadow-[0_0_6px_rgb(0_212_204_/_0.3)]")} strokeWidth={isActive ? 2.35 : 2.05} />
+                      <tab.icon className={cn("h-[22px] w-[22px]", isActive && "drop-shadow-[0_0_8px_rgb(99_102_241_/_0.36)]")} strokeWidth={isActive ? 2.45 : 2.05} />
+                      {badgeCount > 0 && (
+                        <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white shadow-[0_2px_6px_rgb(0_0_0_/_0.28)]">
+                          {badgeCount > 9 ? "9+" : badgeCount}
+                        </span>
+                      )}
                     </motion.span>
                     <motion.span
                       animate={{

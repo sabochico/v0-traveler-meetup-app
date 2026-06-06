@@ -181,11 +181,11 @@ function StartupAppShell() {
       </div>
 
       <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(0.55rem+env(safe-area-inset-bottom))]">
-        <div className="pointer-events-auto mx-auto grid h-[74px] max-w-lg grid-cols-5 items-center gap-1 overflow-hidden rounded-[2.15rem] border border-white/[0.11] bg-background/58 px-1.5 shadow-[0_18px_46px_rgb(0_0_0_/_0.32),inset_0_1px_0_rgb(255_255_255_/_0.08)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/42">
+        <div className="pointer-events-auto mx-auto grid h-[76px] max-w-lg grid-cols-5 items-center gap-1 overflow-hidden rounded-[2.35rem] border border-white/[0.13] bg-[#10131a]/72 px-1.5 shadow-[0_18px_46px_rgb(0_0_0_/_0.38),inset_0_1px_0_rgb(255_255_255_/_0.12)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[#10131a]/58">
           {navItems.map((item) => (
             <div
               key={item.label}
-              className="relative flex h-[62px] min-w-0 flex-col items-center justify-center gap-1 rounded-[1.75rem] px-1 text-muted-foreground/78"
+              className="relative flex h-[62px] min-w-0 flex-col items-center justify-center gap-1 rounded-[1.75rem] px-1 text-white/62"
             >
               {item.create ? (
                 <div className="drift-nav-create flex h-[52px] w-[52px] items-center justify-center rounded-[1.35rem]">
@@ -194,10 +194,10 @@ function StartupAppShell() {
               ) : (
                 <>
                   {item.active && (
-                    <div className="absolute inset-y-1.5 inset-x-1 rounded-[1.65rem] border border-white/[0.12] bg-white/[0.105] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.11),0_10px_28px_rgb(37_99_255_/_0.14)]" />
+                    <div className="absolute inset-y-1.5 inset-x-1 rounded-[1.85rem] border border-white/[0.14] bg-white/[0.13] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.16),0_10px_26px_rgb(99_102_241_/_0.18)]" />
                   )}
-                  <item.icon className="relative h-[22px] w-[22px]" />
-                  <span className="relative max-w-full truncate text-[10px] font-medium leading-none">{item.label}</span>
+                  <item.icon className={item.active ? "relative h-[22px] w-[22px] text-[var(--drift-purple)]" : "relative h-[22px] w-[22px]"} />
+                  <span className={item.active ? "relative max-w-full truncate text-[10px] font-medium leading-none text-[var(--drift-purple)]" : "relative max-w-full truncate text-[10px] font-medium leading-none"}>{item.label}</span>
                 </>
               )}
             </div>
