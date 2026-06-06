@@ -229,19 +229,6 @@
     will-change: opacity, transform, filter;
   }
 
-  .drift-startup-splash__footer {
-    position: absolute;
-    left: 50%;
-    bottom: calc(2rem + env(safe-area-inset-bottom));
-    width: max-content;
-    transform: translateX(-50%);
-    color: rgb(255 255 255 / 0.42);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.01em;
-    animation: drift-footer-intro 1100ms ease-out 520ms both;
-  }
-
   @keyframes drift-logo-intro {
     0% {
       opacity: 0.18;
@@ -252,17 +239,6 @@
       opacity: 1;
       transform: scale(1);
       filter: blur(0);
-    }
-  }
-
-  @keyframes drift-footer-intro {
-    0% {
-      opacity: 0;
-      transform: translateX(-50%) translateY(0.5rem);
-    }
-    100% {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
     }
   }
 

@@ -67,7 +67,6 @@ export default function RootLayout({
           <div className="drift-startup-splash__content">
             <DriftLogo markClassName="h-20 w-20 mx-auto" />
           </div>
-          <p className="drift-startup-splash__footer">Made with ♥ by Drift</p>
         </div>
         {/* Restore accent color and reduce-motion before first paint */}
         <Script id="appearance-init" strategy="beforeInteractive">{`
