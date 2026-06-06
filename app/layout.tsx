@@ -65,10 +65,9 @@ export default function RootLayout({
       <body className="font-sans antialiased min-h-dvh overflow-x-hidden">
         <div id="drift-startup-splash" className="drift-startup-splash" aria-hidden="true">
           <div className="drift-startup-splash__content">
-            <DriftLogo markClassName="h-20 w-20 mx-auto [&_path]:fill-white" />
-            <p className="drift-startup-splash__name">Drift</p>
-            <p className="drift-startup-splash__tagline">Find your people.</p>
+            <DriftLogo markClassName="h-20 w-20 mx-auto" />
           </div>
+          <p className="drift-startup-splash__footer">Made with ♥ by Drift</p>
         </div>
         {/* Restore accent color and reduce-motion before first paint */}
         <Script id="appearance-init" strategy="beforeInteractive">{`
@@ -79,9 +78,11 @@ export default function RootLayout({
           }catch(e){}}());
         `}</Script>
         <Script id="startup-splash-ready" strategy="afterInteractive">{`
-          requestAnimationFrame(function(){
-            document.documentElement.classList.add('drift-ready');
-          });
+          window.setTimeout(function(){
+            requestAnimationFrame(function(){
+              document.documentElement.classList.add('drift-ready');
+            });
+          }, 2000);
         `}</Script>
         <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
           <NativeOAuthListener />
