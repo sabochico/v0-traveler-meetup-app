@@ -5,7 +5,7 @@ import type React from "react"
 import { Loader2, Mail } from "lucide-react"
 import type { Provider } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
-import { getAuthRedirectUrl } from "@/lib/auth-redirect"
+import { getAuthRedirectUrl, isNativeRuntime } from "@/lib/auth-redirect"
 import { cn } from "@/lib/utils"
 
 type SocialProvider = Extract<Provider, "google" | "apple" | "facebook">
@@ -36,6 +36,31 @@ interface SocialAuthButtonsProps {
   onEmailClick: () => void
 }
 
+function getProviderOptions(provider: SocialProvider) {
+  if (provider !== "facebook") return {}
+
+  return {
+    scopes: "email,public_profile",
+    queryParams: {
+      display: isNativeRuntime() ? "touch" : "page",
+    },
+  }
+}
+
+function getOAuthErrorMessage(provider: SocialProvider, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "")
+
+  if (provider === "facebook") {
+    if (/provider.*not enabled|unsupported provider|validation_failed/i.test(message)) {
+      return "Facebook login is not enabled yet. Please check the Supabase Facebook provider settings."
+    }
+
+    return "Facebook login could not start. Please try again or continue with email."
+  }
+
+  return message || "Could not start social login. Please try again."
+}
+
 export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButtonsProps) {
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -52,13 +77,14 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
         provider,
         options: {
           redirectTo: getAuthRedirectUrl("/"),
+          ...getProviderOptions(provider),
         },
       })
 
       if (error) throw error
     } catch (error) {
       setLoadingProvider(null)
-      setError(error instanceof Error ? error.message : "Could not start social login. Please try again.")
+      setError(getOAuthErrorMessage(provider, error))
     }
   }
 
