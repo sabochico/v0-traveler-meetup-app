@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { MeetupCard } from "./meetup-card"
+import { CategorySelector, type CategorySelectorOption } from "./category-selector"
 import { useNearbyProfiles } from "@/hooks/use-profile"
 import { useMeetups } from "@/hooks/use-meetups"
 import { useCreateConversation } from "@/hooks/use-messages"
@@ -158,6 +159,24 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
     ).sort(),
     [sortedMeetups]
   )
+  const discoverTabs = useMemo<CategorySelectorOption[]>(
+    () => [
+      { id: "meetups", label: "Meetups" },
+      { id: "people", label: "People" },
+    ],
+    []
+  )
+  const cityOptions = useMemo<CategorySelectorOption[]>(
+    () => [
+      { id: "all", label: "All cities" },
+      ...cities.map((city) => ({
+        id: city,
+        label: city,
+        icon: <MapPin className="h-3.5 w-3.5" />,
+      })),
+    ],
+    [cities]
+  )
 
   const filteredMeetups = useMemo(
     () => {
@@ -208,30 +227,14 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
           </div>
 
           {/* Meetups / People tabs */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab("meetups")}
-              className={cn(
-                "flex-1 min-h-11 rounded-2xl py-2 text-sm font-semibold transition-colors",
-                activeTab === "meetups"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-white/[0.06] text-secondary-foreground hover:bg-white/[0.09]"
-              )}
-            >
-              Meetups
-            </button>
-            <button
-              onClick={() => setActiveTab("people")}
-              className={cn(
-                "flex-1 min-h-11 rounded-2xl py-2 text-sm font-semibold transition-colors",
-                activeTab === "people"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-white/[0.06] text-secondary-foreground hover:bg-white/[0.09]"
-              )}
-            >
-              People
-            </button>
-          </div>
+          <CategorySelector
+            value={activeTab}
+            options={discoverTabs}
+            onChange={(tab) => setActiveTab(tab as "meetups" | "people")}
+            ariaLabel="Discover sections"
+            storageKey="drift-discover-section"
+            fullWidthItems
+          />
 
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -245,34 +248,14 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
 
           {/* City filter pills - meetups tab */}
           {activeTab === "meetups" && cities.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
-              <button
-                onClick={() => setCityFilter("all")}
-                className={cn(
-                  "min-h-10 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-                  cityFilter === "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-white/[0.07] text-secondary-foreground hover:bg-white/[0.1]"
-                )}
-              >
-                All cities
-              </button>
-              {cities.map((city) => (
-                <button
-                  key={city}
-                  onClick={() => setCityFilter(city)}
-                  className={cn(
-                    "flex min-h-10 items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-                    cityFilter === city
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-white/[0.07] text-secondary-foreground hover:bg-white/[0.1]"
-                  )}
-                >
-                  <MapPin className="w-3 h-3" />
-                  {city}
-                </button>
-              ))}
-            </div>
+            <CategorySelector
+              value={cityFilter}
+              options={cityOptions}
+              onChange={setCityFilter}
+              ariaLabel="Meetup city filters"
+              storageKey="drift-discover-city-filter"
+              className="-mx-4 rounded-none border-x-0 border-y-white/[0.08] bg-transparent px-4 py-1.5 shadow-none backdrop-blur-none"
+            />
           )}
 
         </div>

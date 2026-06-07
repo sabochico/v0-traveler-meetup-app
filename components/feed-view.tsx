@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MeetupCard } from "./meetup-card"
+import { CategorySelector, type CategorySelectorOption } from "./category-selector"
 import { MoodStatus } from "./mood-status"
 import { EditProfileModal } from "./edit-profile-modal"
 import { useMeetups } from "@/hooks/use-meetups"
@@ -973,6 +974,13 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const { profiles } = useNearbyProfiles({ enabled: loadSecondaryData })
   const { isAuthenticated } = useAuth()
   const { blockedUserIdSet } = useBlockedUsers()
+  const feedTabs = useMemo<CategorySelectorOption[]>(
+    () => [
+      { id: "feed", label: "Today" },
+      { id: "saved", label: "Saved", icon: <Heart className="h-3.5 w-3.5" /> },
+    ],
+    []
+  )
 
   useEffect(() => {
     if (sessionStorage.getItem("drift-profile-banner-dismissed") === "1") {
@@ -1032,31 +1040,14 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             <MoodStatus currentMood={currentMood} onMoodChange={handleMoodChange} />
           </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab("feed")}
-              className={cn(
-                "flex-1 py-2 text-sm font-medium rounded-lg transition-colors",
-                activeTab === "feed"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              )}
-            >
-              Today
-            </button>
-            <button
-              onClick={() => setActiveTab("saved")}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-lg transition-colors",
-                activeTab === "saved"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              )}
-            >
-              <Heart className="w-3.5 h-3.5" />
-              Saved
-            </button>
-          </div>
+          <CategorySelector
+            value={activeTab}
+            options={feedTabs}
+            onChange={(tab) => setActiveTab(tab as "feed" | "saved")}
+            ariaLabel="Today sections"
+            storageKey="drift-today-section"
+            fullWidthItems
+          />
 
           {activeTab === "feed" && (
             <div className="pt-2">
