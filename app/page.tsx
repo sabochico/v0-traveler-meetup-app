@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 import { BottomNav } from "@/components/bottom-nav"
 import { FeedView } from "@/components/feed-view"
@@ -13,6 +14,7 @@ import { NotificationsBell } from "@/components/notifications-bell"
 import { DriftLogo } from "@/components/drift-logo"
 import { EditProfileModal } from "@/components/edit-profile-modal"
 import { useProfile } from "@/hooks/use-profile"
+import { isNativeRuntime } from "@/lib/auth-redirect"
 import { isProfileComplete } from "@/lib/profile-completion"
 import { Bell, Compass, HomeIcon, MessageCircle, Plus, UserIcon } from "lucide-react"
 
@@ -25,6 +27,7 @@ export default function Home() {
   const [mountedTabs, setMountedTabs] = useState<Set<AppTab>>(() => new Set(["feed"]))
   const [showCreate, setShowCreate] = useState(false)
   const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
+  const showPublicFooter = !isAuthenticated && !isNativeRuntime()
 
   useEffect(() => {
     if (sessionStorage.getItem("drift-open-tab") !== "profile") return
@@ -110,6 +113,18 @@ export default function Home() {
           </section>
         )}
       </div>
+
+      {showPublicFooter && (
+        <footer className="mx-auto flex max-w-lg items-center justify-center gap-4 px-4 pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-2 text-xs text-muted-foreground">
+          <Link className="transition-colors hover:text-foreground" href="/legal/privacy">
+            Privacy Policy
+          </Link>
+          <span className="h-1 w-1 rounded-full bg-muted-foreground/40" aria-hidden="true" />
+          <Link className="transition-colors hover:text-foreground" href="/legal/terms">
+            Terms of Service
+          </Link>
+        </footer>
+      )}
 
       {/* Bottom Navigation */}
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
