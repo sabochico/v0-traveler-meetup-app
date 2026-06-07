@@ -71,7 +71,11 @@ export function CategorySelector({
             type="button"
             role="tab"
             aria-selected={isActive}
-            onClick={() => onChange(option.id)}
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              onChange(option.id)
+            }}
             className={cn(
               "relative flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-[1.4rem] px-4 text-sm font-semibold tracking-[0.01em] transition-colors duration-150",
               fullWidthItems && "min-w-0 flex-1",
