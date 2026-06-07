@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import type { ReactNode } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -38,9 +38,12 @@ export function CategorySelector({
   fullWidthItems = false,
 }: CategorySelectorProps) {
   const prefersReducedMotion = useReducedMotion()
+  const didRestoreStoredValueRef = useRef(false)
 
   useEffect(() => {
-    if (!storageKey) return
+    if (!storageKey || didRestoreStoredValueRef.current || options.length === 0) return
+    didRestoreStoredValueRef.current = true
+
     const storedValue = window.sessionStorage.getItem(storageKey)
     if (storedValue && storedValue !== value && options.some((option) => option.id === storedValue)) {
       onChange(storedValue)
@@ -49,7 +52,9 @@ export function CategorySelector({
 
   useEffect(() => {
     if (!storageKey || !options.some((option) => option.id === value)) return
-    window.sessionStorage.setItem(storageKey, value)
+    if (window.sessionStorage.getItem(storageKey) !== value) {
+      window.sessionStorage.setItem(storageKey, value)
+    }
   }, [options, storageKey, value])
 
   return (
