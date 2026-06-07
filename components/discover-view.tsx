@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -26,6 +26,12 @@ const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
 }
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+const ALL_CITIES_FILTER = "all"
+
+function normalizeCity(city: string | null | undefined) {
+  return (city ?? "").trim().toLowerCase()
+}
+
 const MOCK_PROFILE_META = {
   profile_photos: [],
   current_region: null,
@@ -129,7 +135,7 @@ interface DiscoverViewProps {
 export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const [activeTab, setActiveTab] = useState<"meetups" | "people">("meetups")
   const [searchQuery, setSearchQuery] = useState("")
-  const [cityFilter, setCityFilter] = useState("all")
+  const [cityFilter, setCityFilter] = useState(ALL_CITIES_FILTER)
   const { profiles, isLoading: profilesLoading } = useNearbyProfiles({ enabled: activeTab === "people" })
   const { meetups, isLoading: meetupsLoading } = useMeetups()
   const { blockedUserIdSet } = useBlockedUsers()
@@ -154,10 +160,22 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
 
   // Build unique city list from real meetups
   const cities = useMemo(
-    () => Array.from(
-      new Set(sortedMeetups.map((m) => m.city).filter(Boolean) as string[])
-    ).sort(),
+    () => {
+      const cityByKey = new Map<string, string>()
+      sortedMeetups.forEach((meetup) => {
+        const city = meetup.city?.trim()
+        const key = normalizeCity(city)
+        if (city && key && !cityByKey.has(key)) {
+          cityByKey.set(key, city)
+        }
+      })
+      return Array.from(cityByKey.values()).sort()
+    },
     [sortedMeetups]
+  )
+  const cityKeySignature = useMemo(
+    () => cities.map((city) => normalizeCity(city)).join("|"),
+    [cities]
   )
   const discoverTabs = useMemo<CategorySelectorOption[]>(
     () => [
@@ -168,7 +186,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   )
   const cityOptions = useMemo<CategorySelectorOption[]>(
     () => [
-      { id: "all", label: "All cities" },
+      { id: ALL_CITIES_FILTER, label: "All cities" },
       ...cities.map((city) => ({
         id: city,
         label: city,
@@ -178,15 +196,30 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
     [cities]
   )
 
-  const activeCityFilter = cityFilter === "all" || cities.includes(cityFilter) ? cityFilter : "all"
+  useEffect(() => {
+    if (meetupsLoading || cityFilter === ALL_CITIES_FILTER || cities.length === 0) return
+
+    const selectedCity = normalizeCity(cityFilter)
+    const availableCityKeys = cityKeySignature ? cityKeySignature.split("|") : []
+    if (selectedCity && !availableCityKeys.includes(selectedCity)) {
+      setCityFilter((currentCityFilter) =>
+        currentCityFilter !== ALL_CITIES_FILTER ? ALL_CITIES_FILTER : currentCityFilter
+      )
+    }
+  }, [cities.length, cityFilter, cityKeySignature, meetupsLoading])
+
+  const activeCityFilter =
+    cityFilter === ALL_CITIES_FILTER || cityKeySignature.split("|").includes(normalizeCity(cityFilter))
+      ? cityFilter
+      : ALL_CITIES_FILTER
 
   const filteredMeetups = useMemo(
     () => {
       const query = searchQuery.trim().toLowerCase()
-      const selectedCity = activeCityFilter.trim().toLowerCase()
-      const byCity = activeCityFilter === "all"
+      const selectedCity = normalizeCity(activeCityFilter)
+      const byCity = activeCityFilter === ALL_CITIES_FILTER
         ? sortedMeetups
-        : sortedMeetups.filter((m) => (m.city ?? "").trim().toLowerCase() === selectedCity)
+        : sortedMeetups.filter((m) => normalizeCity(m.city) === selectedCity)
 
       if (!query) return byCity
 
@@ -273,14 +306,14 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
             <p className="text-muted-foreground">
               {searchQuery
                 ? "No meetups match your search."
-                : activeCityFilter !== "all"
+                : activeCityFilter !== ALL_CITIES_FILTER
                 ? `No meetups in ${activeCityFilter} yet.`
                 : "No meetups yet worldwide. Be the first to create one!"}
             </p>
-            {(activeCityFilter !== "all" || searchQuery) && (
+            {(activeCityFilter !== ALL_CITIES_FILTER || searchQuery) && (
               <button
                 onClick={() => {
-                  setCityFilter("all")
+                  setCityFilter(ALL_CITIES_FILTER)
                   setSearchQuery("")
                 }}
                 className="text-sm text-primary hover:underline"
