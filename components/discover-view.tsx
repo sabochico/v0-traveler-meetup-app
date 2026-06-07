@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -178,17 +178,13 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
     [cities]
   )
 
-  useEffect(() => {
-    if (cityFilter !== "all" && !cities.includes(cityFilter)) {
-      setCityFilter("all")
-    }
-  }, [cities, cityFilter])
+  const activeCityFilter = cityFilter === "all" || cities.includes(cityFilter) ? cityFilter : "all"
 
   const filteredMeetups = useMemo(
     () => {
       const query = searchQuery.trim().toLowerCase()
-      const selectedCity = cityFilter.trim().toLowerCase()
-      const byCity = cityFilter === "all"
+      const selectedCity = activeCityFilter.trim().toLowerCase()
+      const byCity = activeCityFilter === "all"
         ? sortedMeetups
         : sortedMeetups.filter((m) => (m.city ?? "").trim().toLowerCase() === selectedCity)
 
@@ -205,7 +201,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
         ].filter(Boolean).some((value) => String(value).toLowerCase().includes(query))
       )
     },
-    [cityFilter, searchQuery, sortedMeetups]
+    [activeCityFilter, searchQuery, sortedMeetups]
   )
 
   const filteredProfiles = useMemo(
@@ -256,7 +252,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
           {/* City filter pills - meetups tab */}
           {activeTab === "meetups" && cities.length > 0 && (
             <CategorySelector
-              value={cityFilter}
+              value={activeCityFilter}
               options={cityOptions}
               onChange={setCityFilter}
               ariaLabel="Meetup city filters"
@@ -277,11 +273,11 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
             <p className="text-muted-foreground">
               {searchQuery
                 ? "No meetups match your search."
-                : cityFilter !== "all"
-                ? `No meetups in ${cityFilter} yet.`
+                : activeCityFilter !== "all"
+                ? `No meetups in ${activeCityFilter} yet.`
                 : "No meetups yet worldwide. Be the first to create one!"}
             </p>
-            {(cityFilter !== "all" || searchQuery) && (
+            {(activeCityFilter !== "all" || searchQuery) && (
               <button
                 onClick={() => {
                   setCityFilter("all")
