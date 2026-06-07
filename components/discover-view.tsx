@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -178,12 +178,19 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
     [cities]
   )
 
+  useEffect(() => {
+    if (cityFilter !== "all" && !cities.includes(cityFilter)) {
+      setCityFilter("all")
+    }
+  }, [cities, cityFilter])
+
   const filteredMeetups = useMemo(
     () => {
       const query = searchQuery.trim().toLowerCase()
+      const selectedCity = cityFilter.trim().toLowerCase()
       const byCity = cityFilter === "all"
         ? sortedMeetups
-        : sortedMeetups.filter((m) => m.city?.toLowerCase() === cityFilter.toLowerCase())
+        : sortedMeetups.filter((m) => (m.city ?? "").trim().toLowerCase() === selectedCity)
 
       if (!query) return byCity
 
