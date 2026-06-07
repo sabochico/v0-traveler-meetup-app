@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Profile, MoodStatus } from "@/lib/types"
 import { getProfileCompletionScore } from "@/lib/profile-completion"
+import { getPresenceStatus } from "@/lib/presence"
 
 const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   social: { color: "bg-emerald-500", label: "Feeling social" },
@@ -50,6 +51,7 @@ const MOCK_PROFILES: Profile[] = [
     current_country: "Japan",
     location: null,
     instagram_handle: null,
+    last_active_at: new Date().toISOString(),
     last_seen_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -70,6 +72,7 @@ const MOCK_PROFILES: Profile[] = [
     current_country: "Japan",
     location: null,
     instagram_handle: null,
+    last_active_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
     last_seen_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -90,6 +93,7 @@ const MOCK_PROFILES: Profile[] = [
     current_country: "Japan",
     location: null,
     instagram_handle: null,
+    last_active_at: new Date().toISOString(),
     last_seen_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -110,6 +114,7 @@ const MOCK_PROFILES: Profile[] = [
     current_country: "Japan",
     location: null,
     instagram_handle: null,
+    last_active_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
     last_seen_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -373,12 +378,8 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
   const displayName = person.display_name ?? "Anonymous"
   const initial = displayName[0]?.toUpperCase() ?? "U"
 
-  const isOnline =
-    Boolean(person.is_online) ||
-    Boolean(
-      person.last_seen_at &&
-        Date.now() - new Date(person.last_seen_at).getTime() < 2 * 60 * 1000
-    )
+  const presence = getPresenceStatus(person)
+  const isOnline = presence.state === "online"
 
   const location =
     [person.current_city, person.current_country].filter(Boolean).join(", ") ||
@@ -426,14 +427,16 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
               <AvatarFallback className="text-xl">{initial}</AvatarFallback>
             </Avatar>
 
-            <span
-              className={cn(
-                "absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-card",
-                isOnline ? "bg-emerald-500" : "bg-muted"
-              )}
-              title={isOnline ? "Online now" : "Offline"}
-              aria-label={isOnline ? "Online now" : "Offline"}
-            />
+            {presence.state !== "offline" && (
+              <span
+                className={cn(
+                  "absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-card",
+                  isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                )}
+                title={presence.label ?? undefined}
+                aria-label={presence.label ?? undefined}
+              />
+            )}
           </div>
 
           <div className="flex-1 min-w-0">
@@ -453,15 +456,17 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
                   {moodStyle.label}
                 </div>
 
-                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                  <span
-                    className={cn(
-                      "w-2 h-2 rounded-full",
-                      isOnline ? "bg-emerald-500" : "bg-muted"
-                    )}
-                  />
-                  <span>{isOnline ? "Online now" : "Offline"}</span>
-                </div>
+                {presence.state !== "offline" && (
+                  <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                    <span
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                      )}
+                    />
+                    <span>{presence.label}</span>
+                  </div>
+                )}
               </div>
 
               <Badge variant="secondary" className="text-xs shrink-0">

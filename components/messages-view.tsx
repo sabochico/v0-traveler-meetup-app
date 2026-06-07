@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useBlockedUsers } from "@/hooks/use-user-safety"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { motionEase, quickTransition } from "@/lib/motion"
+import { getPresenceStatus } from "@/lib/presence"
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
 
@@ -24,6 +25,7 @@ const MOCK_CONVERSATIONS = [
       display_name: "Mika",
       avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
       is_online: true,
+      last_active_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString(),
       mood: "social",
       travel_mode: true,
@@ -49,6 +51,7 @@ const MOCK_CONVERSATIONS = [
       display_name: "Leo",
       avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
       is_online: false,
+      last_active_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
       last_seen_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
       mood: "exploring",
       travel_mode: false,
@@ -74,6 +77,7 @@ const MOCK_CONVERSATIONS = [
       display_name: "Sofia",
       avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
       is_online: true,
+      last_active_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString(),
       mood: "exploring",
       travel_mode: true,
@@ -219,7 +223,10 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
               </p>
             </div>
           ) : (
-            filteredConversations.map((conversation, index) => (
+            filteredConversations.map((conversation, index) => {
+              const presence = getPresenceStatus(conversation.other_user)
+
+              return (
               <motion.button
                 key={conversation.id}
                 onClick={() => setSelectedConversation(conversation)}
@@ -239,8 +246,11 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
                       {(conversation.other_user?.display_name ?? "U")[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  {conversation.other_user.is_online && (
-                    <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background" />
+                  {presence.state !== "offline" && (
+                    <span className={cn(
+                      "absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-background",
+                      presence.state === "online" ? "bg-emerald-500" : "bg-muted-foreground"
+                    )} />
                   )}
                 </div>
 
@@ -266,7 +276,8 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
                   </span>
                 )}
               </motion.button>
-            ))
+              )
+            })
           )}
         </div>
       )}
@@ -299,6 +310,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
   const { sendMessage, markAsRead } = useSendMessage()
   const { toast } = useToast()
   const otherUser = conversation.other_user
+  const presence = getPresenceStatus(otherUser)
   const location =
     [otherUser?.current_city, otherUser?.current_country].filter(Boolean).join(", ") ||
     otherUser?.location ||
@@ -480,7 +492,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
                   {conversation.other_user?.display_name ?? "Anonymous"}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {conversation.other_user?.is_online ? "Online" : "Offline"}
+                  {presence.label ?? ""}
                 </p>
               </div>
             </>
@@ -503,7 +515,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
                   {conversation.other_user?.display_name ?? "Anonymous"}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {conversation.other_user?.is_online ? "Online" : "Offline"}
+                  {presence.label ?? ""}
                 </p>
               </div>
             </Link>

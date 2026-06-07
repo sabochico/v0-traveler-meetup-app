@@ -4,15 +4,9 @@ import { useEffect } from "react"
 import useSWR, { mutate as globalMutate } from "swr"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
+import { getPresenceStatus } from "@/lib/presence"
 
 const supabase = createClient()
-
-const ONLINE_WINDOW_MS = 2 * 60 * 1000
-
-const isRecentlySeen = (lastSeenAt?: string | null) => {
-  if (!lastSeenAt) return false
-  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS
-}
 
 /** One shared channel — Supabase rejects .on() after .subscribe() on the same topic. */
 let conversationsMessagesChannel: RealtimeChannel | null = null
@@ -56,6 +50,7 @@ export interface Conversation {
     display_name: string | null
     avatar_url: string | null
     is_online: boolean
+    last_active_at: string | null
     last_seen_at: string | null
     mood: string | null
     travel_mode: boolean
@@ -137,7 +132,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
   const { data: otherUsers } = otherUserIds.length
     ? await supabase
       .from("profiles")
-      .select("id, display_name, avatar_url, is_online, last_seen_at, mood, travel_mode, current_city, current_country, location, interests, languages")
+      .select("id, display_name, avatar_url, is_online, last_active_at, last_seen_at, mood, travel_mode, current_city, current_country, location, interests, languages")
       .in("id", otherUserIds)
     : { data: [] }
   const profileById = new Map((otherUsers ?? []).map((profile) => [profile.id, profile]))
@@ -161,6 +156,10 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
     const otherUser = profileById.get(otherUserId)
     const lastSeenAt = otherUser?.last_seen_at ?? null
+    const presence = getPresenceStatus({
+      last_active_at: otherUser?.last_active_at ?? null,
+      last_seen_at: lastSeenAt,
+    })
 
     return {
       id: conv.id,
@@ -170,7 +169,8 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
         id: otherUserId,
         display_name: otherUser?.display_name ?? null,
         avatar_url: otherUser?.avatar_url ?? null,
-        is_online: Boolean(otherUser?.is_online) || isRecentlySeen(lastSeenAt),
+        is_online: presence.state === "online",
+        last_active_at: otherUser?.last_active_at ?? null,
         last_seen_at: lastSeenAt,
         mood: otherUser?.mood ?? null,
         travel_mode: otherUser?.travel_mode ?? false,
@@ -192,9 +192,25 @@ export function useConversations() {
   const { data, error, isLoading, mutate } = useSWR("conversations", conversationsFetcher, SWR_OPTIONS)
 
   useEffect(() => {
-    return subscribeToConversationMessages(() => {
+    const unsubscribeMessages = subscribeToConversationMessages(() => {
       void mutate()
     })
+
+    const profileChannel = supabase
+      .channel("conversations:profiles")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        () => {
+          void mutate()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      unsubscribeMessages()
+      void supabase.removeChannel(profileChannel)
+    }
   }, [mutate])
 
   return {

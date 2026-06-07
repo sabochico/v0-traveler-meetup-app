@@ -29,13 +29,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useUserSafety } from "@/hooks/use-user-safety"
 import { cn } from "@/lib/utils"
 import { getProfileCompletionScore } from "@/lib/profile-completion"
-
-const ONLINE_WINDOW_MS = 2 * 60 * 1000
-
-const isRecentlySeen = (lastSeenAt?: string | null) => {
-  if (!lastSeenAt) return false
-  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS
-}
+import { getPresenceStatus } from "@/lib/presence"
 
 const formatMemberSince = (createdAt?: string | null) => {
   if (!createdAt) return "Recently joined"
@@ -102,7 +96,9 @@ export default function PublicProfilePage({
   const [reportDetails, setReportDetails] = useState("")
   const [safetyLoading, setSafetyLoading] = useState(false)
 
-  const isOnline = Boolean(profile?.is_online) || isRecentlySeen(profile?.last_seen_at)
+  const presence = getPresenceStatus(profile)
+  const isOnline = presence.state === "online"
+  const showPresence = presence.state !== "offline"
   const displayName = profile?.display_name ?? "Anonymous"
   const initial = displayName[0]?.toUpperCase() ?? "U"
   const instagramUsername = profile?.instagram_handle?.replace(/^@/, "")
@@ -119,9 +115,9 @@ export default function PublicProfilePage({
     ? [
         {
           label: "Recent activity",
-          value: isOnline ? "Online now" : formatLastSeen(profile.last_seen_at),
+          value: presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at),
           icon: Clock3,
-          active: isOnline || isRecentlySeen(profile.last_seen_at),
+          active: showPresence,
         },
         {
           label: "Profile details",
@@ -216,7 +212,7 @@ export default function PublicProfilePage({
             </h1>
             {profile && (
               <p className="text-xs text-muted-foreground">
-                {isOnline ? "Online now" : formatLastSeen(profile.last_seen_at)}
+                {presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at)}
               </p>
             )}
           </div>
@@ -247,19 +243,21 @@ export default function PublicProfilePage({
                   <AvatarFallback className="text-4xl">{initial}</AvatarFallback>
                 </Avatar>
 
-                <span
-                  className={cn(
-                    "absolute bottom-2 right-2 w-5 h-5 rounded-full border-2 border-background",
-                    isOnline ? "bg-emerald-500" : "bg-muted"
-                  )}
-                />
+                {showPresence && (
+                  <span
+                    className={cn(
+                      "absolute bottom-2 right-2 w-5 h-5 rounded-full border-2 border-background",
+                      isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                    )}
+                  />
+                )}
               </div>
             </div>
 
             <h2 className="text-3xl font-serif font-semibold mt-4">{displayName}</h2>
 
             <p className="text-sm text-muted-foreground mt-1">
-              {isOnline ? "Online now" : formatLastSeen(profile.last_seen_at)}
+              {presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at)}
             </p>
 
             <div className="flex flex-wrap justify-center gap-2 mt-4">
@@ -335,7 +333,7 @@ export default function PublicProfilePage({
             <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
               <Clock3 className="mb-2 h-5 w-5 text-primary" />
               <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">Status</p>
-              <p className="mt-1 text-[0.95rem] font-semibold leading-tight text-foreground">{isOnline ? "Online" : "Away"}</p>
+              <p className="mt-1 text-[0.95rem] font-semibold leading-tight text-foreground">{presence.label ?? "Inactive"}</p>
             </div>
 
             <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">

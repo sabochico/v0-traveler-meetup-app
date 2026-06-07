@@ -60,6 +60,7 @@ export interface Database {
           location_source: string | null
           location_updated_at: string | null
           instagram_handle: string | null
+          last_active_at: string | null
           last_seen_at: string
           created_at: string
           updated_at: string
@@ -85,6 +86,7 @@ export interface Database {
           location_source?: string | null
           location_updated_at?: string | null
           instagram_handle?: string | null
+          last_active_at?: string | null
           last_seen_at?: string
           created_at?: string
           updated_at?: string
@@ -110,6 +112,7 @@ export interface Database {
           location_source?: string | null
           location_updated_at?: string | null
           instagram_handle?: string | null
+          last_active_at?: string | null
           last_seen_at?: string
           created_at?: string
           updated_at?: string
@@ -355,7 +358,10 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      touch_profile_activity: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

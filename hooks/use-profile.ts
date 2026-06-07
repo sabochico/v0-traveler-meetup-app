@@ -5,14 +5,9 @@ import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { Profile, MoodStatus } from "@/lib/types"
 import { getCachedProfile, setCachedProfile } from "@/lib/profile-cache"
+import { getPresenceStatus } from "@/lib/presence"
 
-const ONLINE_WINDOW_MS = 2 * 60 * 1000
 const SWR_OPTIONS = { keepPreviousData: true }
-
-const isRecentlySeen = (lastSeenAt?: string | null) => {
-  if (!lastSeenAt) return false
-  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS
-}
 
 const createFallbackProfile = (id: string): Profile => {
   const now = new Date().toISOString()
@@ -26,7 +21,7 @@ const createFallbackProfile = (id: string): Profile => {
     languages: [],
     mood: "social",
     travel_mode: false,
-    is_online: isRecentlySeen(now),
+    is_online: true,
     anonymous_mode: false,
     current_city: null,
     current_region: null,
@@ -37,6 +32,7 @@ const createFallbackProfile = (id: string): Profile => {
     location_source: null,
     location_updated_at: null,
     instagram_handle: null,
+    last_active_at: now,
     last_seen_at: now,
     created_at: now,
     updated_at: now,
@@ -61,7 +57,7 @@ const fetcher = async (): Promise<Profile | null> => {
 
   return {
     ...data,
-    is_online: data.is_online || isRecentlySeen(data.last_seen_at),
+    is_online: getPresenceStatus(data).state === "online",
   }
 }
 
@@ -93,45 +89,6 @@ export function useProfile(options: UseProfileOptions = {}) {
     fallbackData,
     onSuccess: setCachedProfile,
   })
-
-  useEffect(() => {
-    if (!enabled) return
-
-    const supabase = createClient()
-    let intervalId: ReturnType<typeof setInterval> | null = null
-
-    const updatePresence = async (isOnline: boolean) => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      await supabase
-        .from("profiles")
-        .update({
-          is_online: isOnline,
-          last_seen_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id)
-    }
-
-    updatePresence(true)
-
-    intervalId = setInterval(() => {
-      updatePresence(true)
-    }, 30000)
-
-    const handleBeforeUnload = () => {
-      updatePresence(false)
-    }
-
-    window.addEventListener("beforeunload", handleBeforeUnload)
-
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-      updatePresence(false)
-    }
-  }, [enabled])
 
   return {
     profile: data,
@@ -208,7 +165,7 @@ export function usePublicProfile(userId: string | null) {
 
       return {
         ...profile,
-        is_online: profile.is_online || isRecentlySeen(profile.last_seen_at),
+        is_online: getPresenceStatus(profile).state === "online",
       } as Profile
     },
     SWR_OPTIONS
@@ -236,13 +193,32 @@ const nearbyFetcher = async (): Promise<Profile[]> => {
 
   return (data ?? []).map((profile) => ({
     ...profile,
-    is_online: profile.is_online || isRecentlySeen(profile.last_seen_at),
+    is_online: getPresenceStatus(profile).state === "online",
   }))
 }
 
 export function useNearbyProfiles(options: UseProfileOptions = {}) {
   const enabled = options.enabled ?? true
   const { data, error, isLoading, mutate } = useSWR(enabled ? "nearby-profiles" : null, nearbyFetcher, SWR_OPTIONS)
+
+  useEffect(() => {
+    if (!enabled) return
+
+    const channel = supabase
+      .channel("profiles:presence")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        () => {
+          void mutate()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [enabled, mutate])
 
   return {
     profiles: data ?? [],

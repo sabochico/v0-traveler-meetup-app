@@ -14,6 +14,7 @@ import { NotificationsBell } from "@/components/notifications-bell"
 import { DriftLogo } from "@/components/drift-logo"
 import { EditProfileModal } from "@/components/edit-profile-modal"
 import { useProfile } from "@/hooks/use-profile"
+import { usePresenceHeartbeat } from "@/hooks/use-presence-heartbeat"
 import { isNativeRuntime } from "@/lib/auth-redirect"
 import { isProfileComplete } from "@/lib/profile-completion"
 import { Bell, Compass, HomeIcon, MessageCircle, Plus, UserIcon } from "lucide-react"
@@ -28,6 +29,8 @@ export default function Home() {
   const [showCreate, setShowCreate] = useState(false)
   const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
   const showPublicFooter = !isAuthenticated && !isNativeRuntime()
+
+  usePresenceHeartbeat(isAuthenticated)
 
   useEffect(() => {
     if (sessionStorage.getItem("drift-open-tab") !== "profile") return

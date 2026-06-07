@@ -36,13 +36,20 @@ create table if not exists public.profiles (
   location_source   text,
   location_updated_at timestamptz,
   instagram_handle  text,
+  last_active_at    timestamptz,
   last_seen_at      timestamptz not null default now(),
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
 );
 
+alter table public.profiles
+  add column if not exists last_active_at timestamptz;
+
 create index if not exists profiles_discovery_idx
   on public.profiles (anonymous_mode, travel_mode, last_seen_at desc);
+
+create index if not exists profiles_last_active_idx
+  on public.profiles (last_active_at desc);
 
 create index if not exists profiles_city_idx
   on public.profiles (current_city);
@@ -92,6 +99,28 @@ create policy "Users can update own profile"
   on public.profiles for update
   using (auth.uid() = id)
   with check (auth.uid() = id);
+
+create or replace function public.touch_profile_activity()
+returns timestamptz
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  touched_at timestamptz := now();
+begin
+  update public.profiles
+  set
+    last_active_at = touched_at,
+    last_seen_at = touched_at,
+    is_online = true
+  where id = auth.uid();
+
+  return touched_at;
+end;
+$$;
+
+grant execute on function public.touch_profile_activity() to authenticated;
 
 -- Meetups
 create table if not exists public.meetups (
