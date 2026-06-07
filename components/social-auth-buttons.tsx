@@ -46,6 +46,7 @@ function getProviderOptions(provider: SocialProvider) {
     // Facebook email requires Meta approval before requesting it in production.
     scopes: "public_profile",
     queryParams: {
+      scope: "public_profile",
       display: isNativeRuntime() ? "touch" : "page",
     },
   }
