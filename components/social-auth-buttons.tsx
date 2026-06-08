@@ -113,10 +113,14 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
       if (error) throw error
 
       if (nativeRuntime && data.url) {
-        await Browser.open({
-          url: data.url,
-          presentationStyle: "fullscreen",
-        })
+        if (Capacitor.isPluginAvailable("Browser")) {
+          await Browser.open({
+            url: data.url,
+            presentationStyle: "fullscreen",
+          })
+        } else {
+          window.location.href = data.url
+        }
       }
     } catch (error) {
       setLoadingProvider(null)
