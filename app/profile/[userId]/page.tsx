@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
@@ -19,6 +19,8 @@ import {
   ShieldCheck,
   Flag,
   Ban,
+  ImageIcon,
+  X,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -95,6 +97,8 @@ export default function PublicProfilePage({
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0])
   const [reportDetails, setReportDetails] = useState("")
   const [safetyLoading, setSafetyLoading] = useState(false)
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null)
+  const [brokenPhotoUrls, setBrokenPhotoUrls] = useState<Set<string>>(() => new Set())
 
   const presence = getPresenceStatus(profile)
   const isOnline = presence.state === "online"
@@ -103,6 +107,10 @@ export default function PublicProfilePage({
   const initial = displayName[0]?.toUpperCase() ?? "U"
   const instagramUsername = profile?.instagram_handle?.replace(/^@/, "")
   const canUseSafetyActions = isAuthenticated && Boolean(user) && user?.id !== profile?.id
+  const profilePhotos = useMemo(
+    () => Array.from(new Set([...(profile?.profile_photos ?? []), profile?.avatar_url].filter(Boolean) as string[])),
+    [profile?.avatar_url, profile?.profile_photos]
+  )
 
   const location =
     [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
@@ -323,6 +331,57 @@ export default function PublicProfilePage({
             )}
           </section>
 
+          {profilePhotos.length > 0 && (
+            <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
+                  <ImageIcon className="h-5 w-5 text-primary" />
+                  Photos
+                </h3>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {profilePhotos.length}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {profilePhotos.map((photoUrl, index) => {
+                  const isBroken = brokenPhotoUrls.has(photoUrl)
+
+                  return (
+                    <button
+                      key={photoUrl}
+                      type="button"
+                      onClick={() => !isBroken && setSelectedPhoto(photoUrl)}
+                      className="group relative aspect-[4/5] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-background/42 text-left shadow-[0_14px_34px_rgb(0_0_0_/_0.18)]"
+                      aria-label={`View ${displayName}'s photo ${index + 1}`}
+                    >
+                      {isBroken ? (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                          <ImageIcon className="h-6 w-6 opacity-60" />
+                          <span className="text-xs">Photo unavailable</span>
+                        </div>
+                      ) : (
+                        <img
+                          src={photoUrl}
+                          alt={`${displayName} photo ${index + 1}`}
+                          loading={index < 2 ? "eager" : "lazy"}
+                          decoding="async"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+                          onError={() => {
+                            setBrokenPhotoUrls((current) => new Set(current).add(photoUrl))
+                          }}
+                        />
+                      )}
+                      {!isBroken && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/22 via-transparent to-white/[0.03]" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
           <section className="grid grid-cols-3 gap-3">
             <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
               <CalendarDays className="mb-2 h-5 w-5 text-primary" />
@@ -436,6 +495,24 @@ export default function PublicProfilePage({
             </section>
           )}
         </main>
+      )}
+
+      {selectedPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/82 p-4 backdrop-blur-xl">
+          <button
+            aria-label="Close photo preview"
+            className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-xl"
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={selectedPhoto}
+            alt={`${displayName} enlarged profile photo`}
+            className="max-h-[82vh] w-full max-w-lg rounded-[1.75rem] object-contain shadow-[0_24px_80px_rgb(0_0_0_/_0.55)]"
+            onError={() => setSelectedPhoto(null)}
+          />
+        </div>
       )}
 
       {showReportModal && profile && (
