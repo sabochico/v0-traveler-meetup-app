@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { Profile, MoodStatus } from "@/lib/types"
@@ -200,17 +200,25 @@ const nearbyFetcher = async (): Promise<Profile[]> => {
 export function useNearbyProfiles(options: UseProfileOptions = {}) {
   const enabled = options.enabled ?? true
   const { data, error, isLoading, mutate } = useSWR(enabled ? "nearby-profiles" : null, nearbyFetcher, SWR_OPTIONS)
+  const mutateRef = useRef(mutate)
+
+  useEffect(() => {
+    mutateRef.current = mutate
+  }, [mutate])
 
   useEffect(() => {
     if (!enabled) return
 
+    const channelId = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()}`
     const channel = supabase
-      .channel("profiles:presence")
+      .channel(`profiles:presence:${channelId}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles" },
         () => {
-          void mutate()
+          void mutateRef.current()
         }
       )
       .subscribe()
@@ -218,7 +226,7 @@ export function useNearbyProfiles(options: UseProfileOptions = {}) {
     return () => {
       void supabase.removeChannel(channel)
     }
-  }, [enabled, mutate])
+  }, [enabled])
 
   return {
     profiles: data ?? [],
