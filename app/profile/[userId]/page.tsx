@@ -249,12 +249,7 @@ export default function PublicProfilePage({
           <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-card/80 shadow-[0_24px_70px_rgb(0_0_0_/_0.35)]">
             <div className="relative aspect-[4/5] min-h-[460px] bg-gradient-to-br from-primary/35 via-card to-[var(--drift-teal)]/18">
               {heroPhoto ? (
-                <button
-                  type="button"
-                  onClick={() => setSelectedPhoto(heroPhoto)}
-                  className="absolute inset-0 text-left"
-                  aria-label={`View ${displayName}'s main photo`}
-                >
+                <>
                   <img
                     src={heroPhoto}
                     alt={`${displayName} main profile photo`}
@@ -266,7 +261,31 @@ export default function PublicProfilePage({
                       setActivePhotoIndex(0)
                     }}
                   />
-                </button>
+                  {visiblePhotos.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivePhotoIndex((current) =>
+                            current === 0 ? visiblePhotos.length - 1 : current - 1
+                          )
+                        }}
+                        className="absolute bottom-28 left-0 top-12 z-10 w-1/2"
+                        aria-label="Previous photo"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivePhotoIndex((current) =>
+                            current >= visiblePhotos.length - 1 ? 0 : current + 1
+                          )
+                        }}
+                        className="absolute bottom-28 right-0 top-12 z-10 w-1/2"
+                        aria-label="Next photo"
+                      />
+                    </>
+                  )}
+                </>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
                   <Avatar className="h-28 w-28 ring-4 ring-primary/20">
@@ -277,7 +296,8 @@ export default function PublicProfilePage({
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/36 to-black/12" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/44 to-black/8" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/88 via-black/42 to-transparent" />
               <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/45 to-transparent" />
 
               {visiblePhotos.length > 1 && (
@@ -298,17 +318,17 @@ export default function PublicProfilePage({
               )}
 
               <div className="absolute bottom-0 left-0 right-0 p-4">
-                <div className="rounded-[1.7rem] border border-white/[0.12] bg-[#10131a]/72 p-4 shadow-[0_18px_50px_rgb(0_0_0_/_0.32),inset_0_1px_0_rgb(255_255_255_/_0.12)] backdrop-blur-2xl">
+                <div className="rounded-[1.35rem] border border-white/[0.1] bg-[#10131a]/42 p-3.5 shadow-[0_14px_42px_rgb(0_0_0_/_0.26),inset_0_1px_0_rgb(255_255_255_/_0.1)] backdrop-blur-xl">
                   <div className="flex items-start gap-3">
                     <div className="relative shrink-0">
-                      <Avatar className="h-14 w-14 ring-2 ring-white/15">
+                      <Avatar className="h-11 w-11 ring-2 ring-white/15">
                         <AvatarImage src={profile.avatar_url ?? heroPhoto ?? undefined} alt={displayName} />
                         <AvatarFallback>{initial}</AvatarFallback>
                       </Avatar>
                       {showPresence && (
                         <span
                           className={cn(
-                            "absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-[#10131a]",
+                            "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#10131a]",
                             isOnline ? "bg-emerald-500" : "bg-muted-foreground"
                           )}
                         />
@@ -316,14 +336,14 @@ export default function PublicProfilePage({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h2 className="truncate text-3xl font-serif font-semibold leading-none">{displayName}</h2>
-                      <p className="mt-1 text-sm text-white/64">
+                      <h2 className="truncate text-2xl font-serif font-semibold leading-none">{displayName}</h2>
+                      <p className="mt-1 text-xs text-white/64">
                         {presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     {profile.mood && (
                       <span
                         className={cn(
@@ -350,7 +370,7 @@ export default function PublicProfilePage({
                   <button
                     onClick={handleSayHi}
                     disabled={isStartingChat}
-                    className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-[1.25rem] bg-primary text-sm font-semibold text-primary-foreground transition hover:opacity-95 disabled:opacity-60"
+                    className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[1.1rem] bg-primary text-sm font-semibold text-primary-foreground transition hover:opacity-95 disabled:opacity-60"
                   >
                     {isStartingChat ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -367,42 +387,6 @@ export default function PublicProfilePage({
               </div>
             </div>
           </section>
-
-          {visiblePhotos.length > 1 && (
-            <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
-                  <ImageIcon className="h-5 w-5 text-primary" />
-                  More photos
-                </h3>
-                <span className="text-xs font-medium text-muted-foreground">{visiblePhotos.length}</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {visiblePhotos.slice(1).map((photoUrl, index) => (
-                  <button
-                    key={photoUrl}
-                    type="button"
-                    onClick={() => setSelectedPhoto(photoUrl)}
-                    className="group relative aspect-[4/5] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-background/42 text-left shadow-[0_14px_34px_rgb(0_0_0_/_0.18)]"
-                    aria-label={`View ${displayName}'s photo ${index + 2}`}
-                  >
-                    <img
-                      src={photoUrl}
-                      alt={`${displayName} photo ${index + 2}`}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
-                      onError={() => {
-                        setBrokenPhotoUrls((current) => new Set(current).add(photoUrl))
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/22 via-transparent to-white/[0.03]" />
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
 
           <section className="grid grid-cols-3 gap-3">
             <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
