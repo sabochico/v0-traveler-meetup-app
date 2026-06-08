@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/client"
 import { getAuthRedirectUrl, isNativeRuntime } from "@/lib/auth-redirect"
 import { cn } from "@/lib/utils"
 
-type SocialProvider = Extract<Provider, "google" | "apple" | "facebook">
+type SocialProvider = Extract<Provider, "google" | "apple">
 
 const PROVIDERS: Array<{
   id: SocialProvider
@@ -32,7 +32,6 @@ const PROVIDERS: Array<{
     ),
   },
   { id: "apple", label: "Continue with Apple", icon: <span className="text-xl leading-none"></span> },
-  { id: "facebook", label: "Continue with Facebook", icon: <span className="text-lg font-bold text-[#1877F2]">f</span> },
 ]
 
 interface SocialAuthButtonsProps {
@@ -40,32 +39,11 @@ interface SocialAuthButtonsProps {
   onEmailClick: () => void
 }
 
-function getProviderOptions(provider: SocialProvider) {
-  if (provider !== "facebook") return {}
-
-  return {
-    // Facebook email requires Meta approval before requesting it in production.
-    scopes: "public_profile",
-    queryParams: {
-      scope: "public_profile",
-      display: isNativeRuntime() ? "touch" : "page",
-    },
-  }
-}
-
 function getOAuthErrorMessage(provider: SocialProvider, error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? "")
 
   if (provider === "apple") {
     return "Apple login could not start. Please try again or continue with email."
-  }
-
-  if (provider === "facebook") {
-    if (/provider.*not enabled|unsupported provider|validation_failed/i.test(message)) {
-      return "Facebook login is not enabled yet. Please check the Supabase Facebook provider settings."
-    }
-
-    return "Facebook login could not start. Please try again or continue with email."
   }
 
   return message || "Could not start social login. Please try again."
@@ -129,7 +107,6 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
         options: {
           redirectTo: getAuthRedirectUrl("/"),
           skipBrowserRedirect: nativeRuntime,
-          ...getProviderOptions(provider),
         },
       })
 
