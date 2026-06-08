@@ -125,14 +125,14 @@ export default function PublicProfilePage({
   const trustSignals = profile
     ? [
         {
-          label: "Recent activity",
+          label: "Recently active",
           value: presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at),
           icon: Clock3,
           active: showPresence,
         },
         {
-          label: "Profile details",
-          value: `${completionScore}% complete`,
+          label: "Profile completeness",
+          value: `${completionScore}%`,
           icon: Users,
           active: completionScore >= 80,
         },
@@ -143,8 +143,8 @@ export default function PublicProfilePage({
           active: true,
         },
         {
-          label: "Social link",
-          value: profile.instagram_handle ? "Instagram connected" : "Not connected yet",
+          label: "Instagram",
+          value: profile.instagram_handle ? "Connected" : "Not connected",
           icon: Instagram,
           active: Boolean(profile.instagram_handle),
         },
@@ -418,9 +418,9 @@ export default function PublicProfilePage({
               {trustSignals.map((signal) => (
                 <div
                   key={signal.label}
-                  className="flex min-h-[118px] flex-col justify-between rounded-[1.35rem] border border-border/50 bg-background/42 p-4"
+                  className="flex min-h-[112px] flex-col justify-between rounded-[1.35rem] border border-border/55 bg-background/44 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-start gap-2.5">
                     <span
                       className={cn(
                         "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
@@ -431,11 +431,11 @@ export default function PublicProfilePage({
                     >
                       <signal.icon className="h-4 w-4" />
                     </span>
-                    <span className="min-w-0 text-[11px] font-medium uppercase tracking-[0.08em] leading-tight text-muted-foreground/78">
+                    <span className="min-w-0 flex-1 pt-1 text-[0.78rem] font-medium leading-snug text-muted-foreground/78">
                       {signal.label}
                     </span>
                   </div>
-                  <p className="mt-3 text-[1.05rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">{signal.value}</p>
+                  <p className="mt-3 text-[1.08rem] font-semibold leading-tight tracking-[-0.01em] text-foreground">{signal.value}</p>
                 </div>
               ))}
             </div>
