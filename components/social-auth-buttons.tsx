@@ -6,6 +6,7 @@ import { Loader2, Mail } from "lucide-react"
 import type { Provider } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import { Capacitor } from "@capacitor/core"
+import { Browser } from "@capacitor/browser"
 import { AppleSignIn, ErrorCode, SignInScope } from "@capawesome/capacitor-apple-sign-in"
 import { createClient } from "@/lib/supabase/client"
 import { getAuthRedirectUrl, isNativeRuntime } from "@/lib/auth-redirect"
@@ -122,15 +123,24 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
         return
       }
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      const nativeRuntime = isNativeRuntime()
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: getAuthRedirectUrl("/"),
+          skipBrowserRedirect: nativeRuntime,
           ...getProviderOptions(provider),
         },
       })
 
       if (error) throw error
+
+      if (nativeRuntime && data.url) {
+        await Browser.open({
+          url: data.url,
+          presentationStyle: "fullscreen",
+        })
+      }
     } catch (error) {
       setLoadingProvider(null)
       if (provider === "apple" && isAppleSignInCancelled(error)) return

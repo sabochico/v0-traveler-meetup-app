@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { App } from "@capacitor/app"
+import { Browser } from "@capacitor/browser"
 import { isNativeRuntime } from "@/lib/auth-redirect"
 import { createClient } from "@/lib/supabase/client"
 
@@ -33,6 +34,7 @@ export function NativeOAuthListener() {
       if (!url.startsWith("com.aweandco.drift://") && !url.startsWith("drift://")) return
 
       try {
+        await Browser.close().catch(() => {})
         const { error, code, accessToken, refreshToken, next } = getAuthParams(url)
         if (error) throw new Error(error)
 
