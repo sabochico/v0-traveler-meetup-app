@@ -78,27 +78,32 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
     try {
       const supabase = createClient()
 
-      if (provider === "apple" && isNativeIosRuntime()) {
-        const nonce = createNonce()
-        const credential = await AppleSignIn.signIn({
-          scopes: [SignInScope.Email, SignInScope.FullName],
-          nonce,
-        })
+      if (provider === "apple" && isNativeIosRuntime() && Capacitor.isPluginAvailable("AppleSignIn")) {
+        try {
+          const nonce = createNonce()
+          const credential = await AppleSignIn.signIn({
+            scopes: [SignInScope.Email, SignInScope.FullName],
+            nonce,
+          })
 
-        if (!credential.idToken) {
-          throw new Error("Apple did not return an identity token.")
+          if (!credential.idToken) {
+            throw new Error("Apple did not return an identity token.")
+          }
+
+          const { error } = await supabase.auth.signInWithIdToken({
+            provider: "apple",
+            token: credential.idToken,
+            nonce,
+          })
+
+          if (error) throw error
+
+          router.replace("/")
+          return
+        } catch (error) {
+          if (isAppleSignInCancelled(error)) return
+          console.warn("Native Apple login failed; falling back to OAuth.", error)
         }
-
-        const { error } = await supabase.auth.signInWithIdToken({
-          provider: "apple",
-          token: credential.idToken,
-          nonce,
-        })
-
-        if (error) throw error
-
-        router.replace("/")
-        return
       }
 
       const nativeRuntime = isNativeRuntime()
