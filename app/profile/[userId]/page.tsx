@@ -98,6 +98,7 @@ export default function PublicProfilePage({
   const [reportDetails, setReportDetails] = useState("")
   const [safetyLoading, setSafetyLoading] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null)
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0)
   const [brokenPhotoUrls, setBrokenPhotoUrls] = useState<Set<string>>(() => new Set())
 
   const presence = getPresenceStatus(profile)
@@ -111,6 +112,8 @@ export default function PublicProfilePage({
     () => Array.from(new Set([...(profile?.profile_photos ?? []), profile?.avatar_url].filter(Boolean) as string[])),
     [profile?.avatar_url, profile?.profile_photos]
   )
+  const visiblePhotos = profilePhotos.filter((photoUrl) => !brokenPhotoUrls.has(photoUrl))
+  const heroPhoto = visiblePhotos[activePhotoIndex] ?? visiblePhotos[0] ?? null
 
   const location =
     [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
@@ -243,141 +246,160 @@ export default function PublicProfilePage({
         </div>
       ) : (
         <main className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-24">
-          <section className="rounded-[2rem] border border-border/60 bg-card/80 p-6 shadow-sm text-center">
-            <div className="flex justify-center">
-              <div className="relative">
-                <Avatar className="w-32 h-32 ring-4 ring-primary/20">
-                  <AvatarImage src={profile.avatar_url ?? undefined} alt={displayName} />
-                  <AvatarFallback className="text-4xl">{initial}</AvatarFallback>
-                </Avatar>
-
-                {showPresence && (
-                  <span
-                    className={cn(
-                      "absolute bottom-2 right-2 w-5 h-5 rounded-full border-2 border-background",
-                      isOnline ? "bg-emerald-500" : "bg-muted-foreground"
-                    )}
+          <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-card/80 shadow-[0_24px_70px_rgb(0_0_0_/_0.35)]">
+            <div className="relative aspect-[4/5] min-h-[460px] bg-gradient-to-br from-primary/35 via-card to-[var(--drift-teal)]/18">
+              {heroPhoto ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhoto(heroPhoto)}
+                  className="absolute inset-0 text-left"
+                  aria-label={`View ${displayName}'s main photo`}
+                >
+                  <img
+                    src={heroPhoto}
+                    alt={`${displayName} main profile photo`}
+                    loading="eager"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                    onError={() => {
+                      setBrokenPhotoUrls((current) => new Set(current).add(heroPhoto))
+                      setActivePhotoIndex(0)
+                    }}
                   />
-                )}
-              </div>
-            </div>
-
-            <h2 className="text-3xl font-serif font-semibold mt-4">{displayName}</h2>
-
-            <p className="text-sm text-muted-foreground mt-1">
-              {presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at)}
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-2 mt-4">
-              {profile.mood && (
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full",
-                    MOOD_COLORS[profile.mood] ?? MOOD_COLORS.exploring
-                  )}
-                >
-                  <Sparkles className="w-3 h-3" />
-                  {MOOD_LABELS[profile.mood] ?? profile.mood}
-                </span>
-              )}
-
-              <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-secondary text-muted-foreground">
-                {profile.travel_mode ? <Plane className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
-                {profile.travel_mode ? "Traveler" : "Local"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mt-4">
-              <MapPin className="w-4 h-4 text-primary" />
-              <span>{location}</span>
-            </div>
-
-            <button
-              onClick={handleSayHi}
-              disabled={isStartingChat}
-              className="mt-6 w-full h-12 rounded-2xl bg-primary text-primary-foreground font-medium flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60 transition"
-            >
-              {isStartingChat ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                </button>
               ) : (
-                <MessageCircle className="w-4 h-4" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                  <Avatar className="h-28 w-28 ring-4 ring-primary/20">
+                    <AvatarImage src={profile.avatar_url ?? undefined} alt={displayName} />
+                    <AvatarFallback className="text-4xl">{initial}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm">Photos coming soon</span>
+                </div>
               )}
-              {isStartingChat ? "Opening chat..." : "Say Hi"}
-            </button>
 
-            {chatError && (
-              <p className="text-xs text-red-400 mt-3 text-center">{chatError}</p>
-            )}
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/36 to-black/12" />
+              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/45 to-transparent" />
 
-            {canUseSafetyActions && (
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  disabled={safetyLoading}
-                  className="h-10 rounded-2xl border border-border/60 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-60"
-                >
-                  <Flag className="w-3.5 h-3.5 inline mr-1" />
-                  Report
-                </button>
-                <button
-                  onClick={handleBlockUser}
-                  disabled={safetyLoading}
-                  className="h-10 rounded-2xl border border-destructive/30 text-xs font-medium text-destructive disabled:opacity-60"
-                >
-                  <Ban className="w-3.5 h-3.5 inline mr-1" />
-                  Block
-                </button>
+              {visiblePhotos.length > 1 && (
+                <div className="absolute left-4 right-4 top-4 flex gap-1.5">
+                  {visiblePhotos.map((photoUrl, index) => (
+                    <button
+                      key={photoUrl}
+                      type="button"
+                      onClick={() => setActivePhotoIndex(index)}
+                      className={cn(
+                        "h-1.5 flex-1 rounded-full transition-colors",
+                        index === activePhotoIndex ? "bg-white" : "bg-white/32"
+                      )}
+                      aria-label={`Show photo ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <div className="rounded-[1.7rem] border border-white/[0.12] bg-[#10131a]/72 p-4 shadow-[0_18px_50px_rgb(0_0_0_/_0.32),inset_0_1px_0_rgb(255_255_255_/_0.12)] backdrop-blur-2xl">
+                  <div className="flex items-start gap-3">
+                    <div className="relative shrink-0">
+                      <Avatar className="h-14 w-14 ring-2 ring-white/15">
+                        <AvatarImage src={profile.avatar_url ?? heroPhoto ?? undefined} alt={displayName} />
+                        <AvatarFallback>{initial}</AvatarFallback>
+                      </Avatar>
+                      {showPresence && (
+                        <span
+                          className={cn(
+                            "absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-[#10131a]",
+                            isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                          )}
+                        />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h2 className="truncate text-3xl font-serif font-semibold leading-none">{displayName}</h2>
+                      <p className="mt-1 text-sm text-white/64">
+                        {presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {profile.mood && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs",
+                          MOOD_COLORS[profile.mood] ?? MOOD_COLORS.exploring
+                        )}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        {MOOD_LABELS[profile.mood] ?? profile.mood}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.09] px-3 py-1.5 text-xs text-white/72">
+                      {profile.travel_mode ? <Plane className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
+                      {profile.travel_mode ? "Traveler" : "Local"}
+                    </span>
+                    {hasLocation && (
+                      <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/[0.09] px-3 py-1.5 text-xs text-white/72">
+                        <MapPin className="h-3 w-3 shrink-0 text-primary" />
+                        <span className="truncate">{location}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleSayHi}
+                    disabled={isStartingChat}
+                    className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-[1.25rem] bg-primary text-sm font-semibold text-primary-foreground transition hover:opacity-95 disabled:opacity-60"
+                  >
+                    {isStartingChat ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageCircle className="h-4 w-4" />
+                    )}
+                    {isStartingChat ? "Opening chat..." : "Say Hi"}
+                  </button>
+
+                  {chatError && (
+                    <p className="mt-3 text-center text-xs text-red-400">{chatError}</p>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
           </section>
 
-          {profilePhotos.length > 0 && (
+          {visiblePhotos.length > 1 && (
             <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
                   <ImageIcon className="h-5 w-5 text-primary" />
-                  Photos
+                  More photos
                 </h3>
-                <span className="text-xs font-medium text-muted-foreground">
-                  {profilePhotos.length}
-                </span>
+                <span className="text-xs font-medium text-muted-foreground">{visiblePhotos.length}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                {profilePhotos.map((photoUrl, index) => {
-                  const isBroken = brokenPhotoUrls.has(photoUrl)
-
-                  return (
-                    <button
-                      key={photoUrl}
-                      type="button"
-                      onClick={() => !isBroken && setSelectedPhoto(photoUrl)}
-                      className="group relative aspect-[4/5] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-background/42 text-left shadow-[0_14px_34px_rgb(0_0_0_/_0.18)]"
-                      aria-label={`View ${displayName}'s photo ${index + 1}`}
-                    >
-                      {isBroken ? (
-                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
-                          <ImageIcon className="h-6 w-6 opacity-60" />
-                          <span className="text-xs">Photo unavailable</span>
-                        </div>
-                      ) : (
-                        <img
-                          src={photoUrl}
-                          alt={`${displayName} photo ${index + 1}`}
-                          loading={index < 2 ? "eager" : "lazy"}
-                          decoding="async"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
-                          onError={() => {
-                            setBrokenPhotoUrls((current) => new Set(current).add(photoUrl))
-                          }}
-                        />
-                      )}
-                      {!isBroken && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/22 via-transparent to-white/[0.03]" />
-                      )}
-                    </button>
-                  )
-                })}
+                {visiblePhotos.slice(1).map((photoUrl, index) => (
+                  <button
+                    key={photoUrl}
+                    type="button"
+                    onClick={() => setSelectedPhoto(photoUrl)}
+                    className="group relative aspect-[4/5] overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-background/42 text-left shadow-[0_14px_34px_rgb(0_0_0_/_0.18)]"
+                    aria-label={`View ${displayName}'s photo ${index + 2}`}
+                  >
+                    <img
+                      src={photoUrl}
+                      alt={`${displayName} photo ${index + 2}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+                      onError={() => {
+                        setBrokenPhotoUrls((current) => new Set(current).add(photoUrl))
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/22 via-transparent to-white/[0.03]" />
+                  </button>
+                ))}
               </div>
             </section>
           )}
@@ -492,6 +514,30 @@ export default function PublicProfilePage({
                 <Instagram className="w-4 h-4" />
                 <span>@{instagramUsername}</span>
               </a>
+            </section>
+          )}
+
+          {canUseSafetyActions && (
+            <section className="rounded-[1.75rem] border border-border/60 bg-card/52 p-4">
+              <h3 className="mb-3 text-sm font-medium text-muted-foreground">Safety</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  disabled={safetyLoading}
+                  className="h-10 rounded-2xl border border-border/60 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-60"
+                >
+                  <Flag className="mr-1 inline h-3.5 w-3.5" />
+                  Report
+                </button>
+                <button
+                  onClick={handleBlockUser}
+                  disabled={safetyLoading}
+                  className="h-10 rounded-2xl border border-destructive/30 text-xs font-medium text-destructive disabled:opacity-60"
+                >
+                  <Ban className="mr-1 inline h-3.5 w-3.5" />
+                  Block
+                </button>
+              </div>
             </section>
           )}
         </main>
