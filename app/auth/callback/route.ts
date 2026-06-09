@@ -1,11 +1,27 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+const NATIVE_AUTH_CALLBACK_URL = 'com.aweandco.drift://auth/callback'
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/auth/verified'
   const oauthError = searchParams.get('error_description') ?? searchParams.get('error')
+  const isNativeCallback = searchParams.get('native') === '1'
+
+  if (isNativeCallback) {
+    const url = new URL(NATIVE_AUTH_CALLBACK_URL)
+    url.searchParams.set('next', next)
+
+    if (oauthError) {
+      url.searchParams.set('error', oauthError)
+    } else if (code) {
+      url.searchParams.set('code', code)
+    }
+
+    return NextResponse.redirect(url)
+  }
 
   if (oauthError) {
     const url = new URL('/auth/error', origin)
