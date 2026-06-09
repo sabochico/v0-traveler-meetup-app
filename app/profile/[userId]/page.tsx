@@ -12,15 +12,12 @@ import {
   MessageCircle,
   Sparkles,
   Languages,
-  Heart,
   CalendarDays,
   Users,
   Clock3,
   ShieldCheck,
   Flag,
   Ban,
-  ImageIcon,
-  X,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -97,7 +94,6 @@ export default function PublicProfilePage({
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0])
   const [reportDetails, setReportDetails] = useState("")
   const [safetyLoading, setSafetyLoading] = useState(false)
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null)
   const [activePhotoIndex, setActivePhotoIndex] = useState(0)
   const [brokenPhotoUrls, setBrokenPhotoUrls] = useState<Set<string>>(() => new Set())
 
@@ -207,35 +203,12 @@ export default function PublicProfilePage({
 
   return (
     <div className="min-h-screen bg-background film-grain">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[var(--drift-safe-top)]">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-
-          <div className="min-w-0">
-            <h1 className="font-medium text-foreground truncate">
-              {profile?.display_name ?? "Profile"}
-            </h1>
-            {profile && (
-              <p className="text-xs text-muted-foreground">
-                {presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at)}
-              </p>
-            )}
-          </div>
-        </div>
-      </header>
-
       {isLoading ? (
-        <div className="flex items-center justify-center py-24">
+        <div className="flex min-h-screen items-center justify-center pt-[var(--drift-safe-top)]">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       ) : !profile ? (
-        <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
+        <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
           <p className="text-muted-foreground">This profile doesn&apos;t exist.</p>
           <button
             onClick={() => router.back()}
@@ -245,9 +218,9 @@ export default function PublicProfilePage({
           </button>
         </div>
       ) : (
-        <main className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-24">
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-card/80 shadow-[0_24px_70px_rgb(0_0_0_/_0.35)]">
-            <div className="relative aspect-[4/5] min-h-[460px] bg-gradient-to-br from-primary/35 via-card to-[var(--drift-teal)]/18">
+        <main className="mx-auto max-w-lg space-y-4 pb-24">
+          <section className="relative min-h-[100svh] overflow-hidden bg-card">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/35 via-card to-[var(--drift-teal)]/18">
               {heroPhoto ? (
                 <>
                   <img
@@ -270,7 +243,7 @@ export default function PublicProfilePage({
                             current === 0 ? visiblePhotos.length - 1 : current - 1
                           )
                         }}
-                        className="absolute bottom-28 left-0 top-12 z-10 w-1/2"
+                        className="absolute inset-y-0 left-0 z-10 w-1/2"
                         aria-label="Previous photo"
                       />
                       <button
@@ -280,7 +253,7 @@ export default function PublicProfilePage({
                             current >= visiblePhotos.length - 1 ? 0 : current + 1
                           )
                         }}
-                        className="absolute bottom-28 right-0 top-12 z-10 w-1/2"
+                        className="absolute inset-y-0 right-0 z-10 w-1/2"
                         aria-label="Next photo"
                       />
                     </>
@@ -296,20 +269,50 @@ export default function PublicProfilePage({
                 </div>
               )}
 
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/44 to-black/8" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/88 via-black/42 to-transparent" />
-              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/45 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/55 via-black/18 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-background via-background/72 to-transparent" />
+
+              <div className="absolute left-4 right-4 z-20 flex items-center justify-between pt-[calc(var(--drift-safe-top)+0.75rem)]">
+                <button
+                  onClick={() => router.back()}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/24 text-white backdrop-blur-xl transition active:scale-95"
+                  aria-label="Back"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+
+                {canUseSafetyActions && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowReportModal(true)}
+                      disabled={safetyLoading}
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/24 text-white/80 backdrop-blur-xl transition active:scale-95 disabled:opacity-60"
+                      aria-label="Report profile"
+                    >
+                      <Flag className="h-[18px] w-[18px]" />
+                    </button>
+                    <button
+                      onClick={handleBlockUser}
+                      disabled={safetyLoading}
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/24 text-white/80 backdrop-blur-xl transition active:scale-95 disabled:opacity-60"
+                      aria-label="Block profile"
+                    >
+                      <Ban className="h-[18px] w-[18px]" />
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {visiblePhotos.length > 1 && (
-                <div className="absolute left-4 right-4 top-4 flex gap-1.5">
+                <div className="absolute left-16 right-16 top-[calc(var(--drift-safe-top)+1.35rem)] z-20 flex gap-1.5">
                   {visiblePhotos.map((photoUrl, index) => (
                     <button
                       key={photoUrl}
                       type="button"
                       onClick={() => setActivePhotoIndex(index)}
                       className={cn(
-                        "h-1.5 flex-1 rounded-full transition-colors",
-                        index === activePhotoIndex ? "bg-white" : "bg-white/32"
+                        "h-1 flex-1 rounded-full transition-colors",
+                        index === activePhotoIndex ? "bg-white/90" : "bg-white/28"
                       )}
                       aria-label={`Show photo ${index + 1}`}
                     />
@@ -317,11 +320,11 @@ export default function PublicProfilePage({
                 </div>
               )}
 
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <div className="rounded-[1.35rem] border border-white/[0.1] bg-[#10131a]/42 p-3.5 shadow-[0_14px_42px_rgb(0_0_0_/_0.26),inset_0_1px_0_rgb(255_255_255_/_0.1)] backdrop-blur-xl">
-                  <div className="flex items-start gap-3">
+              <div className="absolute bottom-0 left-0 right-0 z-20 px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+                <div className="space-y-4">
+                  <div className="flex items-end gap-3">
                     <div className="relative shrink-0">
-                      <Avatar className="h-11 w-11 ring-2 ring-white/15">
+                      <Avatar className="h-12 w-12 ring-2 ring-white/18">
                         <AvatarImage src={profile.avatar_url ?? heroPhoto ?? undefined} alt={displayName} />
                         <AvatarFallback>{initial}</AvatarFallback>
                       </Avatar>
@@ -336,18 +339,20 @@ export default function PublicProfilePage({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h2 className="truncate text-2xl font-serif font-semibold leading-none">{displayName}</h2>
-                      <p className="mt-1 text-xs text-white/64">
+                      <h1 className="truncate text-[2.7rem] font-serif font-semibold leading-none tracking-[-0.04em] text-white drop-shadow-sm">
+                        {displayName}
+                      </h1>
+                      <p className="mt-1 text-sm font-medium text-white/62">
                         {presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {profile.mood && (
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs",
+                          "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-md",
                           MOOD_COLORS[profile.mood] ?? MOOD_COLORS.exploring
                         )}
                       >
@@ -355,22 +360,28 @@ export default function PublicProfilePage({
                         {MOOD_LABELS[profile.mood] ?? profile.mood}
                       </span>
                     )}
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.09] px-3 py-1.5 text-xs text-white/72">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.11] px-3 py-1.5 text-xs font-medium text-white/76 backdrop-blur-md">
                       {profile.travel_mode ? <Plane className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
                       {profile.travel_mode ? "Traveler" : "Local"}
                     </span>
                     {hasLocation && (
-                      <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/[0.09] px-3 py-1.5 text-xs text-white/72">
+                      <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/[0.11] px-3 py-1.5 text-xs font-medium text-white/76 backdrop-blur-md">
                         <MapPin className="h-3 w-3 shrink-0 text-primary" />
                         <span className="truncate">{location}</span>
                       </span>
                     )}
                   </div>
 
+                  {profile.bio && (
+                    <p className="line-clamp-3 text-[1.05rem] leading-7 text-white/82">
+                      {profile.bio}
+                    </p>
+                  )}
+
                   <button
                     onClick={handleSayHi}
                     disabled={isStartingChat}
-                    className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[1.1rem] bg-primary text-sm font-semibold text-primary-foreground transition hover:opacity-95 disabled:opacity-60"
+                    className="flex h-[3.25rem] w-full items-center justify-center gap-2 rounded-[1.35rem] bg-primary text-base font-semibold text-primary-foreground shadow-[0_18px_45px_rgb(37_99_255_/_0.26)] transition active:scale-[0.99] disabled:opacity-60"
                   >
                     {isStartingChat ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -387,26 +398,49 @@ export default function PublicProfilePage({
               </div>
             </div>
           </section>
+          <div className="px-4 space-y-4">
 
-          <section className="grid grid-cols-3 gap-3">
-            <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
-              <CalendarDays className="mb-2 h-5 w-5 text-primary" />
-              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">Member since</p>
-              <p className="mt-1 text-[0.95rem] font-semibold leading-tight text-foreground">{formatMemberSince(profile.created_at)}</p>
-            </div>
+          {(profile.languages?.length ?? 0) > 0 && <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
+              <Languages className="h-5 w-5 text-primary" />
+              Languages
+            </h3>
 
-            <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
-              <Clock3 className="mb-2 h-5 w-5 text-primary" />
-              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">Status</p>
-              <p className="mt-1 text-[0.95rem] font-semibold leading-tight text-foreground">{presence.label ?? "Inactive"}</p>
+            <div className="flex flex-wrap gap-2">
+              {profile.languages.map((lang) => (
+                <Badge key={lang} variant="secondary">
+                  {lang}
+                </Badge>
+              ))}
             </div>
+          </section>}
 
-            <div className="flex min-h-[92px] flex-col items-center justify-center rounded-[1.35rem] border border-border/60 bg-card/72 p-3 text-center">
-              <Users className="mb-2 h-5 w-5 text-primary" />
-              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">Meetups</p>
-              <p className="mt-1 text-[0.95rem] font-semibold leading-tight text-foreground">Soon</p>
+          {(profile.interests?.length ?? 0) > 0 && <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+            <h3 className="mb-3 text-base font-semibold tracking-[-0.01em]">Interests</h3>
+
+            <div className="flex flex-wrap gap-2">
+              {profile.interests.map((interest) => (
+                <Badge key={interest} variant="outline" className="border-border text-foreground">
+                  {interest}
+                </Badge>
+              ))}
             </div>
-          </section>
+          </section>}
+
+          {instagramUsername && (
+            <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+              <h3 className="mb-3 text-base font-semibold tracking-[-0.01em]">Social</h3>
+              <a
+                href={`https://instagram.com/${instagramUsername}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Instagram className="w-4 h-4" />
+                <span>@{instagramUsername}</span>
+              </a>
+            </section>
+          )}
 
           <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
             <h3 className="mb-4 flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
@@ -440,109 +474,8 @@ export default function PublicProfilePage({
               ))}
             </div>
           </section>
-
-          {profile.bio && <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
-              <Heart className="h-5 w-5 text-primary" />
-              About
-            </h3>
-            <p className="text-[0.95rem] leading-7 text-muted-foreground">
-              {profile.bio}
-            </p>
-          </section>}
-
-          {(profile.languages?.length ?? 0) > 0 && <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
-              <Languages className="h-5 w-5 text-primary" />
-              Languages
-            </h3>
-
-            <div className="flex flex-wrap gap-2">
-              {profile.languages.map((lang) => (
-                <Badge key={lang} variant="secondary">
-                  {lang}
-                </Badge>
-              ))}
-            </div>
-          </section>}
-
-          {(profile.interests?.length ?? 0) > 0 && <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
-            <h3 className="mb-3 text-base font-semibold tracking-[-0.01em]">Interests</h3>
-
-            <div className="flex flex-wrap gap-2">
-              {profile.interests.map((interest) => (
-                <Badge key={interest} variant="outline" className="border-border text-foreground">
-                  {interest}
-                </Badge>
-              ))}
-            </div>
-          </section>}
-
-          <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
-            <h3 className="mb-3 text-base font-semibold tracking-[-0.01em]">Shared vibe</h3>
-            <div className="space-y-2 text-[0.95rem] leading-6 text-muted-foreground">
-              <p>Mutual interests will appear here soon.</p>
-              <p>Shared meetup history will appear here soon.</p>
-            </div>
-          </section>
-
-          {instagramUsername && (
-            <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
-              <h3 className="mb-3 text-base font-semibold tracking-[-0.01em]">Social</h3>
-              <a
-                href={`https://instagram.com/${instagramUsername}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Instagram className="w-4 h-4" />
-                <span>@{instagramUsername}</span>
-              </a>
-            </section>
-          )}
-
-          {canUseSafetyActions && (
-            <section className="rounded-[1.75rem] border border-border/60 bg-card/52 p-4">
-              <h3 className="mb-3 text-sm font-medium text-muted-foreground">Safety</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  disabled={safetyLoading}
-                  className="h-10 rounded-2xl border border-border/60 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-60"
-                >
-                  <Flag className="mr-1 inline h-3.5 w-3.5" />
-                  Report
-                </button>
-                <button
-                  onClick={handleBlockUser}
-                  disabled={safetyLoading}
-                  className="h-10 rounded-2xl border border-destructive/30 text-xs font-medium text-destructive disabled:opacity-60"
-                >
-                  <Ban className="mr-1 inline h-3.5 w-3.5" />
-                  Block
-                </button>
-              </div>
-            </section>
-          )}
+          </div>
         </main>
-      )}
-
-      {selectedPhoto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/82 p-4 backdrop-blur-xl">
-          <button
-            aria-label="Close photo preview"
-            className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-xl"
-            onClick={() => setSelectedPhoto(null)}
-          >
-            <X className="h-5 w-5" />
-          </button>
-          <img
-            src={selectedPhoto}
-            alt={`${displayName} enlarged profile photo`}
-            className="max-h-[82vh] w-full max-w-lg rounded-[1.75rem] object-contain shadow-[0_24px_80px_rgb(0_0_0_/_0.55)]"
-            onError={() => setSelectedPhoto(null)}
-          />
-        </div>
       )}
 
       {showReportModal && profile && (
