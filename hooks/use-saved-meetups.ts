@@ -1,5 +1,6 @@
 import useSWR, { mutate } from "swr"
 import { createClient } from "@/lib/supabase/client"
+import { isMeetupDiscoverable } from "@/lib/meetup-lifecycle"
 
 const supabase = createClient()
 const SWR_OPTIONS = { keepPreviousData: true }
@@ -88,6 +89,7 @@ export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
           city,
           country,
           starts_at,
+          ends_at,
           max_attendees,
           is_active,
           creator_id,
@@ -129,7 +131,7 @@ export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
           ...profiles,
         },
       }
-    }).filter(Boolean) || []
+    }).filter(Boolean).filter(isMeetupDiscoverable) || []
   }, SWR_OPTIONS)
 
   return {

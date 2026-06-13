@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation, useSendMessage } from "@/hooks/use-messages"
 import { getMeetupCoverImage, getOptimizedMeetupCoverImage } from "@/lib/meetup-cover-images"
+import { getMeetupLifecycleLabel } from "@/lib/meetup-lifecycle"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
@@ -99,6 +100,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   const categoryLabel = CATEGORY_LABELS[meetup.category] ?? meetup.category
   const attendeeCount = meetup.attendee_count ?? meetup.attendees?.length ?? 0
   const cardImageUrl = getOptimizedMeetupCoverImage(meetup.cover_image_url) ?? getMeetupCoverImage(meetup.category, meetup.id)
+  const lifecycleLabel = getMeetupLifecycleLabel(meetup)
   const [imageFailed, setImageFailed] = useState(false)
 
   useEffect(() => {
@@ -179,7 +181,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
         <div className="absolute top-3 right-3">
           <Badge variant="secondary" className="border-0 bg-background/78 text-foreground shadow-sm shadow-black/20 backdrop-blur-md">
             <Clock className="w-3 h-3 mr-1" />
-            {formatTime(meetup.starts_at)}
+            {lifecycleLabel ?? formatTime(meetup.starts_at)}
           </Badge>
         </div>
 

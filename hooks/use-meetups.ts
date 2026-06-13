@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { MeetupWithCreator } from "@/lib/types"
 import { getRandomMeetupCoverImage } from "@/lib/meetup-cover-images"
 import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
+import { getMeetupEndTime, isMeetupDiscoverable } from "@/lib/meetup-lifecycle"
 
 const SWR_OPTIONS = { keepPreviousData: true }
 
@@ -46,7 +47,7 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
     .limit(20)
 
   if (error) throw error
-  return data as MeetupWithCreator[]
+  return (data as MeetupWithCreator[]).filter(isMeetupDiscoverable)
 }
 
 export function useMeetups() {
@@ -112,4 +113,76 @@ export function useCreateMeetup() {
   }
 
   return { createMeetup }
+}
+
+export function usePastMeetupActivity(userId: string | null) {
+  const { data, error, isLoading } = useSWR(
+    userId ? `past-meetup-activity-${userId}` : null,
+    async (): Promise<MeetupWithCreator[]> => {
+      const supabase = createClient()
+      const selectQuery = `
+        id,
+        creator_id,
+        title,
+        description,
+        category,
+        cover_image_url,
+        location_name,
+        city,
+        region,
+        country,
+        latitude,
+        longitude,
+        max_attendees,
+        starts_at,
+        ends_at,
+        is_active,
+        created_at,
+        updated_at,
+        creator:profiles!creator_id(
+          id,
+          display_name,
+          avatar_url,
+          mood,
+          languages
+        )
+      `
+
+      const { data: hosted, error: hostedError } = await supabase
+        .from("meetups")
+        .select(selectQuery)
+        .eq("creator_id", userId!)
+        .order("starts_at", { ascending: false })
+        .limit(12)
+
+      if (hostedError) throw hostedError
+
+      const { data: joined } = await supabase
+        .from("meetup_attendees")
+        .select(`meetups (${selectQuery})`)
+        .eq("user_id", userId!)
+        .order("joined_at", { ascending: false })
+        .limit(12)
+
+      const joinedMeetups = (joined ?? [])
+        .map((row) => row.meetups)
+        .filter(Boolean) as MeetupWithCreator[]
+
+      const activityById = new Map<string, MeetupWithCreator>()
+      ;[...((hosted ?? []) as MeetupWithCreator[]), ...joinedMeetups].forEach((meetup) => {
+        if (!isMeetupDiscoverable(meetup)) activityById.set(meetup.id, meetup)
+      })
+
+      return Array.from(activityById.values())
+        .sort((a, b) => (getMeetupEndTime(b)?.getTime() ?? 0) - (getMeetupEndTime(a)?.getTime() ?? 0))
+        .slice(0, 4)
+    },
+    SWR_OPTIONS
+  )
+
+  return {
+    pastMeetups: data ?? [],
+    isLoading,
+    error,
+  }
 }

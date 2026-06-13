@@ -22,6 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { usePublicProfile } from "@/hooks/use-profile"
+import { usePastMeetupActivity } from "@/hooks/use-meetups"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
@@ -55,6 +56,14 @@ const formatLastSeen = (lastSeenAt?: string | null) => {
   return "Active earlier"
 }
 
+const formatPastActivityDate = (dateString?: string | null) => {
+  if (!dateString) return "Recently"
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(dateString))
+}
+
 const MOOD_COLORS: Record<string, string> = {
   social: "bg-emerald-500/20 text-emerald-400",
   working: "bg-amber-500/20 text-amber-400",
@@ -86,6 +95,7 @@ export default function PublicProfilePage({
   const { userId } = use(params)
   const router = useRouter()
   const { profile, isLoading } = usePublicProfile(userId)
+  const { pastMeetups } = usePastMeetupActivity(profile?.id ?? null)
   const { user, isAuthenticated } = useAuth()
   const { startConversation } = useCreateConversation()
   const { blockUser, reportUser } = useUserSafety()
@@ -454,6 +464,33 @@ export default function PublicProfilePage({
                 <Instagram className="w-4 h-4" />
                 <span>@{instagramUsername}</span>
               </a>
+            </section>
+          )}
+
+          {pastMeetups.length > 0 && (
+            <section className="rounded-[1.75rem] border border-border/60 bg-card/72 p-5">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold tracking-[-0.01em]">
+                <CalendarDays className="h-5 w-5 text-primary" />
+                Past activities
+              </h3>
+              <div className="space-y-2.5">
+                {pastMeetups.map((meetup) => (
+                  <div
+                    key={meetup.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-border/45 bg-background/36 px-3.5 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">{meetup.title}</p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {[meetup.city, meetup.country].filter(Boolean).join(", ") || meetup.location_name || "Past meetup"}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                      {formatPastActivityDate(meetup.starts_at)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </section>
           )}
 
