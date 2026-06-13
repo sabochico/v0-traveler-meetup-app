@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Settings,
   Camera,
@@ -29,6 +29,8 @@ import { AppearanceSettings } from "@/components/appearance-settings"
 import { createClient } from "@/lib/supabase/client"
 import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
 import { clearCachedProfile } from "@/lib/profile-cache"
+import { Haptics, ImpactStyle } from "@capacitor/haptics"
+import { Capacitor } from "@capacitor/core"
 
 export function ProfileView() {
   const { profile, isLoading } = useProfile()
@@ -43,6 +45,9 @@ export function ProfileView() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [travelMode, setTravelMode] = useState(profile?.travel_mode ?? true)
+  const [anonymousMode, setAnonymousMode] = useState(profile?.anonymous_mode ?? false)
+  const [savingToggle, setSavingToggle] = useState<"travel" | "anonymous" | null>(null)
   const completionScore = getProfileCompletionScore(profile)
   const languageCount = profile?.languages?.length ?? 0
   const interestCount = profile?.interests?.length ?? 0
@@ -50,6 +55,51 @@ export function ProfileView() {
     profile?.current_city && profile?.current_country
       ? `${profile.current_city}, ${profile.current_country}`
       : profile?.current_city ?? profile?.current_country ?? "Set location"
+
+  useEffect(() => {
+    if (!profile || savingToggle) return
+    setTravelMode(profile.travel_mode ?? true)
+    setAnonymousMode(profile.anonymous_mode ?? false)
+  }, [profile?.travel_mode, profile?.anonymous_mode, profile, savingToggle])
+
+  const triggerToggleHaptic = async () => {
+    if (!Capacitor.isNativePlatform()) return
+    await Haptics.impact({ style: ImpactStyle.Light }).catch(() => {})
+  }
+
+  const handleTravelModeChange = async (enabled: boolean) => {
+    if (savingToggle) return
+    const previous = travelMode
+    setTravelMode(enabled)
+    setSavingToggle("travel")
+
+    try {
+      await toggleTravelMode(enabled)
+      await triggerToggleHaptic()
+    } catch (error) {
+      console.error("Failed to update travel mode:", error)
+      setTravelMode(previous)
+    } finally {
+      setSavingToggle(null)
+    }
+  }
+
+  const handleAnonymousModeChange = async (enabled: boolean) => {
+    if (savingToggle) return
+    const previous = anonymousMode
+    setAnonymousMode(enabled)
+    setSavingToggle("anonymous")
+
+    try {
+      await toggleAnonymousMode(enabled)
+      await triggerToggleHaptic()
+    } catch (error) {
+      console.error("Failed to update discover visibility:", error)
+      setAnonymousMode(previous)
+    } finally {
+      setSavingToggle(null)
+    }
+  }
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -278,7 +328,12 @@ export function ProfileView() {
                 <p className="text-xs text-muted-foreground">Show you&apos;re visiting this city</p>
               </div>
             </div>
-            <Switch checked={profile?.travel_mode ?? true} onCheckedChange={toggleTravelMode} />
+            <Switch
+              checked={travelMode}
+              onCheckedChange={handleTravelModeChange}
+              disabled={savingToggle !== null}
+              aria-label="Toggle Travel Mode"
+            />
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-border/50">
@@ -291,7 +346,12 @@ export function ProfileView() {
                 </p>
               </div>
             </div>
-            <Switch checked={profile?.anonymous_mode ?? false} onCheckedChange={toggleAnonymousMode} />
+            <Switch
+              checked={anonymousMode}
+              onCheckedChange={handleAnonymousModeChange}
+              disabled={savingToggle !== null}
+              aria-label="Toggle Hide from Discover"
+            />
           </div>
 
           <button 
