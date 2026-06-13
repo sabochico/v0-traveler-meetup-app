@@ -443,7 +443,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
         setNewMessage(messageContent)
         toast({
           title: "Message was not sent",
-          description: "Please try again.",
+          description: error instanceof Error ? error.message : "Please try again.",
           variant: "destructive",
         })
       }

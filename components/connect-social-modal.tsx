@@ -42,7 +42,7 @@ export function ConnectSocialModal({
       console.error("Failed to save Instagram handle:", error)
       toast({
         title: "Instagram was not saved",
-        description: "Please try again.",
+        description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       })
     } finally {

@@ -5,6 +5,7 @@ import useSWR, { mutate as globalMutate } from "swr"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import { getPresenceStatus } from "@/lib/presence"
+import { assertTextIsSafe, cleanUserText } from "@/lib/text-moderation"
 
 const supabase = createClient()
 
@@ -309,11 +310,13 @@ export function useSendMessage() {
   const sendMessage = async (conversationId: string, content: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
+    const safeContent = cleanUserText(content)
+    assertTextIsSafe(safeContent, "message")
 
     console.debug("[Drift messages] insert start", {
       conversationId,
       userId: user.id,
-      contentLength: content.trim().length,
+      contentLength: safeContent.length,
     })
 
     const { data, error } = await supabase
@@ -321,7 +324,7 @@ export function useSendMessage() {
       .insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content,
+        content: safeContent,
       })
       .select()
       .single()

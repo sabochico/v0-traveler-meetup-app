@@ -4,6 +4,7 @@ import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { MeetupWithCreator } from "@/lib/types"
 import { getRandomMeetupCoverImage } from "@/lib/meetup-cover-images"
+import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
 
 const SWR_OPTIONS = { keepPreviousData: true }
 
@@ -78,13 +79,26 @@ export function useCreateMeetup() {
     
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
+    assertFieldsAreSafe(
+      [meetup.title, meetup.description, meetup.location_name, meetup.city, meetup.region, meetup.country],
+      "meetup"
+    )
 
     const coverImageUrl = getRandomMeetupCoverImage(meetup.category)
+    const safeMeetup = {
+      ...meetup,
+      title: cleanUserText(meetup.title),
+      description: meetup.description ? cleanUserText(meetup.description) : meetup.description,
+      location_name: meetup.location_name ? cleanUserText(meetup.location_name) : meetup.location_name,
+      city: meetup.city ? cleanUserText(meetup.city) : meetup.city,
+      region: meetup.region ? cleanUserText(meetup.region) : meetup.region,
+      country: meetup.country ? cleanUserText(meetup.country) : meetup.country,
+    }
 
     const { data, error } = await supabase
       .from("meetups")
       .insert({
-        ...meetup,
+        ...safeMeetup,
         creator_id: user.id,
         cover_image_url: coverImageUrl,
       })

@@ -2,6 +2,7 @@
 
 import useSWR, { mutate as globalMutate } from "swr"
 import { createClient } from "@/lib/supabase/client"
+import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
 
 const supabase = createClient()
 const BLOCKED_USERS_KEY = "blocked-users"
@@ -69,13 +70,14 @@ export function useUserSafety() {
 
   const reportUser = async (reportedUserId: string, reason: string, details?: string) => {
     const userId = await getCurrentUserId()
+    assertFieldsAreSafe([reason, details], "report")
     const { error } = await supabase
       .from("user_reports")
       .insert({
         reporter_id: userId,
         reported_id: reportedUserId,
-        reason,
-        details: details?.trim() || null,
+        reason: cleanUserText(reason),
+        details: details ? cleanUserText(details) || null : null,
       })
 
     if (error) throw error

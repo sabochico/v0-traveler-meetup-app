@@ -281,7 +281,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
       console.error("Failed to update profile:", error)
       toast({
         title: "Profile was not saved",
-        description: "Please try again.",
+        description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       })
     } finally {

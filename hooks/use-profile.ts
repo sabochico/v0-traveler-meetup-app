@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Profile, MoodStatus } from "@/lib/types"
 import { getCachedProfile, setCachedProfile } from "@/lib/profile-cache"
 import { getPresenceStatus } from "@/lib/presence"
+import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
 
 const SWR_OPTIONS = { keepPreviousData: true }
 
@@ -106,11 +107,30 @@ export function useUpdateProfile() {
     
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
+    assertFieldsAreSafe(
+      [
+        updates.display_name,
+        updates.bio,
+        updates.instagram_handle,
+        updates.location,
+        updates.current_city,
+        updates.current_region,
+        updates.current_country,
+      ],
+      "profile"
+    )
 
     const { data, error } = await supabase
       .from("profiles")
       .update({
         ...updates,
+        display_name: typeof updates.display_name === "string" ? cleanUserText(updates.display_name) : updates.display_name,
+        bio: typeof updates.bio === "string" ? cleanUserText(updates.bio) : updates.bio,
+        instagram_handle: typeof updates.instagram_handle === "string" ? cleanUserText(updates.instagram_handle) : updates.instagram_handle,
+        location: typeof updates.location === "string" ? cleanUserText(updates.location) : updates.location,
+        current_city: typeof updates.current_city === "string" ? cleanUserText(updates.current_city) : updates.current_city,
+        current_region: typeof updates.current_region === "string" ? cleanUserText(updates.current_region) : updates.current_region,
+        current_country: typeof updates.current_country === "string" ? cleanUserText(updates.current_country) : updates.current_country,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id)
