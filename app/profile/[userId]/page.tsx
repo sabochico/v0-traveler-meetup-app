@@ -29,6 +29,8 @@ import { useUserSafety } from "@/hooks/use-user-safety"
 import { cn } from "@/lib/utils"
 import { getProfileCompletionScore } from "@/lib/profile-completion"
 import { getPresenceStatus } from "@/lib/presence"
+import { Capacitor } from "@capacitor/core"
+import { Haptics, ImpactStyle } from "@capacitor/haptics"
 
 const formatMemberSince = (createdAt?: string | null) => {
   if (!createdAt) return "Recently joined"
@@ -164,6 +166,9 @@ export default function PublicProfilePage({
       setIsStartingChat(true)
       setChatError(null)
       const result = await startConversation(profile.id)
+      if (Capacitor.isNativePlatform()) {
+        await Haptics.impact({ style: ImpactStyle.Light }).catch(() => {})
+      }
       router.push(`/?tab=messages&conversation=${result.conversationId}`)
     } catch (error) {
       setChatError(error instanceof Error ? error.message : "Could not start chat")

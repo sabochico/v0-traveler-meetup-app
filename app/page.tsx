@@ -33,6 +33,17 @@ export default function Home() {
   usePresenceHeartbeat(isAuthenticated)
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const urlTab = searchParams.get("tab") as AppTab | null
+    const conversationId = searchParams.get("conversation") ?? undefined
+
+    if (urlTab === "messages") {
+      if (conversationId) setPendingConversationId(conversationId)
+      setActiveTab("messages")
+      window.history.replaceState(null, "", "/")
+      return
+    }
+
     const storedTab = sessionStorage.getItem("drift-open-tab") as AppTab | null
     if (!storedTab || !["feed", "discover", "messages", "profile"].includes(storedTab)) return
     sessionStorage.removeItem("drift-open-tab")
