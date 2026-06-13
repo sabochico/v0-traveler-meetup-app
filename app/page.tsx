@@ -33,9 +33,10 @@ export default function Home() {
   usePresenceHeartbeat(isAuthenticated)
 
   useEffect(() => {
-    if (sessionStorage.getItem("drift-open-tab") !== "profile") return
+    const storedTab = sessionStorage.getItem("drift-open-tab") as AppTab | null
+    if (!storedTab || !["feed", "discover", "messages", "profile"].includes(storedTab)) return
     sessionStorage.removeItem("drift-open-tab")
-    setActiveTab("profile")
+    setActiveTab(storedTab)
   }, [])
 
   useEffect(() => {

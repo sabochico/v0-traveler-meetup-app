@@ -147,6 +147,16 @@ export default function PublicProfilePage({
       ]
     : []
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back()
+      return
+    }
+
+    sessionStorage.setItem("drift-open-tab", "discover")
+    router.replace("/")
+  }
+
   const handleSayHi = async () => {
     if (!profile?.id) return
 
@@ -169,7 +179,7 @@ export default function PublicProfilePage({
       setSafetyLoading(true)
       await blockUser(profile.id)
       toast({ title: "User blocked", description: "They will no longer appear in your Drift experience." })
-      router.back()
+      handleBack()
     } catch (error) {
       toast({
         title: "Could not block user",
@@ -211,7 +221,7 @@ export default function PublicProfilePage({
         <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
           <p className="text-muted-foreground">This profile doesn&apos;t exist.</p>
           <button
-            onClick={() => router.back()}
+            onClick={handleBack}
             className="mt-4 text-sm text-primary hover:underline"
           >
             Go back
@@ -274,7 +284,7 @@ export default function PublicProfilePage({
 
               <div className="absolute left-4 right-4 z-20 flex items-center justify-between pt-[calc(var(--drift-safe-top)+0.75rem)]">
                 <button
-                  onClick={() => router.back()}
+                  onClick={handleBack}
                   className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/24 text-white backdrop-blur-xl transition active:scale-95"
                   aria-label="Back"
                 >
