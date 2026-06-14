@@ -7,6 +7,8 @@ import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
 const supabase = createClient()
 const BLOCKED_USERS_KEY = "blocked-users"
 
+type BlockedUserRow = { blocked_id: string }
+
 async function getCurrentUserId() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Not authenticated")
@@ -23,7 +25,7 @@ async function fetchBlockedUserIds(): Promise<string[]> {
     .eq("blocker_id", user.id)
 
   if (error) throw error
-  return data?.map((block) => block.blocked_id) ?? []
+  return ((data ?? []) as BlockedUserRow[]).map((block) => block.blocked_id)
 }
 
 export function useBlockedUsers() {
@@ -45,7 +47,7 @@ export function useUserSafety() {
     const userId = await getCurrentUserId()
     const { error } = await supabase
       .from("user_blocks")
-      .insert({ blocker_id: userId, blocked_id: blockedUserId })
+      .insert([{ blocker_id: userId, blocked_id: blockedUserId }] as never[])
 
     if (error && error.code !== "23505") throw error
     await globalMutate(BLOCKED_USERS_KEY)
@@ -73,12 +75,12 @@ export function useUserSafety() {
     assertFieldsAreSafe([reason, details], "report")
     const { error } = await supabase
       .from("user_reports")
-      .insert({
+      .insert([{
         reporter_id: userId,
         reported_id: reportedUserId,
         reason: cleanUserText(reason),
         details: details ? cleanUserText(details) || null : null,
-      })
+      }] as never[])
 
     if (error) throw error
   }

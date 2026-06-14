@@ -22,28 +22,13 @@ import { getMeetupCoverImage, getOptimizedMeetupCoverImage } from "@/lib/meetup-
 import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { useBlockedUsers } from "@/hooks/use-user-safety"
+import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
 import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
 
 // Profile completion
 
-function calcProfileScore(p: Profile): number {
-  let score = 0
-  if (p.display_name) score += 20
-  if ((p.profile_photos?.length ?? 0) >= 2) score += 25
-  if ((p.bio?.length ?? 0) >= 20) score += 20
-  if (p.current_city) score += 15
-  if ((p.interests?.length ?? 0) >= 3) score += 15
-  if (p.mood) score += 5
-  return score
-}
-
 function getNextProfileStep(p: Profile): string {
-  if (!p.display_name) return "Add your name"
-  if ((p.profile_photos?.length ?? 0) < 2) return "Add 2 profile photos"
-  if ((p.bio?.length ?? 0) < 20) return "Write a short bio"
-  if (!p.current_city) return "Set your city"
-  if ((p.interests?.length ?? 0) < 3) return "Add 3 interests"
-  return "Set your mood"
+  return getNextProfileRequirement(p)
 }
 
 function getNextProfileTab(p: Profile): "profile" | "interests" {
@@ -58,7 +43,7 @@ interface ProfileCompletionBannerProps {
 }
 
 function ProfileCompletionBanner({ profile, onComplete, onDismiss }: ProfileCompletionBannerProps) {
-  const score = calcProfileScore(profile)
+  const score = getProfileCompletionScore(profile)
   const nextStep = getNextProfileStep(profile)
   const nextTab = getNextProfileTab(profile)
 
@@ -184,13 +169,14 @@ const MOCK_PROFILE_META = {
   longitude: null,
   location_source: null,
   location_updated_at: null,
+  last_active_at: new Date().toISOString(),
 }
 
 const MOCK_MEETUPS: MeetupWithCreator[] = [
   {
     id: "1", creator_id: "mock-1",
     title: "Anyone want to grab coffee in Shibuya?",
-    description: null, category: "coffee",
+    description: null, category: "coffee", cover_image_url: null,
     location_name: "Shibuya, Tokyo", location: null,
     city: "Tokyo", region: null, country: "Japan", latitude: null, longitude: null, max_attendees: 4,
     starts_at: new Date().toISOString(), ends_at: null,
@@ -210,7 +196,7 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
   {
     id: "2", creator_id: "mock-2",
     title: "Working remotely in Seoul today, looking for cafe company",
-    description: null, category: "coffee",
+    description: null, category: "coffee", cover_image_url: null,
     location_name: "Hongdae, Seoul", location: null,
     city: "Seoul", region: null, country: "South Korea", latitude: null, longitude: null, max_attendees: 4,
     starts_at: new Date(Date.now() + 2 * 3600000).toISOString(), ends_at: null,
@@ -230,7 +216,7 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
   {
     id: "3", creator_id: "mock-3",
     title: "First week in Taipei - want to explore night markets!",
-    description: null, category: "food",
+    description: null, category: "food", cover_image_url: null,
     location_name: "Ximending, Taipei", location: null,
     city: "Taipei", region: null, country: "Taiwan", latitude: null, longitude: null, max_attendees: 4,
     starts_at: new Date(Date.now() + 8 * 3600000).toISOString(), ends_at: null,
@@ -250,7 +236,7 @@ const MOCK_MEETUPS: MeetupWithCreator[] = [
   {
     id: "4", creator_id: "mock-4",
     title: "Late night photography walk through Shinjuku",
-    description: null, category: "photo",
+    description: null, category: "photo", cover_image_url: null,
     location_name: "Shinjuku, Tokyo", location: null,
     city: "Tokyo", region: null, country: "Japan", latitude: null, longitude: null, max_attendees: 4,
     starts_at: new Date(Date.now() + 10 * 3600000).toISOString(), ends_at: null,
@@ -788,7 +774,7 @@ function AvailablePeople({
           const displayName = person.display_name ?? "Anonymous"
           const location =
             [person.current_city, person.current_country].filter(Boolean).join(", ") ||
-            person.location ||
+            (typeof person.location === "string" ? person.location : null) ||
             "Location not shared"
 
           return (
@@ -1079,7 +1065,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
 
       <div className="max-w-lg mx-auto">
         <AnimatePresence>
-          {activeTab === "feed" && isAuthenticated && profile && !bannerDismissed && calcProfileScore(profile) < 80 && (
+          {activeTab === "feed" && isAuthenticated && profile && !bannerDismissed && getProfileCompletionScore(profile) < 80 && (
             <ProfileCompletionBanner
               profile={profile}
               onComplete={(tab) => {

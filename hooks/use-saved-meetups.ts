@@ -1,6 +1,7 @@
 import useSWR, { mutate } from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { isMeetupDiscoverable } from "@/lib/meetup-lifecycle"
+import type { MeetupWithCreator } from "@/lib/types"
 
 const supabase = createClient()
 const SWR_OPTIONS = { keepPreviousData: true }
@@ -9,10 +10,24 @@ interface FetchOptions {
   enabled?: boolean
 }
 
+interface UserMeetupRow {
+  meetup_id: string
+  status: string
+}
+
+interface MeetupIdRow {
+  meetup_id: string
+}
+
+type SavedMeetupDetailRow = {
+  created_at: string
+  meetups: (Omit<MeetupWithCreator, "creator"> & { profiles?: Partial<MeetupWithCreator["creator"]> | null }) | null
+}
+
 // Fetch user's saved meetup IDs
 export function useSavedMeetups(options: FetchOptions = {}) {
   const enabled = options.enabled ?? true
-  const { data, error, isLoading } = useSWR(enabled ? "saved-meetups" : null, async () => {
+  const { data, error, isLoading } = useSWR<string[]>(enabled ? "saved-meetups" : null, async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
@@ -22,7 +37,7 @@ export function useSavedMeetups(options: FetchOptions = {}) {
       .eq("user_id", user.id)
 
     if (error) throw error
-    return data?.map(s => s.meetup_id) || []
+    return ((data ?? []) as MeetupIdRow[]).map(s => s.meetup_id)
   }, SWR_OPTIONS)
 
   return {
@@ -40,7 +55,7 @@ export function useSaveMeetup() {
 
     const { error } = await supabase
       .from("saved_meetups")
-      .insert({ user_id: user.id, meetup_id: meetupId })
+      .insert([{ user_id: user.id, meetup_id: meetupId }] as never[])
 
     if (error) throw error
 
@@ -70,7 +85,7 @@ export function useSaveMeetup() {
 // Fetch saved meetups with full details
 export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
   const enabled = options.enabled ?? true
-  const { data, error, isLoading } = useSWR(enabled ? "saved-meetups-details" : null, async () => {
+  const { data, error, isLoading } = useSWR<MeetupWithCreator[]>(enabled ? "saved-meetups-details" : null, async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
@@ -107,13 +122,12 @@ export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
     if (savedError) throw savedError
     
     // Transform the data — rename profiles→creator to match MeetupWithCreator type
-    return savedMeetups?.map(s => {
-      const meetup = s.meetups as any
+    const transformed = ((savedMeetups ?? []) as SavedMeetupDetailRow[]).map(s => {
+      const meetup = s.meetups
       if (!meetup) return null
       const { profiles, ...meetupFields } = meetup
       return {
         ...meetupFields,
-        saved_at: s.created_at,
         creator: {
           bio: null,
           interests: [],
@@ -125,17 +139,20 @@ export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
           current_country: null,
           location: null,
           instagram_handle: null,
+          last_active_at: new Date().toISOString(),
           last_seen_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           ...profiles,
-        },
+        } as MeetupWithCreator["creator"],
       }
-    }).filter(Boolean).filter(isMeetupDiscoverable) || []
+    }).filter((meetup): meetup is MeetupWithCreator => Boolean(meetup)).filter(isMeetupDiscoverable)
+
+    return transformed as MeetupWithCreator[]
   }, SWR_OPTIONS)
 
   return {
-    savedMeetups: data || [],
+    savedMeetups: data ?? [],
     isLoading,
     error,
   }
@@ -149,11 +166,11 @@ export function useJoinMeetup() {
 
     const { error } = await supabase
       .from("meetup_attendees")
-      .insert({ 
+      .insert([{ 
         meetup_id: meetupId, 
         user_id: user.id,
         status: "confirmed"
-      })
+      }] as never[])
 
     if (error) {
       if (error.code === "23505") {
@@ -188,7 +205,7 @@ export function useJoinMeetup() {
 // Check if user has joined a meetup
 export function useUserMeetups(options: FetchOptions = {}) {
   const enabled = options.enabled ?? true
-  const { data, error, isLoading } = useSWR(enabled ? "user-meetups" : null, async () => {
+  const { data, error, isLoading } = useSWR<UserMeetupRow[]>(enabled ? "user-meetups" : null, async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 

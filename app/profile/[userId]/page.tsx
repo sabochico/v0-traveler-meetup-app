@@ -125,7 +125,7 @@ export default function PublicProfilePage({
 
   const location =
     [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
-    profile?.location ||
+    (typeof profile?.location === "string" ? profile.location : null) ||
     "Location not shared"
 
   const hasLocation = location !== "Location not shared"

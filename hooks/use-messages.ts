@@ -82,6 +82,12 @@ const EMPTY_CONVERSATIONS: Conversation[] = []
 const EMPTY_MESSAGES: Message[] = []
 const SWR_OPTIONS = { keepPreviousData: true }
 
+type ConversationIdRow = { conversation_id: string }
+type ConversationRow = Pick<Conversation, "id" | "created_at" | "updated_at">
+type ConversationParticipantRow = { conversation_id: string; user_id: string }
+type ConversationMessageRow = Pick<Message, "conversation_id" | "content" | "created_at" | "sender_id">
+type ConversationProfileRow = Conversation["other_user"]
+
 const conversationsFetcher = async (): Promise<Conversation[]> => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
@@ -93,7 +99,8 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
   if (partError || !participations?.length) return []
 
-  const conversationIds = participations.map(p => p.conversation_id)
+  const participationRows = participations as ConversationIdRow[]
+  const conversationIds = participationRows.map(p => p.conversation_id)
 
   const { data: conversations, error: convError } = await supabase
     .from("conversations")
@@ -126,32 +133,35 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       .neq("sender_id", user.id),
   ])
 
+  const otherParticipantRows = (otherParticipants ?? []) as ConversationParticipantRow[]
+  const recentMessageRows = (recentMessages ?? []) as ConversationMessageRow[]
+  const unreadMessageRows = (unreadMessages ?? []) as ConversationIdRow[]
   const otherParticipantByConversation = new Map(
-    (otherParticipants ?? []).map((participant) => [participant.conversation_id, participant.user_id])
+    otherParticipantRows.map((participant) => [participant.conversation_id, participant.user_id])
   )
-  const otherUserIds = Array.from(new Set((otherParticipants ?? []).map((participant) => participant.user_id)))
+  const otherUserIds = Array.from(new Set(otherParticipantRows.map((participant) => participant.user_id)))
   const { data: otherUsers } = otherUserIds.length
     ? await supabase
       .from("profiles")
       .select("id, display_name, avatar_url, is_online, last_active_at, last_seen_at, mood, travel_mode, current_city, current_country, location, interests, languages")
       .in("id", otherUserIds)
     : { data: [] }
-  const profileById = new Map((otherUsers ?? []).map((profile) => [profile.id, profile]))
-  const lastMessageByConversation = new Map<string, NonNullable<typeof recentMessages>[number]>()
-  for (const message of recentMessages ?? []) {
+  const profileById = new Map(((otherUsers ?? []) as ConversationProfileRow[]).map((profile) => [profile.id, profile]))
+  const lastMessageByConversation = new Map<string, ConversationMessageRow>()
+  for (const message of recentMessageRows) {
     if (!lastMessageByConversation.has(message.conversation_id)) {
       lastMessageByConversation.set(message.conversation_id, message)
     }
   }
   const unreadCountByConversation = new Map<string, number>()
-  for (const message of unreadMessages ?? []) {
+  for (const message of unreadMessageRows) {
     unreadCountByConversation.set(
       message.conversation_id,
       (unreadCountByConversation.get(message.conversation_id) ?? 0) + 1
     )
   }
 
-  const fullConversations = conversations.map((conv) => {
+  const fullConversations = ((conversations ?? []) as ConversationRow[]).map((conv) => {
     const otherUserId = otherParticipantByConversation.get(conv.id)
     if (!otherUserId) return null
 
@@ -186,7 +196,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
     }
   })
 
-  return fullConversations.filter((conversation): conversation is Conversation => Boolean(conversation))
+  return fullConversations.filter(Boolean) as Conversation[]
 }
 
 export function useConversations() {
@@ -307,7 +317,7 @@ export function useCreateConversation() {
 }
 
 export function useSendMessage() {
-  const sendMessage = async (conversationId: string, content: string) => {
+  const sendMessage = async (conversationId: string, content: string): Promise<Message> => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
     const safeContent = cleanUserText(content)
@@ -321,11 +331,11 @@ export function useSendMessage() {
 
     const { data, error } = await supabase
       .from("messages")
-      .insert({
+      .insert([{
         conversation_id: conversationId,
         sender_id: user.id,
         content: safeContent,
-      })
+      }] as never[])
       .select()
       .single()
 
@@ -337,21 +347,22 @@ export function useSendMessage() {
       })
       throw error
     }
+    const savedMessage = data as Message
 
     console.debug("[Drift messages] insert success", {
       conversationId,
       userId: user.id,
-      messageId: data.id,
+      messageId: savedMessage.id,
     })
 
     await supabase
       .from("conversations")
-      .update({ updated_at: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() } as never)
       .eq("id", conversationId)
 
     void globalMutate("conversations")
 
-    return data
+    return savedMessage
   }
 
   const markAsRead = async (conversationId: string) => {
@@ -360,7 +371,7 @@ export function useSendMessage() {
 
     await supabase
       .from("messages")
-      .update({ is_read: true })
+      .update({ is_read: true } as never)
       .eq("conversation_id", conversationId)
       .neq("sender_id", user.id)
   }

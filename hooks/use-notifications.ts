@@ -40,7 +40,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
     await supabase
       .from("notifications")
-      .update({ read: true })
+      .update({ read: true } as never)
       .eq("user_id", user.id)
       .eq("read", false)
 

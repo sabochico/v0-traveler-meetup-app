@@ -95,14 +95,15 @@ export function useCreateMeetup() {
       region: meetup.region ? cleanUserText(meetup.region) : meetup.region,
       country: meetup.country ? cleanUserText(meetup.country) : meetup.country,
     }
+    const insertPayload = {
+      ...safeMeetup,
+      creator_id: user.id,
+      cover_image_url: coverImageUrl,
+    } as Record<string, unknown>
 
     const { data, error } = await supabase
-      .from("meetups")
-      .insert({
-        ...safeMeetup,
-        creator_id: user.id,
-        cover_image_url: coverImageUrl,
-      })
+      .from("meetups" as never)
+      .insert([insertPayload] as never[])
       .select()
       .single()
 
@@ -164,7 +165,7 @@ export function usePastMeetupActivity(userId: string | null) {
         .order("joined_at", { ascending: false })
         .limit(12)
 
-      const joinedMeetups = (joined ?? [])
+      const joinedMeetups = ((joined ?? []) as Array<{ meetups: MeetupWithCreator | null }>)
         .map((row) => row.meetups)
         .filter(Boolean) as MeetupWithCreator[]
 

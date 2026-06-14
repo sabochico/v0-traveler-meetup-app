@@ -402,7 +402,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
 
   const location =
     [person.current_city, person.current_country].filter(Boolean).join(", ") ||
-    person.location ||
+    (typeof person.location === "string" ? person.location : null) ||
     "Location not shared"
 
   const interests = person.interests ?? []

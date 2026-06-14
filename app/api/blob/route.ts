@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   return new NextResponse(result.stream as unknown as ReadableStream, {
     headers: {
-      "Content-Type": result.blob.contentType,
+      "Content-Type": result.blob.contentType ?? "application/octet-stream",
       "Cache-Control": "private, max-age=3600",
     },
   })

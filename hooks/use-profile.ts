@@ -55,10 +55,11 @@ const fetcher = async (): Promise<Profile | null> => {
   if (error) throw error
 
   if (!data) return createFallbackProfile(user.id)
+  const profile = data as Profile
 
   return {
-    ...data,
-    is_online: getPresenceStatus(data).state === "online",
+    ...profile,
+    is_online: getPresenceStatus(profile).state === "online",
   }
 }
 
@@ -112,7 +113,7 @@ export function useUpdateProfile() {
         updates.display_name,
         updates.bio,
         updates.instagram_handle,
-        updates.location,
+        typeof updates.location === "string" ? updates.location : null,
         updates.current_city,
         updates.current_region,
         updates.current_country,
@@ -120,19 +121,21 @@ export function useUpdateProfile() {
       "profile"
     )
 
+    const updatePayload = {
+      ...updates,
+      display_name: typeof updates.display_name === "string" ? cleanUserText(updates.display_name) : updates.display_name,
+      bio: typeof updates.bio === "string" ? cleanUserText(updates.bio) : updates.bio,
+      instagram_handle: typeof updates.instagram_handle === "string" ? cleanUserText(updates.instagram_handle) : updates.instagram_handle,
+      location: typeof updates.location === "string" ? cleanUserText(updates.location) : updates.location,
+      current_city: typeof updates.current_city === "string" ? cleanUserText(updates.current_city) : updates.current_city,
+      current_region: typeof updates.current_region === "string" ? cleanUserText(updates.current_region) : updates.current_region,
+      current_country: typeof updates.current_country === "string" ? cleanUserText(updates.current_country) : updates.current_country,
+      updated_at: new Date().toISOString(),
+    }
+
     const { data, error } = await supabase
       .from("profiles")
-      .update({
-        ...updates,
-        display_name: typeof updates.display_name === "string" ? cleanUserText(updates.display_name) : updates.display_name,
-        bio: typeof updates.bio === "string" ? cleanUserText(updates.bio) : updates.bio,
-        instagram_handle: typeof updates.instagram_handle === "string" ? cleanUserText(updates.instagram_handle) : updates.instagram_handle,
-        location: typeof updates.location === "string" ? cleanUserText(updates.location) : updates.location,
-        current_city: typeof updates.current_city === "string" ? cleanUserText(updates.current_city) : updates.current_city,
-        current_region: typeof updates.current_region === "string" ? cleanUserText(updates.current_region) : updates.current_region,
-        current_country: typeof updates.current_country === "string" ? cleanUserText(updates.current_country) : updates.current_country,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload as never)
       .eq("id", user.id)
       .select()
       .single()
@@ -140,7 +143,7 @@ export function useUpdateProfile() {
     if (error) throw error
 
     await refresh()
-    return data
+    return data as Profile
   }
 
   const updateMood = async (mood: MoodStatus) => {
@@ -211,7 +214,7 @@ const nearbyFetcher = async (): Promise<Profile[]> => {
 
   if (error) throw error
 
-  return (data ?? []).map((profile) => ({
+  return ((data ?? []) as Profile[]).map((profile) => ({
     ...profile,
     is_online: getPresenceStatus(profile).state === "online",
   }))
