@@ -3,8 +3,8 @@ import { Inter, Playfair_Display, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/theme-provider'
-import { DriftLogo } from '@/components/drift-logo'
 import { NativeOAuthListener } from '@/components/native-oauth-listener'
+import { StartupSplashHaptic } from '@/components/startup-splash-haptic'
 import Script from 'next/script'
 import './globals.css'
 
@@ -76,9 +76,17 @@ export default function RootLayout({
       <body className="font-sans antialiased min-h-dvh overflow-x-hidden">
         <div id="drift-startup-splash" className="drift-startup-splash" aria-hidden="true">
           <div className="drift-startup-splash__content">
-            <DriftLogo markClassName="h-20 w-20 mx-auto" />
+            <img
+              src="/drift-logo.png"
+              alt=""
+              width={112}
+              height={112}
+              className="drift-startup-splash__logo"
+              decoding="async"
+            />
           </div>
         </div>
+        <StartupSplashHaptic />
         {/* Restore accent color and reduce-motion before first paint */}
         <Script id="appearance-init" strategy="beforeInteractive">{`
           (function(){try{
