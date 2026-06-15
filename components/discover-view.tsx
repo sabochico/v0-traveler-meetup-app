@@ -25,7 +25,7 @@ const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   homesick: { color: "bg-purple-500", label: "Homesick" },
 }
 
-const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+const SHOW_MOCK_DATA = process.env.NEXT_PUBLIC_SHOW_MOCK_DATA === "true"
 const ALL_CITIES_FILTER = "all"
 
 function normalizeCity(city: string | null | undefined) {
