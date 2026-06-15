@@ -68,6 +68,12 @@ interface UseProfileOptions {
   userId?: string | null
 }
 
+interface NearbyFetcherArgs {
+  userId: string
+  currentCity: string
+  currentCountry?: string
+}
+
 export function useProfile(options: UseProfileOptions = {}) {
   const enabled = options.enabled ?? true
   const key = enabled ? "profile" : null
@@ -196,30 +202,13 @@ export function usePublicProfile(userId: string | null) {
   return { profile: data ?? null, isLoading, error }
 }
 
-const nearbyFetcher = async (): Promise<Profile[]> => {
+const nearbyFetcher = async ({ userId, currentCity, currentCountry }: NearbyFetcherArgs): Promise<Profile[]> => {
   const supabase = createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
-
-  const { data: currentProfile, error: currentProfileError } = await supabase
-    .from("profiles")
-    .select("current_city,current_country")
-    .eq("id", user.id)
-    .maybeSingle()
-
-  if (currentProfileError) throw currentProfileError
-
-  const profileLocation = currentProfile as Pick<Profile, "current_city" | "current_country"> | null
-  const currentCity = profileLocation?.current_city?.trim()
-  const currentCountry = profileLocation?.current_country?.trim()
-
-  if (!currentCity) return []
 
   let query = supabase
     .from("profiles")
     .select("*")
-    .neq("id", user.id)
+    .neq("id", userId)
     .eq("anonymous_mode", false)
     .eq("travel_mode", true)
     .eq("current_city", currentCity)
@@ -242,7 +231,17 @@ const nearbyFetcher = async (): Promise<Profile[]> => {
 
 export function useNearbyProfiles(options: UseProfileOptions = {}) {
   const enabled = options.enabled ?? true
-  const { data, error, isLoading, mutate } = useSWR(enabled ? "nearby-profiles" : null, nearbyFetcher, SWR_OPTIONS)
+  const { profile, isLoading: profileLoading } = useProfile({ enabled })
+  const currentCity = profile?.current_city?.trim()
+  const currentCountry = profile?.current_country?.trim()
+  const nearbyKey = enabled && profile?.id && currentCity
+    ? ["nearby-profiles", profile.id, currentCity, currentCountry ?? ""] as const
+    : null
+  const { data, error, isLoading, mutate } = useSWR(
+    nearbyKey,
+    ([, userId, city, country]) => nearbyFetcher({ userId, currentCity: city, currentCountry: country || undefined }),
+    SWR_OPTIONS
+  )
   const mutateRef = useRef(mutate)
 
   useEffect(() => {
@@ -274,7 +273,7 @@ export function useNearbyProfiles(options: UseProfileOptions = {}) {
 
   return {
     profiles: data ?? [],
-    isLoading,
+    isLoading: enabled && profileLoading ? true : isLoading,
     error,
     refresh: mutate,
   }
