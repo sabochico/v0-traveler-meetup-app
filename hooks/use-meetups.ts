@@ -8,9 +8,14 @@ import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
 import { getMeetupEndTime, isMeetupDiscoverable } from "@/lib/meetup-lifecycle"
 
 const SWR_OPTIONS = { keepPreviousData: true }
+const EXPIRED_MEETUP_QUERY_GRACE_MS = 2 * 60 * 60 * 1000
+const NO_END_TIME_LOOKBACK_MS = 48 * 60 * 60 * 1000
 
 const fetcher = async (): Promise<MeetupWithCreator[]> => {
   const supabase = createClient()
+  const now = Date.now()
+  const explicitEndCutoff = new Date(now - EXPIRED_MEETUP_QUERY_GRACE_MS).toISOString()
+  const missingEndCutoff = new Date(now - NO_END_TIME_LOOKBACK_MS).toISOString()
   
   const { data, error } = await supabase
     .from("meetups")
@@ -43,6 +48,7 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
       )
     `)
     .eq("is_active", true)
+    .or(`ends_at.gte.${explicitEndCutoff},and(ends_at.is.null,starts_at.gte.${missingEndCutoff})`)
     .order("created_at", { ascending: false })
     .limit(20)
 
