@@ -4,18 +4,19 @@ import useSWR, { mutate as globalMutate } from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
 
-const supabase = createClient()
 const BLOCKED_USERS_KEY = "blocked-users"
 
 type BlockedUserRow = { blocked_id: string }
+type SupabaseClient = ReturnType<typeof createClient>
 
-async function getCurrentUserId() {
+async function getCurrentUserId(supabase: SupabaseClient) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Not authenticated")
   return user.id
 }
 
 async function fetchBlockedUserIds(): Promise<string[]> {
+  const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -44,7 +45,8 @@ export function useBlockedUsers() {
 
 export function useUserSafety() {
   const blockUser = async (blockedUserId: string) => {
-    const userId = await getCurrentUserId()
+    const supabase = createClient()
+    const userId = await getCurrentUserId(supabase)
     const { error } = await supabase
       .from("user_blocks")
       .insert([{ blocker_id: userId, blocked_id: blockedUserId }] as never[])
@@ -59,7 +61,8 @@ export function useUserSafety() {
   }
 
   const unblockUser = async (blockedUserId: string) => {
-    const userId = await getCurrentUserId()
+    const supabase = createClient()
+    const userId = await getCurrentUserId(supabase)
     const { error } = await supabase
       .from("user_blocks")
       .delete()
@@ -71,7 +74,8 @@ export function useUserSafety() {
   }
 
   const reportUser = async (reportedUserId: string, reason: string, details?: string) => {
-    const userId = await getCurrentUserId()
+    const supabase = createClient()
+    const userId = await getCurrentUserId(supabase)
     assertFieldsAreSafe([reason, details], "report")
     const { error } = await supabase
       .from("user_reports")
