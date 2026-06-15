@@ -66,7 +66,7 @@ interface NotificationsBellProps {
 
 export function NotificationsBell({ className }: NotificationsBellProps) {
   const [open, setOpen] = useState(false)
-  const { notifications, unreadCount, isLoading, markAllRead } = useNotifications({ enabled: open })
+  const { notifications, unreadCount, isLoading, markAllRead } = useNotifications()
 
   const handleOpen = (open: boolean) => {
     setOpen(open)

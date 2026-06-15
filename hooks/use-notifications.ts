@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useRef } from "react"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import type { Notification } from "@/lib/types"
@@ -29,9 +31,42 @@ interface UseNotificationsOptions {
 
 export function useNotifications(options: UseNotificationsOptions = {}) {
   const enabled = options.enabled ?? true
-  const { data, error, isLoading, mutate } = useSWR(enabled ? "notifications" : null, fetcher, {
-    refreshInterval: 30_000,
-  })
+  const { data, error, isLoading, mutate } = useSWR(enabled ? "notifications" : null, fetcher)
+  const mutateRef = useRef(mutate)
+
+  useEffect(() => {
+    mutateRef.current = mutate
+  }, [mutate])
+
+  useEffect(() => {
+    if (!enabled) return
+
+    const supabase = createClient()
+    let isActive = true
+    let channel: RealtimeChannel | null = null
+
+    void supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!isActive || !user) return
+
+      channel = supabase
+        .channel(`notifications:${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+          () => {
+            void mutateRef.current()
+          }
+        )
+        .subscribe()
+    })
+
+    return () => {
+      isActive = false
+      if (channel) {
+        void supabase.removeChannel(channel)
+      }
+    }
+  }, [enabled])
 
   const markAllRead = async () => {
     const supabase = createClient()
