@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/client"
 import { isMeetupDiscoverable } from "@/lib/meetup-lifecycle"
 import type { MeetupWithCreator } from "@/lib/types"
 
-const supabase = createClient()
 const SWR_OPTIONS = { keepPreviousData: true }
 
 interface FetchOptions {
@@ -28,6 +27,7 @@ type SavedMeetupDetailRow = {
 export function useSavedMeetups(options: FetchOptions = {}) {
   const enabled = options.enabled ?? true
   const { data, error, isLoading } = useSWR<string[]>(enabled ? "saved-meetups" : null, async () => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
@@ -50,6 +50,7 @@ export function useSavedMeetups(options: FetchOptions = {}) {
 // Save/unsave a meetup
 export function useSaveMeetup() {
   const saveMeetup = async (meetupId: string) => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
@@ -64,6 +65,7 @@ export function useSaveMeetup() {
   }
 
   const unsaveMeetup = async (meetupId: string) => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
@@ -86,6 +88,7 @@ export function useSaveMeetup() {
 export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
   const enabled = options.enabled ?? true
   const { data, error, isLoading } = useSWR<MeetupWithCreator[]>(enabled ? "saved-meetups-details" : null, async () => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
@@ -161,6 +164,7 @@ export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
 // Join a meetup
 export function useJoinMeetup() {
   const joinMeetup = async (meetupId: string) => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
@@ -184,6 +188,7 @@ export function useJoinMeetup() {
   }
 
   const leaveMeetup = async (meetupId: string) => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
@@ -206,6 +211,7 @@ export function useJoinMeetup() {
 export function useUserMeetups(options: FetchOptions = {}) {
   const enabled = options.enabled ?? true
   const { data, error, isLoading } = useSWR<UserMeetupRow[]>(enabled ? "user-meetups" : null, async () => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
