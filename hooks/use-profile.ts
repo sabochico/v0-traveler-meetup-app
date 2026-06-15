@@ -202,14 +202,35 @@ const nearbyFetcher = async (): Promise<Profile[]> => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data, error } = await supabase
+  const { data: currentProfile, error: currentProfileError } = await supabase
+    .from("profiles")
+    .select("current_city,current_country")
+    .eq("id", user.id)
+    .maybeSingle()
+
+  if (currentProfileError) throw currentProfileError
+
+  const profileLocation = currentProfile as Pick<Profile, "current_city" | "current_country"> | null
+  const currentCity = profileLocation?.current_city?.trim()
+  const currentCountry = profileLocation?.current_country?.trim()
+
+  if (!currentCity) return []
+
+  let query = supabase
     .from("profiles")
     .select("*")
     .neq("id", user.id)
     .eq("anonymous_mode", false)
     .eq("travel_mode", true)
+    .eq("current_city", currentCity)
     .order("last_seen_at", { ascending: false })
     .limit(20)
+
+  if (currentCountry) {
+    query = query.eq("current_country", currentCountry)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
 
