@@ -7,8 +7,6 @@ import { createClient } from "@/lib/supabase/client"
 import { getPresenceStatus } from "@/lib/presence"
 import { assertTextIsSafe, cleanUserText } from "@/lib/text-moderation"
 
-const supabase = createClient()
-
 /** One shared channel — Supabase rejects .on() after .subscribe() on the same topic. */
 let conversationsMessagesChannel: RealtimeChannel | null = null
 const conversationsMessagesListeners = new Set<() => void>()
@@ -17,6 +15,7 @@ function subscribeToConversationMessages(onUpdate: () => void): () => void {
   conversationsMessagesListeners.add(onUpdate)
 
   if (!conversationsMessagesChannel) {
+    const supabase = createClient()
     conversationsMessagesChannel = supabase
       .channel("conversations:messages")
       .on(
@@ -36,6 +35,7 @@ function subscribeToConversationMessages(onUpdate: () => void): () => void {
   return () => {
     conversationsMessagesListeners.delete(onUpdate)
     if (conversationsMessagesListeners.size === 0 && conversationsMessagesChannel) {
+      const supabase = createClient()
       void supabase.removeChannel(conversationsMessagesChannel)
       conversationsMessagesChannel = null
     }
@@ -89,6 +89,7 @@ type ConversationMessageRow = Pick<Message, "conversation_id" | "content" | "cre
 type ConversationProfileRow = Conversation["other_user"]
 
 const conversationsFetcher = async (): Promise<Conversation[]> => {
+  const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -203,6 +204,7 @@ export function useConversations() {
   const { data, error, isLoading, mutate } = useSWR("conversations", conversationsFetcher, SWR_OPTIONS)
 
   useEffect(() => {
+    const supabase = createClient()
     const unsubscribeMessages = subscribeToConversationMessages(() => {
       void mutate()
     })
@@ -233,6 +235,7 @@ export function useConversations() {
 }
 
 const messagesFetcher = async (conversationId: string): Promise<Message[]> => {
+  const supabase = createClient()
   const { data, error } = await supabase
     .from("messages")
     .select("*")
@@ -253,6 +256,7 @@ export function useMessages(conversationId: string | null) {
   useEffect(() => {
     if (!conversationId) return
 
+    const supabase = createClient()
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -292,6 +296,7 @@ export function useMessages(conversationId: string | null) {
 
 export function useCreateConversation() {
   const startConversation = async (otherUserId: string): Promise<{ conversationId: string; isNew: boolean }> => {
+    const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) throw new Error("Not authenticated")
 
@@ -318,6 +323,7 @@ export function useCreateConversation() {
 
 export function useSendMessage() {
   const sendMessage = async (conversationId: string, content: string): Promise<Message> => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
     const safeContent = cleanUserText(content)
@@ -366,6 +372,7 @@ export function useSendMessage() {
   }
 
   const markAsRead = async (conversationId: string) => {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 

@@ -170,12 +170,11 @@ export function useUpdateProfile() {
   return { updateProfile, updateMood, updateLocation, toggleTravelMode, toggleAnonymousMode }
 }
 
-const supabase = createClient()
-
 export function usePublicProfile(userId: string | null) {
   const { data, error, isLoading } = useSWR(
     userId ? `public-profile-${userId}` : null,
     async () => {
+      const supabase = createClient()
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -232,6 +231,7 @@ export function useNearbyProfiles(options: UseProfileOptions = {}) {
   useEffect(() => {
     if (!enabled) return
 
+    const supabase = createClient()
     const channelId = typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random()}`
