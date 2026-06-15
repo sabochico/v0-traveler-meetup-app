@@ -13,6 +13,7 @@ import { AuthPrompt } from "@/components/auth-prompt"
 import { NotificationsBell } from "@/components/notifications-bell"
 import { DriftLogo } from "@/components/drift-logo"
 import { EditProfileModal } from "@/components/edit-profile-modal"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { useProfile } from "@/hooks/use-profile"
 import { usePresenceHeartbeat } from "@/hooks/use-presence-heartbeat"
 import { isNativeRuntime } from "@/lib/auth-redirect"
@@ -106,25 +107,33 @@ export default function Home() {
       <div className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
         {mountedTabs.has("feed") && (
           <section className={activeTab === "feed" ? "block" : "hidden"} aria-hidden={activeTab !== "feed"}>
-            <FeedView onNavigateToMessages={handleNavigateToMessages} />
+            <ErrorBoundary title="Today">
+              <FeedView onNavigateToMessages={handleNavigateToMessages} />
+            </ErrorBoundary>
           </section>
         )}
         {mountedTabs.has("discover") && (
           <section className={activeTab === "discover" ? "block" : "hidden"} aria-hidden={activeTab !== "discover"}>
-            <DiscoverView onNavigateToMessages={handleNavigateToMessages} />
+            <ErrorBoundary title="Discover">
+              <DiscoverView onNavigateToMessages={handleNavigateToMessages} />
+            </ErrorBoundary>
           </section>
         )}
         {mountedTabs.has("messages") && (
           <section className={activeTab === "messages" ? "block" : "hidden"} aria-hidden={activeTab !== "messages"}>
-            {isAuthenticated
-              ? <MessagesView initialConversationId={pendingConversationId} />
-              : <AuthPrompt message="Sign in to see your messages" />
-            }
+            <ErrorBoundary title="Messages">
+              {isAuthenticated
+                ? <MessagesView initialConversationId={pendingConversationId} />
+                : <AuthPrompt message="Sign in to see your messages" />
+              }
+            </ErrorBoundary>
           </section>
         )}
         {mountedTabs.has("profile") && (
           <section className={activeTab === "profile" ? "block" : "hidden"} aria-hidden={activeTab !== "profile"}>
-            {isAuthenticated ? <ProfileView /> : <AuthPrompt message="Sign in to view your profile" />}
+            <ErrorBoundary title="Profile">
+              {isAuthenticated ? <ProfileView /> : <AuthPrompt message="Sign in to view your profile" />}
+            </ErrorBoundary>
           </section>
         )}
       </div>
