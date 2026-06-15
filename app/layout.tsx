@@ -24,9 +24,20 @@ const jetbrains = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Drift - Find people to do something with today',
-  description: 'Meet travelers and locals nearby for spontaneous real-world plans, meetups, and conversations.',
+  title: 'Drift — Find Your People',
+  description: 'Find people to do something with today. Drift helps travelers, expats, students, and locals connect through shared activities, meetups, and genuine friendships.',
   keywords: ['travel', 'meetup', 'locals', 'spontaneous plans', 'coffee', 'connection'],
+  openGraph: {
+    title: 'Drift — Find Your People',
+    description: 'Find people to do something with today. Drift helps travelers, expats, students, and locals connect through shared activities, meetups, and genuine friendships.',
+    siteName: 'Drift',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Drift — Find Your People',
+    description: 'Find people to do something with today. Drift helps travelers, expats, students, and locals connect through shared activities, meetups, and genuine friendships.',
+  },
   icons: {
     icon: [
       {
