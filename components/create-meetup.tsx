@@ -209,8 +209,8 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-dvh sm:max-h-[90dvh] bg-card border-border p-0 gap-0 rounded-none sm:rounded-lg overflow-hidden flex flex-col">
-        <DialogHeader className="shrink-0 border-b border-border/50 px-6 pb-4 pt-[calc(env(safe-area-inset-top)+20px)] sm:pt-5">
+      <DialogContent showCloseButton={false} className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-dvh sm:max-h-[90dvh] bg-card border-border px-0 pb-0 pt-[calc(max(env(safe-area-inset-top),44px)+12px)] sm:p-0 gap-0 rounded-none sm:rounded-lg overflow-hidden flex flex-col">
+        <DialogHeader className="shrink-0 border-b border-border/50 px-6 pb-4 pt-0 sm:pt-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 text-left">
               <DialogTitle className="text-xl font-serif">Create a meetup</DialogTitle>
