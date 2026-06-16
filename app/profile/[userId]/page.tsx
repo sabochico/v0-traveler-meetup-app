@@ -320,7 +320,7 @@ export default function PublicProfilePage({
               <div className="absolute left-4 right-4 z-20 flex items-center justify-between pt-[calc(var(--drift-safe-top)+0.75rem)]">
                 <button
                   onClick={handleBack}
-                  className="fixed left-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/55 text-white shadow-[0_12px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl transition active:scale-95"
+                  className="fixed left-4 top-[calc(var(--drift-safe-top)+0.75rem)] z-50 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/55 text-white shadow-[0_12px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl transition active:scale-95"
                   aria-label="Back"
                 >
                   <ArrowLeft className="h-5 w-5" />
