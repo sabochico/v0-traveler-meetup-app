@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { MapPin, Clock, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Sparkles, Loader2 } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateMeetup } from "@/hooks/use-meetups"
@@ -209,13 +209,20 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-[calc(100dvh-0.5rem)] sm:max-h-[90dvh] bg-card border-border p-0 gap-0 rounded-t-3xl sm:rounded-lg overflow-hidden flex flex-col">
-        <DialogHeader className="shrink-0 p-6 pb-4 border-b border-border/50">
-          <DialogTitle className="text-xl font-serif">Create a meetup</DialogTitle>
-          <p className="text-sm text-muted-foreground">Find someone to share a moment with</p>
+      <DialogContent showCloseButton={false} className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-[calc(100dvh-env(safe-area-inset-top)-0.75rem)] sm:max-h-[90dvh] bg-card border-border p-0 gap-0 rounded-t-3xl sm:rounded-lg overflow-hidden flex flex-col">
+        <DialogHeader className="shrink-0 border-b border-border/50 px-6 pb-4 pt-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 text-left">
+              <DialogTitle className="text-xl font-serif">Create a meetup</DialogTitle>
+              <p className="mt-1 text-sm text-muted-foreground">Find someone to share a moment with</p>
+            </div>
+            <DialogClose className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:text-foreground active:scale-95" aria-label="Close create meetup">
+              <span className="text-2xl leading-none">&times;</span>
+            </DialogClose>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-5">
           {/* Meetup Type Selection */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">What kind of meetup?</label>
@@ -247,7 +254,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
             <button
               type="button"
               onClick={() => coverInputRef.current?.click()}
-              className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border/60 bg-secondary text-left transition-colors hover:bg-secondary/80"
+              className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border/60 bg-secondary text-left transition-colors hover:bg-secondary/80"
             >
               {coverPreviewUrl ? (
                 <img src={coverPreviewUrl} alt="Meetup cover preview" className="h-full w-full object-cover" />
