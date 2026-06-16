@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useMemo, useState } from "react"
+import { use, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
@@ -108,6 +108,7 @@ export default function PublicProfilePage({
   const [safetyLoading, setSafetyLoading] = useState(false)
   const [activePhotoIndex, setActivePhotoIndex] = useState(0)
   const [brokenPhotoUrls, setBrokenPhotoUrls] = useState<Set<string>>(() => new Set())
+  const preloadedPhotoUrls = useRef<Set<string>>(new Set())
 
   const presence = getPresenceStatus(profile)
   const isOnline = presence.state === "online"
@@ -122,6 +123,18 @@ export default function PublicProfilePage({
   )
   const visiblePhotos = profilePhotos.filter((photoUrl) => !brokenPhotoUrls.has(photoUrl))
   const heroPhoto = visiblePhotos[activePhotoIndex] ?? visiblePhotos[0] ?? null
+
+  useEffect(() => {
+    visiblePhotos.forEach((photoUrl) => {
+      if (preloadedPhotoUrls.current.has(photoUrl)) return
+      preloadedPhotoUrls.current.add(photoUrl)
+
+      const image = new Image()
+      image.decoding = "async"
+      image.src = photoUrl
+      void image.decode?.().catch(() => {})
+    })
+  }, [visiblePhotos])
 
   const location =
     [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
