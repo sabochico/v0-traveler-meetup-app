@@ -76,15 +76,21 @@ export default function RootLayout({
       <body className="font-sans antialiased min-h-dvh overflow-x-hidden">
         <div id="drift-startup-splash" className="drift-startup-splash" aria-hidden="true">
           <div className="drift-startup-splash__content">
-            <img
-              src="/drift-logo-splash.png"
-              alt=""
-              width={112}
-              height={112}
+            <svg
+              viewBox="0 0 64 64"
               className="drift-startup-splash__logo"
-              decoding="async"
-              fetchPriority="high"
-            />
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M16 11h18c9.9 0 18 7.8 18 17.5 0 2.2-1.9 3.9-4.1 3.6-8.6-1.3-15.2-4-20.2-8.4-1.7-1.5-3.8-2.3-6.1-2.3H16a4 4 0 0 1-4-4V15a4 4 0 0 1 4-4Z"
+              />
+              <path
+                fill="currentColor"
+                d="M16 34.3h5.3c2.4 0 4.7.8 6.5 2.4 5 4.3 11.6 7 20 8.2 2.3.3 4.2 2.1 4.2 4.4C52 58.1 44.1 64 34.7 64H16a4 4 0 0 1-4-4V38.3a4 4 0 0 1 4-4Z"
+                transform="translate(0 -10)"
+              />
+            </svg>
           </div>
         </div>
         <StartupSplashHaptic />
