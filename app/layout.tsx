@@ -77,12 +77,13 @@ export default function RootLayout({
         <div id="drift-startup-splash" className="drift-startup-splash" aria-hidden="true">
           <div className="drift-startup-splash__content">
             <img
-              src="/drift-logo.png"
+              src="/drift-logo-splash.png"
               alt=""
               width={112}
               height={112}
               className="drift-startup-splash__logo"
               decoding="async"
+              fetchPriority="high"
             />
           </div>
         </div>
