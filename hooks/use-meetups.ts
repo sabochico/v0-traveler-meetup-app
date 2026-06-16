@@ -81,6 +81,7 @@ export function useCreateMeetup() {
     latitude?: number
     longitude?: number
     starts_at: string
+    cover_image_url?: string | null
   }) => {
     const supabase = createClient()
     
@@ -91,7 +92,7 @@ export function useCreateMeetup() {
       "meetup"
     )
 
-    const coverImageUrl = getRandomMeetupCoverImage(meetup.category)
+    const coverImageUrl = meetup.cover_image_url ?? getRandomMeetupCoverImage(meetup.category)
     const safeMeetup = {
       ...meetup,
       title: cleanUserText(meetup.title),

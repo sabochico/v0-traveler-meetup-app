@@ -67,10 +67,12 @@ export async function POST(request: NextRequest) {
 
     const contentType = request.headers.get("content-type") ?? ""
     let file: File | null = null
+    let purpose = "avatar"
 
     if (contentType.includes("application/json")) {
       const body = await request.json()
       const base64 = body.file as string | undefined
+      purpose = body.purpose === "meetup-cover" ? "meetup-cover" : "avatar"
       if (!base64) {
         return NextResponse.json({ error: "No file provided" }, { status: 400 })
       }
@@ -81,6 +83,7 @@ export async function POST(request: NextRequest) {
     } else {
       const formData = await request.formData()
       file = formData.get("file") as File
+      purpose = formData.get("purpose") === "meetup-cover" ? "meetup-cover" : "avatar"
     }
 
     if (!file) {
@@ -96,7 +99,8 @@ export async function POST(request: NextRequest) {
     }
 
     const ext = file.name.split(".").pop() || "jpg"
-    const filename = `avatars/${user.id}/${Date.now()}.${ext}`
+    const folder = purpose === "meetup-cover" ? "meetup-covers" : "avatars"
+    const filename = `${folder}/${user.id}/${Date.now()}.${ext}`
 
     const blob = await put(filename, file, {
       access: "private",

@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateMeetup } from "@/hooks/use-meetups"
+import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
 interface CreateMeetupProps {
@@ -50,14 +51,23 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const [selectedTime, setSelectedTime] = useState<number>(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null)
 
   const [citySuggestions, setCitySuggestions] = useState<CityResult[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const [isCitySearching, setIsCitySearching] = useState(false)
   const [cityData, setCityData] = useState<{ city: string; region?: string; country?: string; latitude?: number; longitude?: number } | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const coverInputRef = useRef<HTMLInputElement | null>(null)
 
   const { createMeetup } = useCreateMeetup()
+
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl)
+    }
+  }, [coverPreviewUrl])
 
   // Debounced city search via Open-Meteo geocoding
   useEffect(() => {
@@ -115,6 +125,47 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
     setShowDropdown(false)
   }
 
+  const handleCoverChange = (file: File | null) => {
+    if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl)
+    setCoverFile(null)
+    setCoverPreviewUrl(null)
+
+    if (!file) return
+    if (!file.type.startsWith("image/")) {
+      setError("Cover photo must be an image.")
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Cover photo must be less than 5MB.")
+      return
+    }
+
+    setError(null)
+    setCoverFile(file)
+    setCoverPreviewUrl(URL.createObjectURL(file))
+  }
+
+  const uploadCoverImage = async () => {
+    if (!coverFile) return null
+
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) throw new Error("Please sign in to upload a cover photo.")
+
+    const formData = new FormData()
+    formData.append("file", coverFile)
+    formData.append("purpose", "meetup-cover")
+
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: formData,
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error ?? "Cover photo upload failed")
+    return data.url as string
+  }
+
   const handleSubmit = async () => {
     const trimmedTitle = title.trim()
     const trimmedLocation = location.trim()
@@ -126,6 +177,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
     try {
       const startsAt = new Date()
       startsAt.setHours(startsAt.getHours() + selectedTime)
+      const coverImageUrl = await uploadCoverImage()
 
       await createMeetup({
         title: trimmedTitle.slice(0, 140),
@@ -137,6 +189,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
         latitude: cityData?.latitude,
         longitude: cityData?.longitude,
         starts_at: startsAt.toISOString(),
+        cover_image_url: coverImageUrl,
       })
 
       onOpenChange(false)
@@ -145,6 +198,8 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
       setLocation("")
       setSelectedTime(0)
       setCityData(null)
+      setCoverFile(null)
+      setCoverPreviewUrl(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create meetup")
     } finally {
@@ -181,6 +236,41 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Optional Cover Photo */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-medium text-foreground">Cover photo</label>
+              <span className="text-xs text-muted-foreground">Optional</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border/60 bg-secondary text-left transition-colors hover:bg-secondary/80"
+            >
+              {coverPreviewUrl ? (
+                <img src={coverPreviewUrl} alt="Meetup cover preview" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <Camera className="h-6 w-6" />
+                  <span className="text-sm font-medium">Add your own cover</span>
+                  <span className="text-xs">Otherwise Drift picks one for you</span>
+                </div>
+              )}
+              {coverPreviewUrl && (
+                <span className="absolute bottom-3 left-3 rounded-full bg-background/75 px-3 py-1 text-xs font-medium text-foreground backdrop-blur">
+                  Change photo
+                </span>
+              )}
+            </button>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => handleCoverChange(event.target.files?.[0] ?? null)}
+            />
           </div>
 
           {/* Title */}

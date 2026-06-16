@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing pathname parameter" }, { status: 400 })
   }
 
-  if (!pathname.startsWith("avatars/")) {
+  if (!pathname.startsWith("avatars/") && !pathname.startsWith("meetup-covers/")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
