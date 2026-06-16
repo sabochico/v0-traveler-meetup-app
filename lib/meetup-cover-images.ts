@@ -47,6 +47,37 @@ const MEETUP_COVER_IMAGES: Record<string, string[]> = {
   ],
 }
 
+const CATEGORY_ALIASES: Record<string, string> = {
+  coffee: "coffee",
+  cafe: "coffee",
+  exploring: "explore",
+  explore: "explore",
+  travel: "explore",
+  gaming: "gaming",
+  games: "gaming",
+  food: "food",
+  "food adventure": "food",
+  "street food": "food",
+  study: "study",
+  "study session": "study",
+  "language exchange": "study",
+  language: "study",
+  walking: "walk",
+  walk: "walk",
+  "night walk": "walk",
+  photography: "photo",
+  photo: "photo",
+  anime: "gaming",
+}
+
+function normalizeCategory(category: string) {
+  return category.trim().toLowerCase()
+}
+
+function getCategoryImageKey(category: string) {
+  return CATEGORY_ALIASES[normalizeCategory(category)] ?? normalizeCategory(category)
+}
+
 function hash(value: string) {
   let result = 0
   for (let i = 0; i < value.length; i += 1) {
@@ -56,13 +87,13 @@ function hash(value: string) {
 }
 
 export function getMeetupCoverImage(category: string, seed: string) {
-  const images = MEETUP_COVER_IMAGES[category] ?? []
+  const images = MEETUP_COVER_IMAGES[getCategoryImageKey(category)] ?? []
   if (images.length === 0) return null
   return images[hash(seed) % images.length]
 }
 
 export function getRandomMeetupCoverImage(category: string) {
-  const images = MEETUP_COVER_IMAGES[category] ?? []
+  const images = MEETUP_COVER_IMAGES[getCategoryImageKey(category)] ?? []
   if (images.length === 0) return null
   return images[Math.floor(Math.random() * images.length)]
 }

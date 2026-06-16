@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users } from "lucide-react"
+import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users, Sparkles } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -170,7 +170,11 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className={cn("absolute inset-0 bg-gradient-to-br transition-transform duration-500 group-hover:scale-[1.025]", categoryGradient)} />
+          <div className={cn("absolute inset-0 bg-gradient-to-br transition-transform duration-500 group-hover:scale-[1.025]", categoryGradient)}>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Sparkles className="h-16 w-16 text-white/22" strokeWidth={1.5} />
+            </div>
+          </div>
         )}
         {imageFailed && (
           <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_24%),radial-gradient(circle_at_80%_30%,white_0,transparent_18%)]" />
