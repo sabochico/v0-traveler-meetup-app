@@ -209,8 +209,8 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-[calc(100dvh-env(safe-area-inset-top)-0.75rem)] sm:max-h-[90dvh] bg-card border-border p-0 gap-0 rounded-t-3xl sm:rounded-lg overflow-hidden flex flex-col">
-        <DialogHeader className="shrink-0 border-b border-border/50 px-6 pb-4 pt-5">
+      <DialogContent showCloseButton={false} className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-dvh sm:max-h-[90dvh] bg-card border-border p-0 gap-0 rounded-none sm:rounded-lg overflow-hidden flex flex-col">
+        <DialogHeader className="shrink-0 border-b border-border/50 px-6 pb-4 pt-[calc(env(safe-area-inset-top)+20px)] sm:pt-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 text-left">
               <DialogTitle className="text-xl font-serif">Create a meetup</DialogTitle>
@@ -222,7 +222,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-5">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 pb-8 space-y-5">
           {/* Meetup Type Selection */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">What kind of meetup?</label>
@@ -361,7 +361,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
         </div>
 
         {/* Submit */}
-        <div className="shrink-0 border-t border-border/50 bg-card p-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="shrink-0 border-t border-border/50 bg-card px-6 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4">
           <button
             onClick={handleSubmit}
             disabled={!selectedType || !title || !location || loading}
