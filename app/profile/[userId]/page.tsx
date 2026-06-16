@@ -229,7 +229,14 @@ export default function PublicProfilePage({
   return (
     <div className="min-h-screen bg-background film-grain">
       {isLoading ? (
-        <div className="flex min-h-screen items-center justify-center pt-[var(--drift-safe-top)]">
+        <div className="relative flex min-h-screen items-center justify-center pt-[var(--drift-safe-top)]">
+          <button
+            onClick={handleBack}
+            className="absolute left-4 top-[calc(var(--drift-safe-top)+0.75rem)] z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-card/80 text-foreground shadow-lg shadow-black/20 backdrop-blur-xl transition active:scale-95"
+            aria-label="Back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       ) : !profile ? (
