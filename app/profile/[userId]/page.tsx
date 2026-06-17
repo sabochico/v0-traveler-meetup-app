@@ -273,16 +273,15 @@ export default function PublicProfilePage({
                     alt=""
                     loading="eager"
                     decoding="async"
-                    className="absolute inset-0 h-full w-full scale-105 object-cover object-top blur-2xl"
+                    className="absolute inset-0 h-full w-full scale-105 object-cover object-top opacity-45 blur-2xl"
                     aria-hidden="true"
                   />
-                  <div className="absolute inset-0 bg-black/28" />
                   <img
                     src={heroPhoto}
                     alt={`${displayName} main profile photo`}
                     loading="eager"
                     decoding="async"
-                    className="absolute inset-0 h-full w-full object-contain object-top"
+                    className="absolute inset-0 h-full w-full object-cover object-top"
                     onError={() => {
                       setBrokenPhotoUrls((current) => new Set(current).add(heroPhoto))
                       setActivePhotoIndex(0)
@@ -324,7 +323,7 @@ export default function PublicProfilePage({
               )}
 
               <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/55 via-black/18 to-transparent" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-background via-background/72 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-background via-background/64 to-transparent" />
 
               <div className="absolute left-4 right-4 z-20 flex items-center justify-between pt-[calc(var(--drift-safe-top)+0.75rem)]">
                 <button
