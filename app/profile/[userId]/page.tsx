@@ -264,8 +264,9 @@ export default function PublicProfilePage({
         </div>
       ) : (
         <main className="mx-auto max-w-lg space-y-4 pb-24">
-          <section className="relative min-h-[100svh] overflow-hidden bg-card">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/35 via-card to-[var(--drift-teal)]/18">
+          <section className="relative px-4 pt-[calc(var(--drift-safe-top)+0.75rem)]">
+            <div className="relative h-[48svh] min-h-[21rem] max-h-[31rem] overflow-hidden rounded-[2rem] bg-card shadow-2xl shadow-black/25">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/35 via-card to-[var(--drift-teal)]/18" />
               {heroPhoto ? (
                 <>
                   <img
@@ -281,7 +282,7 @@ export default function PublicProfilePage({
                     alt={`${displayName} main profile photo`}
                     loading="eager"
                     decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover object-top"
+                    className="absolute inset-0 h-full w-full object-cover object-[center_18%]"
                     onError={() => {
                       setBrokenPhotoUrls((current) => new Set(current).add(heroPhoto))
                       setActivePhotoIndex(0)
@@ -323,7 +324,7 @@ export default function PublicProfilePage({
               )}
 
               <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/55 via-black/18 to-transparent" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-background via-background/64 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
 
               <div className="absolute left-4 right-4 z-20 flex items-center justify-between pt-[calc(var(--drift-safe-top)+0.75rem)]">
                 <button
@@ -357,7 +358,7 @@ export default function PublicProfilePage({
               </div>
 
               {visiblePhotos.length > 1 && (
-                <div className="absolute left-16 right-16 top-[calc(var(--drift-safe-top)+1.35rem)] z-20 flex gap-1.5">
+                <div className="absolute bottom-4 left-8 right-8 z-20 flex gap-1.5">
                   {visiblePhotos.map((photoUrl, index) => (
                     <button
                       key={photoUrl}
@@ -373,11 +374,13 @@ export default function PublicProfilePage({
                 </div>
               )}
 
-              <div className="absolute bottom-0 left-0 right-0 z-20 px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+            </div>
+
+            <div className="relative z-20 -mt-8 rounded-[1.75rem] border border-white/10 bg-card/90 p-4 shadow-2xl shadow-black/25 backdrop-blur-2xl">
                 <div className="space-y-4">
                   <div className="flex items-end gap-3">
                     <div className="relative shrink-0">
-                      <Avatar className="h-12 w-12 ring-2 ring-white/18">
+                      <Avatar className="h-12 w-12 ring-2 ring-white/10">
                         <AvatarImage src={profile.avatar_url ?? heroPhoto ?? undefined} alt={displayName} />
                         <AvatarFallback>{initial}</AvatarFallback>
                       </Avatar>
@@ -392,10 +395,10 @@ export default function PublicProfilePage({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h1 className="truncate text-[2.7rem] font-serif font-semibold leading-none tracking-[-0.04em] text-white drop-shadow-sm">
+                      <h1 className="truncate text-[2.25rem] font-serif font-semibold leading-none tracking-[-0.035em] text-foreground">
                         {displayName}
                       </h1>
-                      <p className="mt-1 text-sm font-medium text-white/62">
+                      <p className="mt-1 text-sm font-medium text-muted-foreground">
                         {presence.label ?? formatLastSeen(profile.last_active_at ?? profile.last_seen_at)}
                       </p>
                     </div>
@@ -418,7 +421,7 @@ export default function PublicProfilePage({
                       {profile.travel_mode ? "Traveler" : "Local"}
                     </span>
                     {hasLocation && (
-                      <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/[0.11] px-3 py-1.5 text-xs font-medium text-white/76 backdrop-blur-md">
+                      <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-foreground/72 backdrop-blur-md">
                         <MapPin className="h-3 w-3 shrink-0 text-primary" />
                         <span className="truncate">{location}</span>
                       </span>
@@ -426,7 +429,7 @@ export default function PublicProfilePage({
                   </div>
 
                   {profile.bio && (
-                    <p className="line-clamp-3 text-[1.05rem] leading-7 text-white/82">
+                    <p className="line-clamp-3 text-[1rem] leading-7 text-foreground/78">
                       {profile.bio}
                     </p>
                   )}
@@ -449,7 +452,6 @@ export default function PublicProfilePage({
                   )}
                 </div>
               </div>
-            </div>
           </section>
           <div className="px-4 space-y-4">
 
