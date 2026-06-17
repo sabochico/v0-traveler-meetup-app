@@ -64,6 +64,28 @@ function isAppleSignInCancelled(error: unknown) {
   return value?.code === ErrorCode.SignInCanceled || /cancel/i.test(value?.message ?? "")
 }
 
+function getRedirectParam(url: string) {
+  try {
+    const parsed = new URL(url)
+    return parsed.searchParams.get("redirect_to") ?? parsed.searchParams.get("redirectTo")
+  } catch {
+    return null
+  }
+}
+
+function getSafeUrlSummary(url: string) {
+  try {
+    const parsed = new URL(url)
+    return {
+      origin: parsed.origin,
+      pathname: parsed.pathname,
+      redirectTo: getRedirectParam(url),
+    }
+  } catch {
+    return { origin: "invalid-url", pathname: "", redirectTo: null }
+  }
+}
+
 export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButtonsProps) {
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -107,10 +129,19 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
       }
 
       const nativeRuntime = isNativeRuntime()
+      const redirectTo = getAuthRedirectUrl("/")
+      if (nativeRuntime && redirectTo !== "com.aweandco.drift://auth/callback?next=/") {
+        throw new Error("Native OAuth redirect is not configured for the Drift app.")
+      }
+
+      if (nativeRuntime) {
+        console.info("[Drift OAuth] selected redirectTo", { provider, redirectTo })
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: getAuthRedirectUrl("/"),
+          redirectTo,
           skipBrowserRedirect: nativeRuntime,
         },
       })
@@ -121,6 +152,12 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
         if (!Capacitor.isPluginAvailable("Browser")) {
           throw new Error("Native browser login is not available in this build.")
         }
+
+        const browserUrl = getSafeUrlSummary(data.url)
+        if (browserUrl.redirectTo?.startsWith("http")) {
+          throw new Error("Native OAuth tried to open a web redirect.")
+        }
+        console.info("[Drift OAuth] Browser.open URL", { provider, ...browserUrl })
 
         await Browser.open({
           url: data.url,

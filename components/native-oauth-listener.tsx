@@ -21,6 +21,22 @@ function getAuthParams(url: string) {
   }
 }
 
+function getSafeCallbackSummary(url: string) {
+  const parsed = new URL(url)
+  const params = getAuthParams(url)
+
+  return {
+    protocol: parsed.protocol,
+    host: parsed.host,
+    pathname: parsed.pathname,
+    hasCode: Boolean(params.code),
+    hasAccessToken: Boolean(params.accessToken),
+    hasRefreshToken: Boolean(params.refreshToken),
+    hasError: Boolean(params.error),
+    next: params.next,
+  }
+}
+
 export function NativeOAuthListener() {
   const router = useRouter()
 
@@ -34,6 +50,7 @@ export function NativeOAuthListener() {
       if (!url.startsWith("com.aweandco.drift://") && !url.startsWith("drift://")) return
 
       try {
+        console.info("[Drift OAuth] received appUrlOpen URL", getSafeCallbackSummary(url))
         const { error, code, accessToken, refreshToken, next } = getAuthParams(url)
         if (error) throw new Error(error)
 

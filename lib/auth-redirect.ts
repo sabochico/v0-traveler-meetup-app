@@ -18,8 +18,7 @@ export function getAuthRedirectUrl(next = "/") {
     return callbackUrl.toString()
   }
 
-  const origin = window.location.origin.startsWith("http") ? window.location.origin : PRODUCTION_ORIGIN
-  const callbackUrl = new URL("/auth/callback", origin)
+  const callbackUrl = new URL("/auth/callback", PRODUCTION_ORIGIN)
   callbackUrl.searchParams.set("next", next)
 
   return callbackUrl.toString()
