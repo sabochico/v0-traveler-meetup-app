@@ -150,8 +150,10 @@ export function useUpdateProfile() {
 
     if (error) throw error
 
-    await refresh()
-    return data as Profile
+    const updatedProfile = data as Profile
+    setCachedProfile(updatedProfile)
+    await refresh(updatedProfile, { revalidate: false })
+    return updatedProfile
   }
 
   const updateMood = async (mood: MoodStatus) => {
