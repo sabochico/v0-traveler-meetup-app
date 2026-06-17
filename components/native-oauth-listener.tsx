@@ -34,7 +34,6 @@ export function NativeOAuthListener() {
       if (!url.startsWith("com.aweandco.drift://") && !url.startsWith("drift://")) return
 
       try {
-        await Browser.close().catch(() => {})
         const { error, code, accessToken, refreshToken, next } = getAuthParams(url)
         if (error) throw new Error(error)
 
@@ -54,11 +53,14 @@ export function NativeOAuthListener() {
         }
 
         if (!active) return
+        await Browser.close().catch(() => {})
         window.history.replaceState(null, "", "/")
+        router.refresh()
         router.replace(next.startsWith("/") ? next : "/")
       } catch (error) {
         console.error("Native OAuth callback failed:", error)
         if (!active) return
+        await Browser.close().catch(() => {})
         window.history.replaceState(null, "", "/auth/login")
         router.replace("/auth/error")
       }

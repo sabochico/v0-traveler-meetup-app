@@ -118,14 +118,14 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
       if (error) throw error
 
       if (nativeRuntime && data.url) {
-        if (Capacitor.isPluginAvailable("Browser")) {
-          await Browser.open({
-            url: data.url,
-            presentationStyle: "fullscreen",
-          })
-        } else {
-          window.location.href = data.url
+        if (!Capacitor.isPluginAvailable("Browser")) {
+          throw new Error("Native browser login is not available in this build.")
         }
+
+        await Browser.open({
+          url: data.url,
+          presentationStyle: "fullscreen",
+        })
       }
     } catch (error) {
       setLoadingProvider(null)
