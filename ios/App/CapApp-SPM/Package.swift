@@ -15,7 +15,8 @@ let package = Package(
         .package(name: "CapacitorApp", path: "..\..\..\node_modules\.pnpm\@capacitor+app@8.1.0_@capacitor+core@8.3.4\node_modules\@capacitor\app"),
         .package(name: "CapacitorBrowser", path: "..\..\..\node_modules\.pnpm\@capacitor+browser@8.0.3_@capacitor+core@8.3.4\node_modules\@capacitor\browser"),
         .package(name: "CapacitorHaptics", path: "..\..\..\node_modules\.pnpm\@capacitor+haptics@8.0.2_@capacitor+core@8.3.4\node_modules\@capacitor\haptics"),
-        .package(name: "CapawesomeCapacitorAppleSignIn", path: "..\..\..\node_modules\.pnpm\@capawesome+capacitor-apple_8d7f7de8f048246ef69f934c1e1c0a91\node_modules\@capawesome\capacitor-apple-sign-in")
+        .package(name: "CapawesomeCapacitorAppleSignIn", path: "..\..\..\node_modules\.pnpm\@capawesome+capacitor-apple_8d7f7de8f048246ef69f934c1e1c0a91\node_modules\@capawesome\capacitor-apple-sign-in"),
+        .package(name: "CapgoCapacitorSocialLogin", path: "..\..\..\node_modules\.pnpm\@capgo+capacitor-social-login@8.3.25_@capacitor+core@8.3.4\node_modules\@capgo\capacitor-social-login")
     ],
     targets: [
         .target(
@@ -26,7 +27,8 @@ let package = Package(
                 .product(name: "CapacitorApp", package: "CapacitorApp"),
                 .product(name: "CapacitorBrowser", package: "CapacitorBrowser"),
                 .product(name: "CapacitorHaptics", package: "CapacitorHaptics"),
-                .product(name: "CapawesomeCapacitorAppleSignIn", package: "CapawesomeCapacitorAppleSignIn")
+                .product(name: "CapawesomeCapacitorAppleSignIn", package: "CapawesomeCapacitorAppleSignIn"),
+                .product(name: "CapgoCapacitorSocialLogin", package: "CapgoCapacitorSocialLogin")
             ]
         )
     ]

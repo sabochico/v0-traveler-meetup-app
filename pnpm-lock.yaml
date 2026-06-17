@@ -29,6 +29,9 @@ importers:
       '@capawesome/capacitor-apple-sign-in':
         specifier: ^0.1.0
         version: 0.1.0(@capacitor/core@8.3.4)
+      '@capgo/capacitor-social-login':
+        specifier: ^8.3.25
+        version: 8.3.25(@capacitor/core@8.3.4)
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.71.1(react@19.2.4))
@@ -257,6 +260,11 @@ packages:
 
   '@capawesome/capacitor-apple-sign-in@0.1.0':
     resolution: {integrity: sha512-/iSFHj2ZEJa1TYfEkgtAhwLIqMB/sr1ntr/HfXNz3fdssmh/j00mWgDK7sFXUSIj5G8ArpVBzaK2hJKFBWoDUQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-social-login@8.3.25':
+    resolution: {integrity: sha512-U3fZeeJrUIDEip+sE/FygiKW2ZVI2irU2GcXeKY+wil76X5e2VAsBh/vSTzBWETsP7bHGUIclGZp+n+ZTcTBdw==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -2298,6 +2306,11 @@ snapshots:
   '@capawesome/capacitor-apple-sign-in@0.1.0(@capacitor/core@8.3.4)':
     dependencies:
       '@capacitor/core': 8.3.4
+
+  '@capgo/capacitor-social-login@8.3.25(@capacitor/core@8.3.4)':
+    dependencies:
+      '@capacitor/core': 8.3.4
+      tslib: 2.8.1
 
   '@date-fns/tz@1.4.1': {}
 

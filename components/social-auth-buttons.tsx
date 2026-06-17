@@ -53,6 +53,13 @@ function isNativeIosRuntime() {
   return isNativeRuntime() && Capacitor.getPlatform() === "ios"
 }
 
+function getGoogleClientIds() {
+  return {
+    iosClientId: process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    webClientId: process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+  }
+}
+
 function createNonce() {
   const bytes = new Uint8Array(16)
   window.crypto.getRandomValues(bytes)
@@ -86,6 +93,16 @@ function getSafeUrlSummary(url: string) {
   }
 }
 
+function getGoogleIdToken(result: unknown) {
+  const value = result as {
+    idToken?: string
+    authentication?: { idToken?: string }
+    result?: { idToken?: string; authentication?: { idToken?: string } }
+  }
+
+  return value.idToken ?? value.authentication?.idToken ?? value.result?.idToken ?? value.result?.authentication?.idToken
+}
+
 export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButtonsProps) {
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -100,8 +117,12 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
     try {
       const supabase = createClient()
 
-      if (provider === "apple" && isNativeIosRuntime() && Capacitor.isPluginAvailable("AppleSignIn")) {
-        try {
+      if (isNativeIosRuntime()) {
+        if (provider === "apple") {
+          if (!Capacitor.isPluginAvailable("AppleSignIn")) {
+            throw new Error("Native Apple login is not available in this build.")
+          }
+
           const nonce = createNonce()
           const credential = await AppleSignIn.signIn({
             scopes: [SignInScope.Email, SignInScope.FullName],
@@ -122,9 +143,52 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
 
           router.replace("/")
           return
-        } catch (error) {
-          if (isAppleSignInCancelled(error)) return
-          console.warn("Native Apple login failed; falling back to OAuth.", error)
+        }
+
+        if (provider === "google") {
+          if (!Capacitor.isPluginAvailable("SocialLogin")) {
+            throw new Error("Native Google login is not available in this build.")
+          }
+
+          const { iosClientId, webClientId } = getGoogleClientIds()
+          if (!iosClientId || !webClientId) {
+            throw new Error("Google native client IDs are not configured.")
+          }
+
+          const { SocialLogin } = await import("@capgo/capacitor-social-login")
+          const socialLogin = SocialLogin as unknown as {
+            initialize: (options: unknown) => Promise<void>
+            login: (options: unknown) => Promise<unknown>
+          }
+
+          await socialLogin.initialize({
+            google: {
+              iOSClientId: iosClientId,
+              webClientId,
+              mode: "online",
+            },
+          })
+
+          const googleUser = await socialLogin.login({
+            provider: "google",
+            options: {
+              scopes: ["email", "profile"],
+            },
+          })
+          const token = getGoogleIdToken(googleUser)
+          if (!token) {
+            throw new Error("Google did not return an identity token.")
+          }
+
+          const { error } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token,
+          })
+
+          if (error) throw error
+
+          router.replace("/")
+          return
         }
       }
 
