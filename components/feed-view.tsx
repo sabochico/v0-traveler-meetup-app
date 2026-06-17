@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
+import type { TouchEvent } from "react"
 import Link from "next/link"
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion"
 import {
@@ -952,9 +953,11 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [editProfileTab, setEditProfileTab] = useState<"profile" | "interests">("profile")
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [loadSecondaryData, setLoadSecondaryData] = useState(false)
+  const [refreshingSaved, setRefreshingSaved] = useState(false)
+  const savedPullStartY = useRef<number | null>(null)
   const { meetups, isLoading } = useMeetups()
   const shouldLoadSavedMeetups = activeTab === "saved" || loadSecondaryData
-  const { savedMeetups, isLoading: savedLoading } = useSavedMeetupsWithDetails({ enabled: shouldLoadSavedMeetups })
+  const { savedMeetups, isLoading: savedLoading, refresh: refreshSavedMeetups } = useSavedMeetupsWithDetails({ enabled: shouldLoadSavedMeetups })
   const { profile } = useProfile()
   const { updateMood } = useUpdateProfile()
   const { profiles } = useNearbyProfiles({ enabled: loadSecondaryData })
@@ -978,6 +981,37 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
     const timerId = window.setTimeout(() => setLoadSecondaryData(true), 700)
     return () => window.clearTimeout(timerId)
   }, [])
+
+  useEffect(() => {
+    if (activeTab === "saved" && shouldLoadSavedMeetups) {
+      void refreshSavedMeetups()
+    }
+  }, [activeTab, shouldLoadSavedMeetups, refreshSavedMeetups])
+
+  const refreshSaved = useCallback(async () => {
+    if (refreshingSaved) return
+    setRefreshingSaved(true)
+    try {
+      await refreshSavedMeetups()
+    } finally {
+      setRefreshingSaved(false)
+    }
+  }, [refreshSavedMeetups, refreshingSaved])
+
+  const handleSavedTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (activeTab !== "saved" || window.scrollY > 2) return
+    savedPullStartY.current = event.touches[0]?.clientY ?? null
+  }
+
+  const handleSavedTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const startY = savedPullStartY.current
+    savedPullStartY.current = null
+    if (startY === null || activeTab !== "saved" || refreshingSaved) return
+    const endY = event.changedTouches[0]?.clientY ?? startY
+    if (endY - startY > 72 && window.scrollY <= 2) {
+      void refreshSaved()
+    }
+  }
 
   const handleDismissBanner = () => {
     sessionStorage.setItem("drift-profile-banner-dismissed", "1")
@@ -1092,28 +1126,47 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             onViewSaved={() => setActiveTab("saved")}
             onBrowseAll={() => setBrowseAll(true)}
           />
-        ) : savedLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
-        ) : savedMeetups.length === 0 ? (
-          <div className="text-center py-16 px-8">
-            <Heart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground font-medium">No saved meetups yet</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">
-              Save meetups from Today or Discover to keep them here.
-            </p>
-          </div>
         ) : (
-          <div className="px-4 py-6 space-y-6">
-            {savedMeetups.map((meetup) => (
-              <MeetupCard
-                key={meetup.id}
-                meetup={meetup as MeetupWithCreator}
-                loadUserState
-                onNavigateToMessages={onNavigateToMessages}
-              />
-            ))}
+          <div
+            className="min-h-[55svh] overscroll-y-contain"
+            onTouchStart={handleSavedTouchStart}
+            onTouchEnd={handleSavedTouchEnd}
+          >
+            <div
+              className={cn(
+                "flex items-center justify-center gap-2 pt-3 text-xs text-muted-foreground transition-opacity",
+                refreshingSaved ? "opacity-100" : "opacity-0"
+              )}
+              aria-live="polite"
+            >
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+              Refreshing saved meetups
+            </div>
+
+            {savedLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : savedMeetups.length === 0 ? (
+              <div className="text-center py-16 px-8">
+                <Heart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground font-medium">No saved meetups yet</p>
+                <p className="text-sm text-muted-foreground/60 mt-1">
+                  Save meetups from Today or Discover to keep them here.
+                </p>
+              </div>
+            ) : (
+              <div className="px-4 py-6 space-y-6">
+                {savedMeetups.map((meetup) => (
+                  <MeetupCard
+                    key={meetup.id}
+                    meetup={meetup as MeetupWithCreator}
+                    loadUserState
+                    onNavigateToMessages={onNavigateToMessages}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

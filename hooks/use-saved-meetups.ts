@@ -60,8 +60,9 @@ export function useSaveMeetup() {
 
     if (error) throw error
 
-    // Revalidate saved meetups
+    // Revalidate both the saved ID list and the detailed Saved tab data.
     mutate("saved-meetups")
+    mutate("saved-meetups-details")
   }
 
   const unsaveMeetup = async (meetupId: string) => {
@@ -77,8 +78,9 @@ export function useSaveMeetup() {
 
     if (error) throw error
 
-    // Revalidate saved meetups
+    // Revalidate both the saved ID list and the detailed Saved tab data.
     mutate("saved-meetups")
+    mutate("saved-meetups-details")
   }
 
   return { saveMeetup, unsaveMeetup }
@@ -87,7 +89,7 @@ export function useSaveMeetup() {
 // Fetch saved meetups with full details
 export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
   const enabled = options.enabled ?? true
-  const { data, error, isLoading } = useSWR<MeetupWithCreator[]>(enabled ? "saved-meetups-details" : null, async () => {
+  const { data, error, isLoading, mutate: refresh } = useSWR<MeetupWithCreator[]>(enabled ? "saved-meetups-details" : null, async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
@@ -158,6 +160,7 @@ export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
     savedMeetups: data ?? [],
     isLoading,
     error,
+    refresh,
   }
 }
 
