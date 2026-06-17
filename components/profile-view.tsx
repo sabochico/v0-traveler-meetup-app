@@ -51,6 +51,7 @@ export function ProfileView() {
   const completionScore = getProfileCompletionScore(profile)
   const languageCount = profile?.languages?.length ?? 0
   const interestCount = profile?.interests?.length ?? 0
+  const heroPhoto = profile?.profile_photos?.[0] ?? profile?.avatar_url ?? null
   const locationLabel =
     profile?.current_city && profile?.current_country
       ? `${profile.current_city}, ${profile.current_country}`
@@ -159,11 +160,18 @@ export function ProfileView() {
   return (
     <div className="min-h-screen pb-8">
       {/* Profile Hero */}
-      <div className="relative overflow-hidden px-4 pb-3 pt-[calc(0.75rem+var(--drift-safe-top))]">
+      <div className="relative overflow-hidden px-4 pb-4 pt-[calc(0.75rem+var(--drift-safe-top))]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(255,255,255,0.14),transparent_20rem),linear-gradient(135deg,rgba(37,99,255,0.82),rgba(0,212,204,0.64))]" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-background" />
-        <div className="relative mx-auto max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="rounded-[1.75rem] border border-white/12 bg-background/52 p-3.5 shadow-lg shadow-black/15 backdrop-blur-2xl">
+        {heroPhoto && (
+          <div className="absolute inset-x-4 top-[calc(1rem+var(--drift-safe-top))] mx-auto h-[21rem] max-w-lg overflow-hidden rounded-[2rem] opacity-95">
+            <img src={heroPhoto} alt="" className="h-full w-full scale-105 object-cover object-top blur-2xl" />
+            <div className="absolute inset-0 bg-black/30" />
+            <img src={heroPhoto} alt="" className="absolute inset-0 h-full w-full object-contain object-top" />
+          </div>
+        )}
+        <div className="relative mx-auto flex min-h-[24rem] max-w-lg items-end animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="w-full rounded-[1.75rem] border border-white/12 bg-background/62 p-3.5 shadow-lg shadow-black/20 backdrop-blur-2xl">
             <div className="flex items-start gap-3">
               <div className="relative flex-shrink-0 pt-0.5">
                 <Avatar className="h-[4.35rem] w-[4.35rem] ring-2 ring-white/16 shadow-md shadow-black/20">

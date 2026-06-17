@@ -270,10 +270,19 @@ export default function PublicProfilePage({
                 <>
                   <img
                     src={heroPhoto}
+                    alt=""
+                    loading="eager"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full scale-105 object-cover object-top blur-2xl"
+                    aria-hidden="true"
+                  />
+                  <div className="absolute inset-0 bg-black/28" />
+                  <img
+                    src={heroPhoto}
                     alt={`${displayName} main profile photo`}
                     loading="eager"
                     decoding="async"
-                    className="h-full w-full object-cover"
+                    className="absolute inset-0 h-full w-full object-contain object-top"
                     onError={() => {
                       setBrokenPhotoUrls((current) => new Set(current).add(heroPhoto))
                       setActivePhotoIndex(0)
