@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { isAdminEmail } from "@/lib/admin"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -60,7 +61,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Meetup not found" }, { status: 404 })
     }
 
-    if (meetup.creator_id !== user.id) {
+    const isAdmin = isAdminEmail(user.email)
+    if (meetup.creator_id !== user.id && !isAdmin) {
       return NextResponse.json({ error: "Only the creator can delete this meetup" }, { status: 403 })
     }
 
@@ -72,7 +74,6 @@ export async function DELETE(
       .from("meetups")
       .delete()
       .eq("id", meetupId)
-      .eq("creator_id", user.id)
 
     if (deleteError) {
       console.error("[meetups] delete failed:", deleteError)

@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation, useSendMessage } from "@/hooks/use-messages"
 import { getMeetupCoverImage, getOptimizedMeetupCoverImage } from "@/lib/meetup-cover-images"
 import { getMeetupLifecycleLabel } from "@/lib/meetup-lifecycle"
+import { isAdminEmail } from "@/lib/admin"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
@@ -108,6 +109,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   const isLiked = savedMeetupIds.includes(meetup.id)
   const isJoined = joinedMeetups.some(m => m.meetup_id === meetup.id)
   const isCreator = user?.id === meetup.creator_id
+  const canDeleteMeetup = isCreator || isAdminEmail(user?.email)
   
   const creatorMood = (meetup.creator?.mood as MoodStatus) ?? "exploring"
   const categoryGradient = CATEGORY_GRADIENTS[meetup.category] ?? CATEGORY_GRADIENTS.coffee
@@ -169,7 +171,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   }
 
   const handleDeleteMeetup = async () => {
-    if (!user || !isCreator) return
+    if (!user || !canDeleteMeetup) return
     setDeletingMeetup(true)
     try {
       await deleteMeetup(meetup.id)
@@ -307,12 +309,14 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
             <span className="truncate">{meetup.location_name ?? `${meetup.city}, ${meetup.country}`}</span>
           </div>
           
-          {isCreator ? (
+          {canDeleteMeetup ? (
             <div className="flex shrink-0 items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/[0.06] text-muted-foreground text-sm font-medium">
-                <Users className="w-4 h-4" />
-                <span>Your meetup</span>
-              </div>
+              {isCreator && (
+                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/[0.06] text-muted-foreground text-sm font-medium">
+                  <Users className="w-4 h-4" />
+                  <span>Your meetup</span>
+                </div>
+              )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <button
