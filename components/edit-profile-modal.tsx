@@ -13,6 +13,10 @@ import type { Profile } from "@/lib/types"
 import { getNextProfileRequirement, isProfileComplete, MIN_BIO_LENGTH, MIN_INTERESTS } from "@/lib/profile-completion"
 import { detectCurrentLocation, type DetectedLocation } from "@/lib/location"
 
+const MAX_RAW_IMAGE_SIZE = 15 * 1024 * 1024
+const MAX_COMPRESSED_DIMENSION = 1600
+const TARGET_COMPRESSED_SIZE = 2 * 1024 * 1024
+
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -23,6 +27,52 @@ function readFileAsBase64(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"))
     reader.readAsDataURL(file)
   })
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error("Could not prepare this photo. Please try another image."))
+    image.src = src
+  })
+}
+
+async function compressProfilePhoto(file: File): Promise<File> {
+  const imageUrl = URL.createObjectURL(file)
+
+  try {
+    const image = await loadImage(imageUrl)
+    const drawCompressed = async (maxDimension: number, quality: number) => {
+      const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight))
+      const width = Math.max(1, Math.round(image.naturalWidth * scale))
+      const height = Math.max(1, Math.round(image.naturalHeight * scale))
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      const context = canvas.getContext("2d")
+      if (!context) throw new Error("Could not prepare this photo. Please try another image.")
+      context.drawImage(image, 0, 0, width, height)
+
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, "image/jpeg", quality)
+      })
+      if (!blob) throw new Error("Could not compress this photo. Please try another image.")
+      return blob
+    }
+
+    let blob = await drawCompressed(MAX_COMPRESSED_DIMENSION, 0.82)
+    if (blob.size > TARGET_COMPRESSED_SIZE) {
+      blob = await drawCompressed(1280, 0.76)
+    }
+
+    return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg") || "profile-photo.jpg", {
+      type: "image/jpeg",
+      lastModified: Date.now(),
+    })
+  } finally {
+    URL.revokeObjectURL(imageUrl)
+  }
 }
 
 const SUGGESTED_LANGUAGES = [
@@ -161,11 +211,19 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Photo format not supported",
+        description: "Please choose an image file.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (file.size > MAX_RAW_IMAGE_SIZE) {
       toast({
         title: "Photo is too large",
-        description: "Please choose an image under 5MB.",
+        description: "Please choose an image under 15MB.",
         variant: "destructive",
       })
       return
@@ -188,7 +246,8 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         throw new Error("Please sign in to upload a photo")
       }
 
-      const fileBase64 = await readFileAsBase64(file)
+      const compressedFile = await compressProfilePhoto(file)
+      const fileBase64 = await readFileAsBase64(compressedFile)
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -199,8 +258,8 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         },
         body: JSON.stringify({
           file: fileBase64,
-          fileName: file.name,
-          contentType: file.type,
+          fileName: compressedFile.name,
+          contentType: compressedFile.type,
         }),
       })
 
