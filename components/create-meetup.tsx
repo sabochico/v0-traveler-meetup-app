@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useCreateMeetup } from "@/hooks/use-meetups"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
+import { checkTextModeration, cleanUserText } from "@/lib/text-moderation"
 
 interface CreateMeetupProps {
   open: boolean
@@ -41,9 +42,40 @@ const TIME_OPTIONS = [
 ]
 
 const CAPACITY_OPTIONS = [1, 2, 4, 6, 8, 12, 20]
+const LOCATION_ERROR_MESSAGE = "Please enter a real venue, neighborhood, or city."
+const LOW_QUALITY_LOCATIONS = new Set(["test", "testing", "asdf", "qwerty", "123", "abc"])
+const BLOCKED_LOCATION_TERMS = [
+  "boob",
+  "boobs",
+  "tits",
+  "pussy",
+  "dick",
+  "cock",
+  "penis",
+  "vagina",
+  "fuck",
+  "shit",
+  "bitch",
+  "cunt",
+]
 
 function formatCityLabel(s: CityResult): string {
   return `${s.name}, ${s.country}`
+}
+
+function isValidMeetupLocation(value: string) {
+  const cleaned = cleanUserText(value)
+  if (cleaned.length < 3) return false
+  if (!/[a-zA-Z]/.test(cleaned)) return false
+  if (LOW_QUALITY_LOCATIONS.has(cleaned.toLowerCase())) return false
+  if (!checkTextModeration(cleaned, "meetup").ok) return false
+
+  const normalized = cleaned
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+  const words = normalized.split(/[^a-z0-9]+/).filter(Boolean)
+  return !BLOCKED_LOCATION_TERMS.some((term) => words.includes(term))
 }
 
 export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
@@ -173,6 +205,10 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
     const trimmedTitle = title.trim()
     const trimmedLocation = location.trim()
     if (!selectedType || !trimmedTitle || !trimmedLocation) return
+    if (!isValidMeetupLocation(trimmedLocation)) {
+      setError(LOCATION_ERROR_MESSAGE)
+      return
+    }
 
     setLoading(true)
     setError(null)
