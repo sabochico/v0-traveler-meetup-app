@@ -37,12 +37,23 @@ as $$
 declare
   v_meetup  record;
   v_joiner  record;
+  v_meetup_requests_enabled boolean := true;
 begin
   select * into v_meetup from public.meetups where id = NEW.meetup_id;
   select * into v_joiner from public.profiles where id = NEW.user_id;
 
   -- Skip if creator is joining their own meetup
   if v_meetup.creator_id = NEW.user_id then
+    return NEW;
+  end if;
+
+  select coalesce((p.notification_preferences->>'meetup_requests')::boolean, true)
+  into v_meetup_requests_enabled
+  from public.profiles p
+  where p.id = v_meetup.creator_id;
+
+  -- Respect the creator's meetup notification preference when present.
+  if coalesce(v_meetup_requests_enabled, true) = false then
     return NEW;
   end if;
 

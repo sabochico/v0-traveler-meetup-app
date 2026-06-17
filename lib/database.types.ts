@@ -60,6 +60,7 @@ export interface Database {
           location_source: string | null
           location_updated_at: string | null
           instagram_handle: string | null
+          notification_preferences: unknown
           last_active_at: string | null
           last_seen_at: string
           created_at: string
@@ -86,6 +87,7 @@ export interface Database {
           location_source?: string | null
           location_updated_at?: string | null
           instagram_handle?: string | null
+          notification_preferences?: unknown
           last_active_at?: string | null
           last_seen_at?: string
           created_at?: string
@@ -112,6 +114,7 @@ export interface Database {
           location_source?: string | null
           location_updated_at?: string | null
           instagram_handle?: string | null
+          notification_preferences?: unknown
           last_active_at?: string | null
           last_seen_at?: string
           created_at?: string

@@ -156,7 +156,8 @@ alter table public.profiles
   add column if not exists longitude double precision,
   add column if not exists location_source text,
   add column if not exists location_updated_at timestamptz,
-  add column if not exists profile_photos text[] not null default '{}';
+  add column if not exists profile_photos text[] not null default '{}',
+  add column if not exists notification_preferences jsonb not null default '{"messages":true,"meetup_requests":true,"likes":false,"nearby":true,"sounds":true}'::jsonb;
 
 alter table public.meetups
   add column if not exists region text,

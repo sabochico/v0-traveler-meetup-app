@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { Profile, MoodStatus } from "@/lib/types"
 import { getProfileCompletionScore } from "@/lib/profile-completion"
 import { getPresenceStatus } from "@/lib/presence"
+import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notification-preferences"
 
 const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   social: { color: "bg-emerald-500", label: "Feeling social" },
@@ -33,6 +34,7 @@ function normalizeCity(city: string | null | undefined) {
 }
 
 const MOCK_PROFILE_META = {
+  notification_preferences: DEFAULT_NOTIFICATION_PREFERENCES,
   profile_photos: [],
   current_region: null,
   latitude: null,

@@ -7,6 +7,7 @@ import { Profile, MoodStatus } from "@/lib/types"
 import { getCachedProfile, setCachedProfile } from "@/lib/profile-cache"
 import { getPresenceStatus } from "@/lib/presence"
 import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
+import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notification-preferences"
 
 const SWR_OPTIONS = { keepPreviousData: true }
 
@@ -33,6 +34,7 @@ const createFallbackProfile = (id: string): Profile => {
     location_source: null,
     location_updated_at: null,
     instagram_handle: null,
+    notification_preferences: DEFAULT_NOTIFICATION_PREFERENCES,
     last_active_at: now,
     last_seen_at: now,
     created_at: now,

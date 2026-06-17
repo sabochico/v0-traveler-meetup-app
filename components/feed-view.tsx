@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { useBlockedUsers } from "@/hooks/use-user-safety"
 import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
+import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notification-preferences"
 import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
 
 // Profile completion
@@ -164,6 +165,7 @@ const CONFETTI_COLORS = [
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
 const MOCK_PROFILE_META = {
+  notification_preferences: DEFAULT_NOTIFICATION_PREFERENCES,
   profile_photos: [],
   current_region: null,
   latitude: null,
