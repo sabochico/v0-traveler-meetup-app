@@ -13,9 +13,7 @@ export function getAuthRedirectUrl(next = "/") {
   if (typeof window === "undefined") return undefined
 
   if (isNativeRuntime()) {
-    const callbackUrl = new URL(NATIVE_AUTH_CALLBACK_URL)
-    callbackUrl.searchParams.set("next", next)
-    return callbackUrl.toString()
+    return NATIVE_AUTH_CALLBACK_URL
   }
 
   const callbackUrl = new URL("/auth/callback", PRODUCTION_ORIGIN)

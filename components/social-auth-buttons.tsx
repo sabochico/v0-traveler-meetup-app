@@ -130,19 +130,24 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
 
       const nativeRuntime = isNativeRuntime()
       const redirectTo = getAuthRedirectUrl("/")
-      if (nativeRuntime && redirectTo !== "com.aweandco.drift://auth/callback?next=/") {
+      const skipBrowserRedirect = nativeRuntime
+      if (nativeRuntime && redirectTo !== "com.aweandco.drift://auth/callback") {
         throw new Error("Native OAuth redirect is not configured for the Drift app.")
       }
 
       if (nativeRuntime) {
-        console.info("[Drift OAuth] selected redirectTo", { provider, redirectTo })
+        console.info("[Drift OAuth] selected redirectTo", {
+          provider,
+          redirectTo,
+          skipBrowserRedirect,
+        })
       }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
-          skipBrowserRedirect: nativeRuntime,
+          skipBrowserRedirect,
         },
       })
 
@@ -157,7 +162,11 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
         if (browserUrl.redirectTo?.startsWith("http")) {
           throw new Error("Native OAuth tried to open a web redirect.")
         }
-        console.info("[Drift OAuth] Browser.open URL", { provider, ...browserUrl })
+        console.info("[Drift OAuth] Browser.open URL", {
+          provider,
+          skipBrowserRedirect,
+          ...browserUrl,
+        })
 
         await Browser.open({
           url: data.url,
