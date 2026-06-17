@@ -19,6 +19,7 @@ type CachedProfile = Pick<
   | "current_country"
   | "location"
   | "instagram_handle"
+  | "notification_preferences"
 > & {
   completion_score: number
   is_complete: boolean
@@ -60,6 +61,7 @@ export function setCachedProfile(profile: Profile | null) {
     current_country: profile.current_country,
     location: profile.location,
     instagram_handle: profile.instagram_handle,
+    notification_preferences: profile.notification_preferences,
     completion_score: getProfileCompletionScore(profile),
     is_complete: isProfileComplete(profile),
     cached_at: new Date().toISOString(),
@@ -72,4 +74,3 @@ export function clearCachedProfile() {
   if (!canUseStorage()) return
   window.localStorage.removeItem(PROFILE_CACHE_KEY)
 }
-

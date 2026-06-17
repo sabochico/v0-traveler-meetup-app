@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 import { useProfile, useUpdateProfile } from "@/hooks/use-profile"
 import { DEFAULT_NOTIFICATION_PREFERENCES, normalizeNotificationPreferences, type NotificationPreferences } from "@/lib/notification-preferences"
 import type { Profile } from "@/lib/types"
+import { Capacitor } from "@capacitor/core"
+import { Haptics, ImpactStyle } from "@capacitor/haptics"
 
 interface NotificationsSettingsProps {
   isOpen: boolean
@@ -26,10 +28,10 @@ export function NotificationsSettings({ isOpen, onClose }: NotificationsSettings
   const [savingId, setSavingId] = useState<keyof NotificationPreferences | null>(null)
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !savingId) {
       setPreferences(normalizeNotificationPreferences(profile?.notification_preferences))
     }
-  }, [isOpen, profile?.notification_preferences])
+  }, [isOpen, profile?.notification_preferences, savingId])
 
   const settings: NotificationSetting[] = [
     {
@@ -70,6 +72,9 @@ export function NotificationsSettings({ isOpen, onClose }: NotificationsSettings
     setSavingId(id)
     try {
       await updateProfile({ notification_preferences: next } as Partial<Profile>)
+      if (Capacitor.isNativePlatform()) {
+        await Haptics.impact({ style: ImpactStyle.Light }).catch(() => {})
+      }
     } catch (error) {
       setPreferences(preferences)
       console.error("Failed to update notification preference:", error)
