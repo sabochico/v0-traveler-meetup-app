@@ -170,7 +170,7 @@ export function ProfileView() {
             <img src={heroPhoto} alt="" className="absolute inset-0 h-full w-full object-contain object-top" />
           </div>
         )}
-        <div className="relative mx-auto flex min-h-[24rem] max-w-lg items-end animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="relative mx-auto flex min-h-[29rem] max-w-lg items-end pb-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="w-full rounded-[1.75rem] border border-white/12 bg-background/62 p-3.5 shadow-lg shadow-black/20 backdrop-blur-2xl">
             <div className="flex items-start gap-3">
               <div className="relative flex-shrink-0 pt-0.5">
