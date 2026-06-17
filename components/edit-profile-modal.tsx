@@ -150,6 +150,20 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
 
   useEffect(() => {
     if (!isOpen) return
+    setDisplayName(profile.display_name ?? "")
+    setBio(profile.bio ?? "")
+    setCurrentCity(profile.current_city ?? "")
+    setCurrentCountry(profile.current_country ?? "")
+    setDetectedLocation(null)
+    setLanguages(profile.languages ?? [])
+    setInterests(profile.interests ?? [])
+    setAvatarUrl(profile.avatar_url)
+    setProfilePhotos(profile.profile_photos?.length ? profile.profile_photos : profile.avatar_url ? [profile.avatar_url] : [])
+    setInstagramHandle(profile.instagram_handle ?? "")
+  }, [isOpen, profile])
+
+  useEffect(() => {
+    if (!isOpen) return
     setActiveTab(initialTab)
     if (setupMode) setSetupStep(0)
   }, [isOpen, initialTab])

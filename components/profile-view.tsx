@@ -32,6 +32,12 @@ import { clearCachedProfile } from "@/lib/profile-cache"
 import { Haptics, ImpactStyle } from "@capacitor/haptics"
 import { Capacitor } from "@capacitor/core"
 
+function versionImageUrl(url: string | null | undefined, version: string | null | undefined) {
+  if (!url || !version) return url ?? undefined
+  const separator = url.includes("?") ? "&" : "?"
+  return `${url}${separator}v=${encodeURIComponent(version)}`
+}
+
 export function ProfileView() {
   const { profile, isLoading } = useProfile()
   const { toggleTravelMode, toggleAnonymousMode } = useUpdateProfile()
@@ -52,6 +58,8 @@ export function ProfileView() {
   const languageCount = profile?.languages?.length ?? 0
   const interestCount = profile?.interests?.length ?? 0
   const heroPhoto = profile?.profile_photos?.[0] ?? profile?.avatar_url ?? null
+  const heroPhotoSrc = versionImageUrl(heroPhoto, profile?.updated_at)
+  const avatarSrc = versionImageUrl(profile?.avatar_url, profile?.updated_at)
   const locationLabel =
     profile?.current_city && profile?.current_country
       ? `${profile.current_city}, ${profile.current_country}`
@@ -165,9 +173,9 @@ export function ProfileView() {
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-background" />
         {heroPhoto && (
           <div className="absolute inset-x-4 top-[calc(1rem+var(--drift-safe-top))] mx-auto h-[21rem] max-w-lg overflow-hidden rounded-[2rem] opacity-95">
-            <img src={heroPhoto} alt="" className="h-full w-full scale-105 object-cover object-top blur-2xl" />
+            <img src={heroPhotoSrc} alt="" className="h-full w-full scale-105 object-cover object-top blur-2xl" />
             <div className="absolute inset-0 bg-black/30" />
-            <img src={heroPhoto} alt="" className="absolute inset-0 h-full w-full object-contain object-top" />
+            <img src={heroPhotoSrc} alt="" className="absolute inset-0 h-full w-full object-contain object-top" />
           </div>
         )}
         <div className="relative mx-auto flex min-h-[29rem] max-w-lg items-end pb-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -175,7 +183,7 @@ export function ProfileView() {
             <div className="flex items-start gap-3">
               <div className="relative flex-shrink-0 pt-0.5">
                 <Avatar className="h-[4.35rem] w-[4.35rem] ring-2 ring-white/16 shadow-md shadow-black/20">
-                  <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.display_name ?? "You"} />
+                  <AvatarImage src={avatarSrc} alt={profile?.display_name ?? "You"} />
                   <AvatarFallback>{(profile?.display_name ?? "U")[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <button
