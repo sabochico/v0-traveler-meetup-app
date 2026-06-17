@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const otherUserId = body.otherUserId as string | undefined
+    const meetupId = body.meetupId as string | undefined
     if (!otherUserId) {
       return NextResponse.json({ error: "otherUserId is required" }, { status: 400 })
     }
@@ -94,7 +95,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "You cannot message this user" }, { status: 403 })
     }
 
-    // Check if a conversation already exists between the two users
+    if (meetupId) {
+      const { data: meetup } = await admin
+        .from("meetups")
+        .select("id, creator_id")
+        .eq("id", meetupId)
+        .maybeSingle()
+
+      if (!meetup) {
+        return NextResponse.json({ error: "Meetup not found" }, { status: 404 })
+      }
+
+      if (meetup.creator_id !== otherUserId && meetup.creator_id !== user.id) {
+        return NextResponse.json({ error: "Invalid meetup conversation" }, { status: 400 })
+      }
+    }
+
+    // Direct DMs are scoped by participants. Meetup chats are scoped by participants + meetup_id.
     const { data: myParticipations } = await admin
       .from("conversation_participants")
       .select("conversation_id")
@@ -110,6 +127,16 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (otherPart) {
+          const query = admin
+            .from("conversations")
+            .select("id")
+            .eq("id", part.conversation_id)
+
+          const { data: matchingConversation } = meetupId
+            ? await query.eq("meetup_id", meetupId).maybeSingle()
+            : await query.is("meetup_id", null).maybeSingle()
+
+          if (!matchingConversation) continue
           return NextResponse.json({ conversationId: part.conversation_id, isNew: false })
         }
       }
@@ -118,7 +145,7 @@ export async function POST(request: NextRequest) {
     // Create the conversation row
     const { data: newConv, error: convError } = await admin
       .from("conversations")
-      .insert({})
+      .insert({ meetup_id: meetupId ?? null })
       .select()
       .single()
 

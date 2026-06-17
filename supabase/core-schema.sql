@@ -323,9 +323,16 @@ create policy "Users can report as themselves"
 -- Conversations
 create table if not exists public.conversations (
   id          uuid        primary key default gen_random_uuid(),
+  meetup_id   uuid        references public.meetups(id) on delete set null,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+alter table public.conversations
+  add column if not exists meetup_id uuid references public.meetups(id) on delete set null;
+
+create index if not exists conversations_meetup_idx
+  on public.conversations (meetup_id);
 
 drop trigger if exists conversations_set_updated_at on public.conversations;
 create trigger conversations_set_updated_at

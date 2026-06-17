@@ -44,6 +44,7 @@ function subscribeToConversationMessages(onUpdate: () => void): () => void {
 
 export interface Conversation {
   id: string
+  meetup_id: string | null
   created_at: string
   updated_at: string
   other_user: {
@@ -66,6 +67,12 @@ export interface Conversation {
     created_at: string
     sender_id: string
   } | null
+  meetup: {
+    id: string
+    title: string
+    city: string | null
+    country: string | null
+  } | null
   unread_count: number
 }
 
@@ -83,10 +90,11 @@ const EMPTY_MESSAGES: Message[] = []
 const SWR_OPTIONS = { keepPreviousData: true }
 
 type ConversationIdRow = { conversation_id: string }
-type ConversationRow = Pick<Conversation, "id" | "created_at" | "updated_at">
+type ConversationRow = Pick<Conversation, "id" | "meetup_id" | "created_at" | "updated_at">
 type ConversationParticipantRow = { conversation_id: string; user_id: string }
 type ConversationMessageRow = Pick<Message, "conversation_id" | "content" | "created_at" | "sender_id">
 type ConversationProfileRow = Conversation["other_user"]
+type ConversationMeetupRow = NonNullable<Conversation["meetup"]>
 
 const conversationsFetcher = async (): Promise<Conversation[]> => {
   const supabase = createClient()
@@ -105,7 +113,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
   const { data: conversations, error: convError } = await supabase
     .from("conversations")
-    .select("id, created_at, updated_at")
+    .select("id, meetup_id, created_at, updated_at")
     .in("id", conversationIds)
     .order("updated_at", { ascending: false })
 
@@ -148,6 +156,14 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
       .in("id", otherUserIds)
     : { data: [] }
   const profileById = new Map(((otherUsers ?? []) as ConversationProfileRow[]).map((profile) => [profile.id, profile]))
+  const meetupIds = Array.from(new Set(((conversations ?? []) as ConversationRow[]).map((conv) => conv.meetup_id).filter(Boolean))) as string[]
+  const { data: meetups } = meetupIds.length
+    ? await supabase
+      .from("meetups")
+      .select("id, title, city, country")
+      .in("id", meetupIds)
+    : { data: [] }
+  const meetupById = new Map(((meetups ?? []) as ConversationMeetupRow[]).map((meetup) => [meetup.id, meetup]))
   const lastMessageByConversation = new Map<string, ConversationMessageRow>()
   for (const message of recentMessageRows) {
     if (!lastMessageByConversation.has(message.conversation_id)) {
@@ -175,6 +191,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
 
     return {
       id: conv.id,
+      meetup_id: conv.meetup_id,
       created_at: conv.created_at,
       updated_at: conv.updated_at,
       other_user: {
@@ -193,6 +210,7 @@ const conversationsFetcher = async (): Promise<Conversation[]> => {
         languages: otherUser?.languages ?? [],
       },
       last_message: lastMessageByConversation.get(conv.id) ?? null,
+      meetup: conv.meetup_id ? meetupById.get(conv.meetup_id) ?? null : null,
       unread_count: unreadCountByConversation.get(conv.id) ?? 0,
     }
   })
@@ -295,7 +313,10 @@ export function useMessages(conversationId: string | null) {
 }
 
 export function useCreateConversation() {
-  const startConversation = async (otherUserId: string): Promise<{ conversationId: string; isNew: boolean }> => {
+  const startConversation = async (
+    otherUserId: string,
+    options: { meetupId?: string } = {}
+  ): Promise<{ conversationId: string; isNew: boolean }> => {
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) throw new Error("Not authenticated")
@@ -306,7 +327,7 @@ export function useCreateConversation() {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ otherUserId }),
+      body: JSON.stringify({ otherUserId, meetupId: options.meetupId }),
     })
 
     const data = await response.json()

@@ -209,16 +209,19 @@ export interface Database {
       conversations: {
         Row: {
           id: string
+          meetup_id: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
+          meetup_id?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
+          meetup_id?: string | null
           created_at?: string
           updated_at?: string
         }

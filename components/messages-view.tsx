@@ -20,6 +20,7 @@ const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
 const MOCK_CONVERSATIONS = [
   {
     id: "mock-1",
+    meetup_id: null,
     other_user: {
       id: "mock-user-1",
       display_name: "Mika",
@@ -41,11 +42,13 @@ const MOCK_CONVERSATIONS = [
       sender_id: "mock-user-1",
     },
     unread_count: 2,
+    meetup: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
     id: "mock-2",
+    meetup_id: null,
     other_user: {
       id: "mock-user-2",
       display_name: "Leo",
@@ -67,11 +70,13 @@ const MOCK_CONVERSATIONS = [
       sender_id: "mock-user-2",
     },
     unread_count: 0,
+    meetup: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
     id: "mock-3",
+    meetup_id: null,
     other_user: {
       id: "mock-user-3",
       display_name: "Sofia",
@@ -93,6 +98,7 @@ const MOCK_CONVERSATIONS = [
       sender_id: "mock-user-3",
     },
     unread_count: 1,
+    meetup: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -266,7 +272,9 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">
-                    {conversation.last_message?.content ?? "Start the conversation"}
+                    {conversation.meetup?.title
+                      ? `${conversation.meetup.title} · ${conversation.last_message?.content ?? "Start the conversation"}`
+                      : conversation.last_message?.content ?? "Start the conversation"}
                   </p>
                 </div>
 
@@ -492,7 +500,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
                   {conversation.other_user?.display_name ?? "Anonymous"}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {presence.label ?? ""}
+                  {conversation.meetup?.title ?? presence.label ?? ""}
                 </p>
               </div>
             </>
@@ -515,7 +523,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
                   {conversation.other_user?.display_name ?? "Anonymous"}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {presence.label ?? ""}
+                  {conversation.meetup?.title ?? presence.label ?? ""}
                 </p>
               </div>
             </Link>

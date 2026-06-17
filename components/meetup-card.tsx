@@ -149,7 +149,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
 
         // Open a DM with the organizer (skip if user IS the creator)
         if (meetup.creator_id !== user.id) {
-          const { conversationId, isNew } = await startConversation(meetup.creator_id)
+          const { conversationId, isNew } = await startConversation(meetup.creator_id, { meetupId: meetup.id })
           if (isNew) {
             await sendMessage(conversationId, `Hey! 👋 I just joined your meetup. Would love to connect!`)
           }
