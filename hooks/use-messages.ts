@@ -335,7 +335,7 @@ export function useCreateConversation() {
       throw new Error(data.error ?? "Failed to create conversation")
     }
 
-    await globalMutate("conversations")
+    void globalMutate("conversations")
     return { conversationId: data.conversationId, isNew: data.isNew }
   }
 
@@ -376,18 +376,28 @@ export function useSendMessage() {
     }
     const savedMessage = data as Message
 
+    void globalMutate(
+      `messages-${conversationId}`,
+      (current: Message[] | undefined) => {
+        if (current?.some((message) => message.id === savedMessage.id)) return current
+        return [...(current ?? []), savedMessage]
+      },
+      { revalidate: false }
+    )
+
     console.debug("[Drift messages] insert success", {
       conversationId,
       userId: user.id,
       messageId: savedMessage.id,
     })
 
-    await supabase
+    void supabase
       .from("conversations")
       .update({ updated_at: new Date().toISOString() } as never)
       .eq("id", conversationId)
-
-    void globalMutate("conversations")
+      .then(() => {
+        void globalMutate("conversations")
+      })
 
     return savedMessage
   }
