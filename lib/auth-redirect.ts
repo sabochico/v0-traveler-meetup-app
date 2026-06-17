@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core"
 
-export const NATIVE_AUTH_CALLBACK_URL = "drift://auth/callback"
+export const NATIVE_AUTH_CALLBACK_URL = "com.aweandco.drift://auth/callback"
 const PRODUCTION_ORIGIN = "https://driftapp.me"
 
 export function isNativeRuntime() {
