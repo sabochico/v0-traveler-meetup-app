@@ -294,12 +294,25 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         throw new Error(errorMessage)
       }
 
-      const data = JSON.parse(responseText)
+      const data = JSON.parse(responseText) as { url?: string }
+      if (!data.url) throw new Error("Upload did not return a photo URL")
+
+      const nextPhotos = [...previousPhotos]
+      nextPhotos[uploadPhotoIndex] = data.url
+      const savedPhotos = nextPhotos.filter(Boolean)
+      const savedAvatarUrl = uploadPhotoIndex === 0 ? data.url : savedPhotos[0] ?? previousAvatarUrl
+
       if (uploadPhotoIndex === 0) setAvatarUrl(data.url)
-      setProfilePhotos((prev) => {
-        const next = [...prev]
-        next[uploadPhotoIndex] = data.url
-        return next.filter(Boolean)
+      setProfilePhotos(savedPhotos)
+
+      await updateProfile({
+        avatar_url: savedAvatarUrl,
+        profile_photos: savedPhotos,
+      })
+
+      toast({
+        title: "Photo updated",
+        description: "Your profile photo has been saved.",
       })
     } catch (error) {
       console.error("Upload error:", error)
