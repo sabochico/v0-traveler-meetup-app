@@ -6,7 +6,6 @@ import {
   Camera,
   Instagram,
   Shield,
-  Bell,
   Moon,
   ChevronRight,
   Plane,
@@ -23,8 +22,6 @@ import { useAuth } from "@/hooks/use-auth"
 import { EditProfileModal } from "@/components/edit-profile-modal"
 import { ConnectSocialModal } from "@/components/connect-social-modal"
 import { LocationSelector } from "@/components/location-selector"
-import { NotificationsSettings } from "@/components/notifications-settings"
-import { NotificationsBell } from "@/components/notifications-bell"
 import { AppearanceSettings } from "@/components/appearance-settings"
 import { createClient } from "@/lib/supabase/client"
 import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
@@ -46,7 +43,6 @@ export function ProfileView() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSocialModal, setShowSocialModal] = useState(false)
   const [showLocationModal, setShowLocationModal] = useState(false)
-  const [showNotificationsModal, setShowNotificationsModal] = useState(false)
   const [showAppearanceModal, setShowAppearanceModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
@@ -203,16 +199,13 @@ export function ProfileView() {
                       Hey, {profile?.display_name ?? "Drifter"}
                     </h1>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
-                    <NotificationsBell className="bg-background/45 hover:bg-background/70" />
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="flex h-11 w-11 items-center justify-center rounded-full bg-background/38 text-foreground transition-colors active:scale-95 hover:bg-background/65"
-                      aria-label="Edit profile"
-                    >
-                      <Settings className="h-5 w-5" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-background/38 text-foreground transition-colors active:scale-95 hover:bg-background/65"
+                    aria-label="Edit profile"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </button>
                 </div>
 
                 <div className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[13px] text-foreground/64">
@@ -371,15 +364,6 @@ export function ProfileView() {
           </div>
 
           <button 
-            onClick={() => setShowNotificationsModal(true)}
-            className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
-          >
-            <Bell className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">Notifications</span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
-          </button>
-
-          <button 
             onClick={() => setShowAppearanceModal(true)}
             className="flex items-center gap-3 w-full p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors"
           >
@@ -464,12 +448,6 @@ export function ProfileView() {
         onClose={() => setShowLocationModal(false)}
         currentCity={profile?.current_city}
         currentCountry={profile?.current_country}
-      />
-
-      {/* Notifications Settings Modal */}
-      <NotificationsSettings
-        isOpen={showNotificationsModal}
-        onClose={() => setShowNotificationsModal(false)}
       />
 
       {/* Appearance Settings Modal */}
