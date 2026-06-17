@@ -131,7 +131,7 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
       const nativeRuntime = isNativeRuntime()
       const redirectTo = getAuthRedirectUrl("/")
       const skipBrowserRedirect = nativeRuntime
-      if (nativeRuntime && redirectTo !== "https://driftapp.me/auth/callback?native=1&next=%2F") {
+      if (nativeRuntime && redirectTo !== "com.aweandco.drift://auth/callback") {
         throw new Error("Native OAuth redirect is not configured for the Drift app.")
       }
 
@@ -159,10 +159,7 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
         }
 
         const browserUrl = getSafeUrlSummary(data.url)
-        if (
-          browserUrl.redirectTo?.startsWith("http") &&
-          browserUrl.redirectTo !== "https://driftapp.me/auth/callback?native=1&next=%2F"
-        ) {
+        if (browserUrl.redirectTo?.startsWith("http")) {
           throw new Error("Native OAuth tried to open a web redirect.")
         }
         console.info("[Drift OAuth] Browser.open URL", {
