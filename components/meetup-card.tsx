@@ -2,11 +2,23 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users, Sparkles } from "lucide-react"
+import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users, Sparkles, Trash2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import { useSavedMeetups, useSaveMeetup, useJoinMeetup, useUserMeetups } from "@/hooks/use-saved-meetups"
+import { useDeleteMeetup } from "@/hooks/use-meetups"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation, useSendMessage } from "@/hooks/use-messages"
@@ -83,6 +95,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   const { savedMeetupIds } = useSavedMeetups({ enabled: loadUserState })
   const { saveMeetup, unsaveMeetup } = useSaveMeetup()
   const { joinMeetup, leaveMeetup } = useJoinMeetup()
+  const { deleteMeetup } = useDeleteMeetup()
   const { joinedMeetups } = useUserMeetups({ enabled: loadUserState })
   const { toast } = useToast()
   const { startConversation } = useCreateConversation()
@@ -90,6 +103,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   
   const [savingLike, setSavingLike] = useState(false)
   const [joiningMeetup, setJoiningMeetup] = useState(false)
+  const [deletingMeetup, setDeletingMeetup] = useState(false)
   
   const isLiked = savedMeetupIds.includes(meetup.id)
   const isJoined = joinedMeetups.some(m => m.meetup_id === meetup.id)
@@ -151,6 +165,23 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
       toast({ title: "Something went wrong", description: e?.message ?? (error instanceof Error ? error.message : "Please try again."), variant: "destructive" })
     } finally {
       setJoiningMeetup(false)
+    }
+  }
+
+  const handleDeleteMeetup = async () => {
+    if (!user || !isCreator) return
+    setDeletingMeetup(true)
+    try {
+      await deleteMeetup(meetup.id)
+      toast({ title: "Meetup deleted", description: `"${meetup.title}" has been removed.` })
+    } catch (error) {
+      toast({
+        title: "Could not delete meetup",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeletingMeetup(false)
     }
   }
 
@@ -277,9 +308,45 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
           </div>
           
           {isCreator ? (
-            <div className="flex shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/[0.06] text-muted-foreground text-sm font-medium">
-              <Users className="w-4 h-4" />
-              <span>Your meetup</span>
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/[0.06] text-muted-foreground text-sm font-medium">
+                <Users className="w-4 h-4" />
+                <span>Your meetup</span>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={deletingMeetup}
+                    className="flex h-9 items-center gap-1.5 rounded-full border border-destructive/25 bg-destructive/10 px-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/15 disabled:opacity-50"
+                  >
+                    {deletingMeetup ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    <span>Delete Meetup</span>
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-3xl border-border/70 bg-card">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete meetup?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove this meetup. This can&apos;t be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deletingMeetup}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteMeetup}
+                      disabled={deletingMeetup}
+                      className="bg-destructive text-white hover:bg-destructive/90"
+                    >
+                      {deletingMeetup ? "Deleting..." : "Delete Meetup"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           ) : isJoined ? (
             <button 

@@ -1,6 +1,6 @@
 "use client"
 
-import useSWR from "swr"
+import useSWR, { mutate } from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { MeetupWithCreator } from "@/lib/types"
 import { getRandomMeetupCoverImage } from "@/lib/meetup-cover-images"
@@ -121,6 +121,38 @@ export function useCreateMeetup() {
   }
 
   return { createMeetup }
+}
+
+export function useDeleteMeetup() {
+  const deleteMeetup = async (meetupId: string) => {
+    const supabase = createClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session?.access_token) throw new Error("Please sign in to delete this meetup.")
+
+    const response = await fetch(`/api/meetups/${meetupId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(data.error ?? "Could not delete meetup")
+    }
+
+    await Promise.all([
+      mutate("meetups"),
+      mutate("saved-meetups"),
+      mutate("saved-meetups-details"),
+      mutate("user-meetups"),
+    ])
+  }
+
+  return { deleteMeetup }
 }
 
 export function usePastMeetupActivity(userId: string | null) {
