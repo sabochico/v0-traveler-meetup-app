@@ -115,6 +115,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   const categoryGradient = CATEGORY_GRADIENTS[meetup.category] ?? CATEGORY_GRADIENTS.coffee
   const categoryLabel = CATEGORY_LABELS[meetup.category] ?? meetup.category
   const attendeeCount = meetup.attendee_count ?? meetup.attendees?.length ?? 0
+  const isFull = attendeeCount >= meetup.max_attendees
   const cardImageUrl = getOptimizedMeetupCoverImage(meetup.cover_image_url) ?? getMeetupCoverImage(meetup.category, meetup.id)
   const lifecycleLabel = getMeetupLifecycleLabel(meetup)
   const [imageFailed, setImageFailed] = useState(false)
@@ -298,7 +299,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1">
             <Users className="w-3.5 h-3.5 text-primary" />
-            {attendeeCount}/{meetup.max_attendees} going
+            {isFull ? "Full" : `${attendeeCount}/${meetup.max_attendees} Joined`}
           </span>
         </div>
 
@@ -368,7 +369,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
           ) : (
             <button 
               onClick={handleJoinToggle}
-              disabled={joiningMeetup || !user}
+              disabled={joiningMeetup || !user || isFull}
               className="flex shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium transition-opacity hover:opacity-95 disabled:opacity-50"
             >
               {joiningMeetup ? (
@@ -376,7 +377,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
               ) : (
                 <MessageCircle className="w-4 h-4" />
               )}
-              <span>Join</span>
+              <span>{isFull ? "Full" : "Join"}</span>
             </button>
           )}
         </div>

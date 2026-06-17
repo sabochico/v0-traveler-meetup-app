@@ -113,6 +113,7 @@ export function useSavedMeetupsWithDetails(options: FetchOptions = {}) {
           max_attendees,
           is_active,
           creator_id,
+          attendees:meetup_attendees(*),
           profiles:creator_id (
             id,
             display_name,
@@ -171,6 +172,25 @@ export function useJoinMeetup() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
+    const { data: meetup, error: meetupError } = await supabase
+      .from("meetups")
+      .select("max_attendees")
+      .eq("id", meetupId)
+      .maybeSingle()
+
+    if (meetupError) throw meetupError
+
+    const { count, error: countError } = await supabase
+      .from("meetup_attendees")
+      .select("id", { count: "exact", head: true })
+      .eq("meetup_id", meetupId)
+
+    if (countError) throw countError
+    const maxAttendees = (meetup as { max_attendees?: number } | null)?.max_attendees
+    if (maxAttendees && (count ?? 0) >= maxAttendees) {
+      throw new Error("This meetup is full")
+    }
+
     const { error } = await supabase
       .from("meetup_attendees")
       .insert([{ 
@@ -187,6 +207,7 @@ export function useJoinMeetup() {
     }
 
     mutate("meetups")
+    mutate("saved-meetups-details")
     mutate("user-meetups")
   }
 
@@ -204,6 +225,7 @@ export function useJoinMeetup() {
     if (error) throw error
 
     mutate("meetups")
+    mutate("saved-meetups-details")
     mutate("user-meetups")
   }
 

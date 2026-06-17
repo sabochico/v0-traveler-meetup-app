@@ -40,6 +40,8 @@ const TIME_OPTIONS = [
   { label: "Tomorrow", value: 24 },
 ]
 
+const CAPACITY_OPTIONS = [1, 2, 4, 6, 8, 12, 20]
+
 function formatCityLabel(s: CityResult): string {
   return `${s.name}, ${s.country}`
 }
@@ -49,6 +51,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const [title, setTitle] = useState("")
   const [location, setLocation] = useState("")
   const [selectedTime, setSelectedTime] = useState<number>(0)
+  const [capacity, setCapacity] = useState(4)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
@@ -188,6 +191,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
         country: cityData?.country,
         latitude: cityData?.latitude,
         longitude: cityData?.longitude,
+        max_attendees: capacity,
         starts_at: startsAt.toISOString(),
         cover_image_url: coverImageUrl,
       })
@@ -197,6 +201,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
       setTitle("")
       setLocation("")
       setSelectedTime(0)
+      setCapacity(4)
       setCityData(null)
       setCoverFile(null)
       setCoverPreviewUrl(null)
@@ -240,6 +245,28 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
                 >
                   <type.icon className="w-5 h-5" />
                   <span className="text-[10px] font-medium text-center leading-tight">{type.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Capacity */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-foreground">Group size</label>
+            <div className="flex flex-wrap gap-2">
+              {CAPACITY_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setCapacity(option)}
+                  className={cn(
+                    "min-h-11 rounded-full px-4 text-sm font-medium transition-colors",
+                    capacity === option
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  )}
+                >
+                  {option === 1 ? "1-on-1" : option}
                 </button>
               ))}
             </div>

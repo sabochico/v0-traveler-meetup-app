@@ -39,6 +39,7 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
       is_active,
       created_at,
       updated_at,
+      attendees:meetup_attendees(*),
       creator:profiles!creator_id(
         id,
         display_name,
@@ -80,6 +81,7 @@ export function useCreateMeetup() {
     country?: string
     latitude?: number
     longitude?: number
+    max_attendees?: number
     starts_at: string
     cover_image_url?: string | null
   }) => {
