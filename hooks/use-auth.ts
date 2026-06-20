@@ -32,6 +32,14 @@ export function useAuth() {
 
   const signOut = async () => {
     const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      await supabase.from("push_tokens" as never).delete().eq("user_id", user.id)
+    }
+
     await supabase.auth.signOut()
     clearCachedProfile()
     await mutate(null)

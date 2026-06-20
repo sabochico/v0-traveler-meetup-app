@@ -313,6 +313,36 @@ export interface Database {
           created_at?: string
         }
       }
+      push_tokens: {
+        Row: {
+          id: string
+          user_id: string
+          platform: string
+          token: string
+          enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          platform?: string
+          token: string
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          platform?: string
+          token?: string
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_blocks: {
         Row: {
           id: string

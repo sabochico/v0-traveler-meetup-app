@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/theme-provider'
 import { NativeOAuthListener } from '@/components/native-oauth-listener'
+import { PushNotificationRegistrar } from '@/components/push-notification-registrar'
 import { StartupSplashHaptic } from '@/components/startup-splash-haptic'
 import Script from 'next/script'
 import './globals.css'
@@ -111,6 +112,7 @@ export default function RootLayout({
         `}</Script>
         <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
           <NativeOAuthListener />
+          <PushNotificationRegistrar />
           {children}
           <Toaster />
         </ThemeProvider>
