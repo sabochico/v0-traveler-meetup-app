@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import Link from "next/link"
-import { Search, ArrowLeft, Send, Loader2, MapPin, Plane, Globe, Sparkles } from "lucide-react"
+import { Search, ArrowLeft, Send, Loader2, MapPin, Plane, Globe, Sparkles, MessageCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { useConversations, useMessages, useSendMessage, Conversation } from "@/hooks/use-messages"
 import { formatDistanceToNow } from "@/lib/utils"
 import { cn } from "@/lib/utils"
@@ -14,7 +15,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { motionEase, quickTransition } from "@/lib/motion"
 import { getPresenceStatus } from "@/lib/presence"
 
-const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_SHOW_MOCK_DATA === "true"
 
 // Mock conversations shown in development when user has no real conversations yet.
 const MOCK_CONVERSATIONS = [
@@ -132,9 +133,10 @@ function MessageSkeleton() {
 
 interface MessagesViewProps {
   initialConversationId?: string
+  onBrowsePeople?: () => void
 }
 
-export function MessagesView({ initialConversationId }: MessagesViewProps) {
+export function MessagesView({ initialConversationId, onBrowsePeople }: MessagesViewProps) {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const prefersReducedMotion = useReducedMotion()
@@ -220,14 +222,33 @@ export function MessagesView({ initialConversationId }: MessagesViewProps) {
       ) : (
         <div className="max-w-lg mx-auto divide-y divide-border/50">
           {filteredConversations.length === 0 ? (
-            <div className="text-center py-12 px-4">
-              <p className="text-muted-foreground">
-                {searchQuery ? "No conversations found" : "No conversations yet"}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {searchQuery ? "Try a different name." : "Say hi to someone on Discover to start chatting."}
-              </p>
-            </div>
+            <Empty className="mx-4 my-8 rounded-3xl border border-border/60 bg-card/70 px-5 py-12">
+              <EmptyHeader>
+                <EmptyMedia variant="icon" className="h-14 w-14 rounded-2xl bg-primary/10 text-primary">
+                  <MessageCircle className="h-6 w-6" />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {searchQuery ? "No conversations found" : "Start your first chat"}
+                </EmptyTitle>
+                <EmptyDescription className="max-w-[18rem]">
+                  {searchQuery
+                    ? "Try searching by another name."
+                    : "Find someone nearby, say hi, or join a meetup to open a conversation."}
+                </EmptyDescription>
+              </EmptyHeader>
+              {!searchQuery && onBrowsePeople && (
+                <EmptyContent>
+                  <button
+                    type="button"
+                    onClick={onBrowsePeople}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Browse people
+                  </button>
+                </EmptyContent>
+              )}
+            </Empty>
           ) : (
             filteredConversations.map((conversation, index) => {
               const presence = getPresenceStatus(conversation.other_user)

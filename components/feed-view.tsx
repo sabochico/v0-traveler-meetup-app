@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { MeetupCard } from "./meetup-card"
 import { CategorySelector, type CategorySelectorOption } from "./category-selector"
 import { MoodStatus } from "./mood-status"
@@ -163,7 +164,7 @@ const CONFETTI_COLORS = [
   "#8b5cf6","#ef4444","#06b6d4","#f97316",
 ]
 
-const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production"
+const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_SHOW_MOCK_DATA === "true"
 const MOCK_PROFILE_META = {
   notification_preferences: DEFAULT_NOTIFICATION_PREFERENCES,
   profile_photos: [],
@@ -600,27 +601,37 @@ function SwipeFeed({ meetups, isLoading, onSaveMeetup }: SwipeFeedProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="px-4 py-8">
+        <div className="mx-auto max-w-lg rounded-3xl border border-border/60 bg-card/70 p-5">
+          <div className="h-[360px] animate-pulse rounded-3xl bg-secondary/80" />
+          <div className="mt-4 space-y-2">
+            <div className="h-4 w-2/3 animate-pulse rounded-full bg-secondary" />
+            <div className="h-3 w-1/2 animate-pulse rounded-full bg-secondary/70" />
+          </div>
+        </div>
       </div>
     )
   }
 
   if (allSwiped || meetups.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-8">
-        <Sparkles className="w-12 h-12 text-primary" />
-        <h3 className="text-xl font-serif font-semibold text-foreground">You&apos;re all caught up</h3>
-        <p className="text-sm text-muted-foreground max-w-xs">
-          No nearby meetups right now. Check Discover for other cities or create your own.
-        </p>
+      <Empty className="mx-4 my-8 rounded-3xl border border-border/60 bg-card/70 px-6 py-14">
+        <EmptyHeader>
+          <EmptyMedia variant="icon" className="h-14 w-14 rounded-2xl bg-primary/10 text-primary">
+            <Sparkles className="h-6 w-6" />
+          </EmptyMedia>
+          <EmptyTitle>You&apos;re all caught up</EmptyTitle>
+          <EmptyDescription className="max-w-xs">
+            No nearby meetups right now. Browse other cities or create your own plan.
+          </EmptyDescription>
+        </EmptyHeader>
         <button
           onClick={() => setCurrentIndex(0)}
-          className="mt-2 px-8 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium"
+          className="mt-1 min-h-11 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground"
         >
           Start over
         </button>
-      </div>
+      </Empty>
     )
   }
 
@@ -889,10 +900,12 @@ function TodayHome({
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : soonMeetups.length === 0 ? (
-          <div className="rounded-3xl border border-border/60 bg-card/70 p-5 text-center">
-            <p className="text-sm font-medium text-foreground">No nearby meetups right now</p>
-            <p className="text-xs text-muted-foreground mt-1">Create one or browse Discover for other cities.</p>
-          </div>
+          <Empty className="rounded-3xl border border-border/60 bg-card/70 p-5">
+            <EmptyHeader className="gap-1">
+              <EmptyTitle className="text-sm">No nearby meetups right now</EmptyTitle>
+              <EmptyDescription className="text-xs">Create one or browse Discover for other cities.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="space-y-4">
             {soonMeetups.map((meetup) => (
@@ -922,11 +935,15 @@ function TodayHome({
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
           </div>
         ) : savedMeetups.length === 0 ? (
-          <div className="rounded-3xl border border-border/60 bg-card/70 p-5 text-center">
-            <Heart className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-            <p className="text-sm font-medium text-foreground">No saved plans yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Save meetups from Today or Discover to come back to them.</p>
-          </div>
+          <Empty className="rounded-3xl border border-border/60 bg-card/70 p-5">
+            <EmptyHeader className="gap-1">
+              <EmptyMedia variant="default" className="mb-1 text-muted-foreground/40">
+                <Heart className="h-8 w-8" />
+              </EmptyMedia>
+              <EmptyTitle className="text-sm">No saved plans yet</EmptyTitle>
+              <EmptyDescription className="text-xs">Save meetups from Today or Discover to come back to them.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="space-y-4">
             {savedMeetups.slice(0, 2).map((meetup) => (
@@ -1150,13 +1167,15 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : savedMeetups.length === 0 ? (
-              <div className="text-center py-16 px-8">
-                <Heart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground font-medium">No saved meetups yet</p>
-                <p className="text-sm text-muted-foreground/60 mt-1">
-                  Save meetups from Today or Discover to keep them here.
-                </p>
-              </div>
+              <Empty className="mx-4 my-8 rounded-3xl border border-border/60 bg-card/70 px-6 py-14">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon" className="h-14 w-14 rounded-2xl bg-primary/10 text-primary">
+                    <Heart className="h-6 w-6" />
+                  </EmptyMedia>
+                  <EmptyTitle>No saved meetups yet</EmptyTitle>
+                  <EmptyDescription>Save meetups from Today or Discover to keep them here.</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             ) : (
               <div className="px-4 py-6 space-y-6">
                 {savedMeetups.map((meetup) => (

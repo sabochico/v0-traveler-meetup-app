@@ -6,6 +6,7 @@ import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-rea
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { MeetupCard } from "./meetup-card"
 import { CategorySelector, type CategorySelectorOption } from "./category-selector"
 import { useNearbyProfiles } from "@/hooks/use-profile"
@@ -304,26 +305,32 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
         meetupsLoading ? (
           <MeetupFeedSkeleton />
         ) : filteredMeetups.length === 0 ? (
-          <div className="mx-auto max-w-lg px-4 py-12 pb-[calc(8rem+env(safe-area-inset-bottom))] text-center space-y-2">
-            <p className="text-muted-foreground">
+          <Empty className="mx-4 my-8 rounded-3xl border border-border/60 bg-card/70 px-6 py-14 pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+            <EmptyHeader>
+              <EmptyMedia variant="icon" className="h-14 w-14 rounded-2xl bg-primary/10 text-primary">
+                <Globe className="h-6 w-6" />
+              </EmptyMedia>
+              <EmptyTitle>No meetups found</EmptyTitle>
+              <EmptyDescription className="max-w-xs">
               {searchQuery
                 ? "No meetups match your search."
                 : activeCityFilter !== ALL_CITIES_FILTER
                 ? `No meetups in ${activeCityFilter} yet.`
                 : "No meetups yet worldwide. Be the first to create one!"}
-            </p>
+              </EmptyDescription>
+            </EmptyHeader>
             {(activeCityFilter !== ALL_CITIES_FILTER || searchQuery) && (
               <button
                 onClick={() => {
                   setCityFilter(ALL_CITIES_FILTER)
                   setSearchQuery("")
                 }}
-                className="text-sm text-primary hover:underline"
+                className="min-h-11 rounded-full bg-primary/10 px-5 text-sm font-semibold text-primary"
               >
                 Clear filters
               </button>
             )}
-          </div>
+          </Empty>
         ) : (
           <div className="max-w-lg mx-auto px-4 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom))] space-y-5">
             {filteredMeetups.map((meetup, index) => (
@@ -334,20 +341,29 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
           </div>
         )
       ) : profilesLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <div className="mx-auto max-w-lg px-4 py-8">
+          <div className="space-y-3">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="h-20 animate-pulse rounded-3xl border border-border/50 bg-card/70" />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="max-w-lg mx-auto px-4 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom))] space-y-4">
           {filteredProfiles.length === 0 ? (
-            <div className="rounded-3xl border border-border/60 bg-card/70 p-6 text-center">
-              <p className="text-sm font-medium text-foreground">
+            <Empty className="rounded-3xl border border-border/60 bg-card/70 p-6">
+              <EmptyHeader className="gap-1">
+                <EmptyMedia variant="icon" className="h-12 w-12 rounded-2xl bg-primary/10 text-primary">
+                  <MessageCircle className="h-5 w-5" />
+                </EmptyMedia>
+                <EmptyTitle className="text-sm">
                 {searchQuery ? "No people found" : "No people to show yet"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
+                </EmptyTitle>
+                <EmptyDescription className="text-xs">
                 {searchQuery ? "Try another name, interest, or language." : "Invite friends or check back as more people join Drift."}
-              </p>
-            </div>
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             filteredProfiles.map((person) => (
               <PersonCard key={person.id} person={person} isMock={isMockData} />

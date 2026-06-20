@@ -123,7 +123,7 @@ export default function Home() {
           <section className={activeTab === "messages" ? "block" : "hidden"} aria-hidden={activeTab !== "messages"}>
             <ErrorBoundary title="Messages">
               {isAuthenticated
-                ? <MessagesView initialConversationId={pendingConversationId} />
+                ? <MessagesView initialConversationId={pendingConversationId} onBrowsePeople={() => setActiveTab("discover")} />
                 : <AuthPrompt message="Sign in to see your messages" />
               }
             </ErrorBoundary>
