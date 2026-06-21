@@ -51,6 +51,10 @@ export interface Database {
           travel_mode: boolean
           is_online: boolean
           anonymous_mode: boolean
+          is_hidden_from_discovery: boolean
+          banned_at: string | null
+          banned_by: string | null
+          ban_reason: string | null
           current_city: string | null
           current_region: string | null
           current_country: string | null
@@ -78,6 +82,10 @@ export interface Database {
           travel_mode?: boolean
           is_online?: boolean
           anonymous_mode?: boolean
+          is_hidden_from_discovery?: boolean
+          banned_at?: string | null
+          banned_by?: string | null
+          ban_reason?: string | null
           current_city?: string | null
           current_region?: string | null
           current_country?: string | null
@@ -105,6 +113,10 @@ export interface Database {
           travel_mode?: boolean
           is_online?: boolean
           anonymous_mode?: boolean
+          is_hidden_from_discovery?: boolean
+          banned_at?: string | null
+          banned_by?: string | null
+          ban_reason?: string | null
           current_city?: string | null
           current_region?: string | null
           current_country?: string | null

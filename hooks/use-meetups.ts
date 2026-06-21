@@ -45,7 +45,9 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
         display_name,
         avatar_url,
         mood,
-        languages
+        languages,
+        is_hidden_from_discovery,
+        banned_at
       )
     `)
     .eq("is_active", true)
@@ -54,7 +56,11 @@ const fetcher = async (): Promise<MeetupWithCreator[]> => {
     .limit(20)
 
   if (error) throw error
-  return (data as MeetupWithCreator[]).filter(isMeetupDiscoverable)
+  return (data as MeetupWithCreator[]).filter((meetup) =>
+    isMeetupDiscoverable(meetup) &&
+    !meetup.creator?.is_hidden_from_discovery &&
+    !meetup.creator?.banned_at
+  )
 }
 
 export function useMeetups() {

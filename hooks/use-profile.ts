@@ -26,6 +26,10 @@ const createFallbackProfile = (id: string): Profile => {
     travel_mode: false,
     is_online: true,
     anonymous_mode: false,
+    is_hidden_from_discovery: false,
+    banned_at: null,
+    banned_by: null,
+    ban_reason: null,
     current_city: null,
     current_region: null,
     current_country: null,
@@ -215,6 +219,8 @@ const nearbyFetcher = async ({ userId, currentCity, currentCountry }: NearbyFetc
     .select("*")
     .neq("id", userId)
     .eq("anonymous_mode", false)
+    .eq("is_hidden_from_discovery", false)
+    .is("banned_at", null)
     .eq("travel_mode", true)
     .ilike("current_city", currentCity)
     .order("last_seen_at", { ascending: false })

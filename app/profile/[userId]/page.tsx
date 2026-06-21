@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Flag,
   Ban,
+  ShieldAlert,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -30,6 +31,8 @@ import { useUserSafety } from "@/hooks/use-user-safety"
 import { cn } from "@/lib/utils"
 import { getProfileCompletionScore } from "@/lib/profile-completion"
 import { getPresenceStatus } from "@/lib/presence"
+import { isAdminEmail } from "@/lib/admin"
+import { createClient } from "@/lib/supabase/client"
 import { Capacitor } from "@capacitor/core"
 import { Haptics, ImpactStyle } from "@capacitor/haptics"
 
@@ -87,6 +90,13 @@ const REPORT_REASONS = [
   "Other",
 ]
 
+type AdminReport = {
+  id: string
+  reason: string
+  details: string | null
+  created_at: string
+}
+
 export default function PublicProfilePage({
   params,
 }: {
@@ -106,6 +116,9 @@ export default function PublicProfilePage({
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0])
   const [reportDetails, setReportDetails] = useState("")
   const [safetyLoading, setSafetyLoading] = useState(false)
+  const [adminLoading, setAdminLoading] = useState(false)
+  const [adminReports, setAdminReports] = useState<AdminReport[]>([])
+  const [adminHiddenOverride, setAdminHiddenOverride] = useState<boolean | null>(null)
   const [activePhotoIndex, setActivePhotoIndex] = useState(0)
   const [brokenPhotoUrls, setBrokenPhotoUrls] = useState<Set<string>>(() => new Set())
   const preloadedPhotoUrls = useRef<Set<string>>(new Set())
@@ -117,6 +130,8 @@ export default function PublicProfilePage({
   const initial = displayName[0]?.toUpperCase() ?? "U"
   const instagramUsername = profile?.instagram_handle?.replace(/^@/, "")
   const canUseSafetyActions = isAuthenticated && Boolean(user) && user?.id !== profile?.id
+  const isAdmin = isAdminEmail(user?.email)
+  const isHiddenFromDiscovery = adminHiddenOverride ?? Boolean(profile?.is_hidden_from_discovery || profile?.banned_at)
   const profilePhotos = useMemo(
     () => Array.from(new Set([...(profile?.profile_photos ?? []), profile?.avatar_url].filter(Boolean) as string[])),
     [profile?.avatar_url, profile?.profile_photos]
@@ -135,6 +150,31 @@ export default function PublicProfilePage({
       void image.decode?.().catch(() => {})
     })
   }, [visiblePhotos])
+
+  useEffect(() => {
+    if (!isAdmin || !profile?.id) return
+
+    let cancelled = false
+    const loadAdminData = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+
+      const response = await fetch(`/api/admin/users/${profile.id}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      if (!response.ok) return
+      const data = await response.json()
+      if (!cancelled) {
+        setAdminReports(data.reports ?? [])
+      }
+    }
+
+    void loadAdminData()
+    return () => {
+      cancelled = true
+    }
+  }, [isAdmin, profile?.id])
 
   const location =
     [profile?.current_city, profile?.current_country].filter(Boolean).join(", ") ||
@@ -239,6 +279,52 @@ export default function PublicProfilePage({
     }
   }
 
+  const handleAdminToggleHidden = async () => {
+    if (!profile?.id || !isAdmin) return
+
+    const nextHidden = !isHiddenFromDiscovery
+    const message = nextHidden
+      ? "Hide this user from Drift discovery?"
+      : "Restore this user to Drift discovery?"
+    if (!confirm(message)) return
+
+    try {
+      setAdminLoading(true)
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error("Not authenticated")
+
+      const response = await fetch(`/api/admin/users/${profile.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          hidden: nextHidden,
+          reason: nextHidden ? "Launch safety moderation" : null,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error ?? "Could not update user")
+
+      toast({
+        title: nextHidden ? "User hidden from discovery" : "User restored",
+        description: nextHidden ? "They will no longer appear in People or meetup discovery." : "They can appear in discovery again.",
+      })
+      setAdminHiddenOverride(nextHidden)
+      router.refresh()
+    } catch (error) {
+      toast({
+        title: "Admin action failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setAdminLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background film-grain">
       {isLoading ? (
@@ -337,6 +423,16 @@ export default function PublicProfilePage({
 
                 {canUseSafetyActions && (
                   <div className="flex gap-2">
+                    {isAdmin && (
+                      <button
+                        onClick={handleAdminToggleHidden}
+                        disabled={adminLoading}
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-amber-400/25 bg-amber-500/18 text-amber-100 backdrop-blur-xl transition active:scale-95 disabled:opacity-60"
+                        aria-label={isHiddenFromDiscovery ? "Restore user to discovery" : "Hide user from discovery"}
+                      >
+                        {adminLoading ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <ShieldAlert className="h-[18px] w-[18px]" />}
+                      </button>
+                    )}
                     <button
                       onClick={() => setShowReportModal(true)}
                       disabled={safetyLoading}
@@ -494,6 +590,37 @@ export default function PublicProfilePage({
                 <Instagram className="w-4 h-4" />
                 <span>@{instagramUsername}</span>
               </a>
+            </section>
+          )}
+
+          {isAdmin && (
+            <section className="rounded-[1.75rem] border border-amber-400/25 bg-amber-500/8 p-5">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold tracking-[-0.01em] text-amber-200">
+                <ShieldAlert className="h-5 w-5" />
+                Admin moderation
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Discovery status: {isHiddenFromDiscovery ? "Hidden" : "Visible"}
+              </p>
+              {profile.ban_reason && (
+                <p className="mt-1 text-xs text-muted-foreground">Reason: {profile.ban_reason}</p>
+              )}
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-semibold text-foreground">Reports ({adminReports.length})</p>
+                {adminReports.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No reports for this user.</p>
+                ) : (
+                  adminReports.map((report) => (
+                    <div key={report.id} className="rounded-2xl border border-border/50 bg-background/40 p-3">
+                      <p className="text-xs font-medium text-foreground">{report.reason}</p>
+                      {report.details && <p className="mt-1 text-xs text-muted-foreground">{report.details}</p>}
+                      <p className="mt-1 text-[11px] text-muted-foreground/70">
+                        {new Date(report.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
             </section>
           )}
 
