@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import useSWR, { mutate as globalMutate } from "swr"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
@@ -88,6 +88,7 @@ export interface Message {
 const EMPTY_CONVERSATIONS: Conversation[] = []
 const EMPTY_MESSAGES: Message[] = []
 const SWR_OPTIONS = { keepPreviousData: true }
+const MESSAGE_PAGE_SIZE = 50
 
 type ConversationIdRow = { conversation_id: string }
 type ConversationRow = Pick<Conversation, "id" | "meetup_id" | "created_at" | "updated_at">
@@ -252,24 +253,43 @@ export function useConversations() {
   }
 }
 
-const messagesFetcher = async (conversationId: string): Promise<Message[]> => {
+const fetchMessagesPage = async (conversationId: string, beforeCreatedAt?: string): Promise<Message[]> => {
   const supabase = createClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from("messages")
     .select("*")
     .eq("conversation_id", conversationId)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(MESSAGE_PAGE_SIZE)
+
+  if (beforeCreatedAt) {
+    query = query.lt("created_at", beforeCreatedAt)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
-  return data ?? []
+  return ((data ?? []) as Message[]).reverse()
 }
 
 export function useMessages(conversationId: string | null) {
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false)
+  const [hasOlderMessages, setHasOlderMessages] = useState(true)
   const swrKey = conversationId ? `messages-${conversationId}` : null
   const { data, error, isLoading, mutate } = useSWR(
     swrKey,
-    () => conversationId ? messagesFetcher(conversationId) : Promise.resolve([])
+    () => conversationId ? fetchMessagesPage(conversationId) : Promise.resolve([])
   )
+
+  useEffect(() => {
+    setHasOlderMessages(true)
+  }, [conversationId])
+
+  useEffect(() => {
+    if (data && data.length < MESSAGE_PAGE_SIZE) {
+      setHasOlderMessages(false)
+    }
+  }, [data])
 
   useEffect(() => {
     if (!conversationId) return
@@ -304,11 +324,38 @@ export function useMessages(conversationId: string | null) {
     }
   }, [conversationId, mutate])
 
+  const loadOlderMessages = useCallback(async () => {
+    if (!conversationId || isLoadingOlder || !hasOlderMessages || !data?.length) return
+
+    setIsLoadingOlder(true)
+    try {
+      const oldestMessage = data[0]
+      const olderMessages = await fetchMessagesPage(conversationId, oldestMessage.created_at)
+      setHasOlderMessages(olderMessages.length === MESSAGE_PAGE_SIZE)
+
+      if (olderMessages.length === 0) return
+
+      await mutate(
+        (current = EMPTY_MESSAGES) => {
+          const existingIds = new Set(current.map((message) => message.id))
+          const uniqueOlderMessages = olderMessages.filter((message) => !existingIds.has(message.id))
+          return [...uniqueOlderMessages, ...current]
+        },
+        { revalidate: false }
+      )
+    } finally {
+      setIsLoadingOlder(false)
+    }
+  }, [conversationId, data, hasOlderMessages, isLoadingOlder, mutate])
+
   return {
     messages: data ?? EMPTY_MESSAGES,
     isLoading,
     error,
     refresh: mutate,
+    hasOlderMessages,
+    isLoadingOlder,
+    loadOlderMessages,
   }
 }
 

@@ -333,9 +333,11 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
   }>>([])
   const [keyboardOffset, setKeyboardOffset] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesScrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const preserveScrollAfterOlderRef = useRef<{ beforeHeight: number; beforeTop: number } | null>(null)
   const prefersReducedMotion = useReducedMotion()
-  const { messages, isLoading } = useMessages(isMock ? null : conversation.id)
+  const { messages, isLoading, hasOlderMessages, isLoadingOlder, loadOlderMessages } = useMessages(isMock ? null : conversation.id)
   const { sendMessage, markAsRead } = useSendMessage()
   const { toast } = useToast()
   const otherUser = conversation.other_user
@@ -397,6 +399,18 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
 
   // Scroll to bottom on new messages
   useEffect(() => {
+    const preserveScroll = preserveScrollAfterOlderRef.current
+    if (preserveScroll) {
+      requestAnimationFrame(() => {
+        const scrollElement = messagesScrollRef.current
+        if (scrollElement) {
+          scrollElement.scrollTop = scrollElement.scrollHeight - preserveScroll.beforeHeight + preserveScroll.beforeTop
+        }
+        preserveScrollAfterOlderRef.current = null
+      })
+      return
+    }
+
     scrollToBottom(prefersReducedMotion ? "auto" : "smooth")
   }, [localMessages.length, prefersReducedMotion, scrollToBottom])
 
@@ -492,6 +506,18 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
     })
   }
 
+  const handleMessagesScroll = async () => {
+    const scrollElement = messagesScrollRef.current
+    if (!scrollElement || isMock || isLoadingOlder || !hasOlderMessages || localMessages.length === 0) return
+    if (scrollElement.scrollTop > 120) return
+
+    preserveScrollAfterOlderRef.current = {
+      beforeHeight: scrollElement.scrollHeight,
+      beforeTop: scrollElement.scrollTop,
+    }
+    await loadOlderMessages()
+  }
+
   return (
     <div className="min-h-[100dvh] flex flex-col">
       {/* Header */}
@@ -554,10 +580,18 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
 
       {/* Messages */}
       <div
+        ref={messagesScrollRef}
+        onScroll={handleMessagesScroll}
         className="flex-1 overflow-y-auto overscroll-contain"
         style={{ scrollPaddingBottom: scrollBottomPadding }}
       >
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4" style={{ paddingBottom: scrollBottomPadding }}>
+          {isLoadingOlder && (
+            <div className="flex justify-center py-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            </div>
+          )}
+
           <motion.div
             className="rounded-3xl border border-border/60 bg-card/70 p-4"
             initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
