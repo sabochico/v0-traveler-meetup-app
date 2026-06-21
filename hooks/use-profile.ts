@@ -8,6 +8,7 @@ import { getCachedProfile, setCachedProfile } from "@/lib/profile-cache"
 import { getPresenceStatus } from "@/lib/presence"
 import { assertFieldsAreSafe, cleanUserText } from "@/lib/text-moderation"
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notification-preferences"
+import { hasLocationValue, normalizeLocationValue } from "@/lib/city-matching"
 
 const SWR_OPTIONS = { keepPreviousData: true }
 
@@ -215,12 +216,12 @@ const nearbyFetcher = async ({ userId, currentCity, currentCountry }: NearbyFetc
     .neq("id", userId)
     .eq("anonymous_mode", false)
     .eq("travel_mode", true)
-    .eq("current_city", currentCity)
+    .ilike("current_city", currentCity)
     .order("last_seen_at", { ascending: false })
     .limit(20)
 
   if (currentCountry) {
-    query = query.eq("current_country", currentCountry)
+    query = query.ilike("current_country", currentCountry)
   }
 
   const { data, error } = await query
@@ -236,8 +237,8 @@ const nearbyFetcher = async ({ userId, currentCity, currentCountry }: NearbyFetc
 export function useNearbyProfiles(options: UseProfileOptions = {}) {
   const enabled = options.enabled ?? true
   const { profile, isLoading: profileLoading } = useProfile({ enabled })
-  const currentCity = profile?.current_city?.trim()
-  const currentCountry = profile?.current_country?.trim()
+  const currentCity = normalizeLocationValue(profile?.current_city)
+  const currentCountry = normalizeLocationValue(profile?.current_country)
   const nearbyKey = enabled && profile?.id && currentCity
     ? ["nearby-profiles", profile.id, currentCity, currentCountry ?? ""] as const
     : null
@@ -280,5 +281,9 @@ export function useNearbyProfiles(options: UseProfileOptions = {}) {
     isLoading: enabled && profileLoading ? true : isLoading,
     error,
     refresh: mutate,
+    currentCity: profile?.current_city?.trim() ?? null,
+    currentCountry: profile?.current_country?.trim() ?? null,
+    hasCurrentCity: hasLocationValue(profile?.current_city),
+    needsLocation: enabled && !profileLoading && Boolean(profile?.id) && !hasLocationValue(profile?.current_city),
   }
 }

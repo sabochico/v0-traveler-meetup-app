@@ -19,6 +19,7 @@ import type { Profile, MoodStatus } from "@/lib/types"
 import { getProfileCompletionScore } from "@/lib/profile-completion"
 import { getPresenceStatus } from "@/lib/presence"
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notification-preferences"
+import { normalizeLocationValue, sameCity } from "@/lib/city-matching"
 
 const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   social: { color: "bg-emerald-500", label: "Feeling social" },
@@ -29,10 +30,6 @@ const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
 
 const SHOW_MOCK_DATA = process.env.NEXT_PUBLIC_SHOW_MOCK_DATA === "true"
 const ALL_CITIES_FILTER = "all"
-
-function normalizeCity(city: string | null | undefined) {
-  return (city ?? "").trim().toLowerCase()
-}
 
 const MOCK_PROFILE_META = {
   notification_preferences: DEFAULT_NOTIFICATION_PREFERENCES,
@@ -139,7 +136,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const [activeTab, setActiveTab] = useState<"meetups" | "people">("meetups")
   const [searchQuery, setSearchQuery] = useState("")
   const [cityFilter, setCityFilter] = useState(ALL_CITIES_FILTER)
-  const { profiles, isLoading: profilesLoading } = useNearbyProfiles({ enabled: activeTab === "people" })
+  const { profiles, isLoading: profilesLoading, needsLocation } = useNearbyProfiles({ enabled: activeTab === "people" })
   const { meetups, isLoading: meetupsLoading } = useMeetups()
   const { blockedUserIdSet } = useBlockedUsers()
 
@@ -167,7 +164,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
       const cityByKey = new Map<string, string>()
       sortedMeetups.forEach((meetup) => {
         const city = meetup.city?.trim()
-        const key = normalizeCity(city)
+        const key = normalizeLocationValue(city)
         if (city && key && !cityByKey.has(key)) {
           cityByKey.set(key, city)
         }
@@ -177,7 +174,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
     [sortedMeetups]
   )
   const cityKeySignature = useMemo(
-    () => cities.map((city) => normalizeCity(city)).join("|"),
+    () => cities.map((city) => normalizeLocationValue(city)).join("|"),
     [cities]
   )
   const discoverTabs = useMemo<CategorySelectorOption[]>(
@@ -202,7 +199,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   useEffect(() => {
     if (meetupsLoading || cityFilter === ALL_CITIES_FILTER || cities.length === 0) return
 
-    const selectedCity = normalizeCity(cityFilter)
+    const selectedCity = normalizeLocationValue(cityFilter)
     const availableCityKeys = cityKeySignature ? cityKeySignature.split("|") : []
     if (selectedCity && !availableCityKeys.includes(selectedCity)) {
       setCityFilter((currentCityFilter) =>
@@ -212,17 +209,16 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   }, [cities.length, cityFilter, cityKeySignature, meetupsLoading])
 
   const activeCityFilter =
-    cityFilter === ALL_CITIES_FILTER || cityKeySignature.split("|").includes(normalizeCity(cityFilter))
+    cityFilter === ALL_CITIES_FILTER || cityKeySignature.split("|").includes(normalizeLocationValue(cityFilter))
       ? cityFilter
       : ALL_CITIES_FILTER
 
   const filteredMeetups = useMemo(
     () => {
       const query = searchQuery.trim().toLowerCase()
-      const selectedCity = normalizeCity(activeCityFilter)
       const byCity = activeCityFilter === ALL_CITIES_FILTER
         ? sortedMeetups
-        : sortedMeetups.filter((m) => normalizeCity(m.city) === selectedCity)
+        : sortedMeetups.filter((m) => sameCity(m.city, activeCityFilter))
 
       if (!query) return byCity
 
@@ -357,10 +353,10 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
                   <MessageCircle className="h-5 w-5" />
                 </EmptyMedia>
                 <EmptyTitle className="text-sm">
-                {searchQuery ? "No people found" : "No people to show yet"}
+                {searchQuery ? "No people found" : needsLocation ? "Set your city to find people nearby" : "No people to show yet"}
                 </EmptyTitle>
                 <EmptyDescription className="text-xs">
-                {searchQuery ? "Try another name, interest, or language." : "Invite friends or check back as more people join Drift."}
+                {searchQuery ? "Try another name, interest, or language." : needsLocation ? "Add your current city in Profile so Drift can show people in the same city." : "Invite friends or check back as more people join Drift."}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>

@@ -24,6 +24,7 @@ import { getMeetupCoverImage, getOptimizedMeetupCoverImage } from "@/lib/meetup-
 import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { useBlockedUsers } from "@/hooks/use-user-safety"
+import { hasLocationValue, sameCityAndCountry } from "@/lib/city-matching"
 import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notification-preferences"
 import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
@@ -738,9 +739,11 @@ function SwipeFeed({ meetups, isLoading, onSaveMeetup }: SwipeFeedProps) {
 
 function AvailablePeople({
   profiles,
+  hasUserCity,
   onNavigateToMessages,
 }: {
   profiles: Profile[]
+  hasUserCity: boolean
   onNavigateToMessages?: (conversationId: string) => void
 }) {
   const [startingId, setStartingId] = useState<string | null>(null)
@@ -769,8 +772,12 @@ function AvailablePeople({
       <section className="px-4">
         <div className="rounded-3xl border border-border/60 bg-card/70 p-5 text-center">
           <Users className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-          <p className="text-sm font-medium text-foreground">No one available nearby yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Check Discover to explore people in other cities.</p>
+          <p className="text-sm font-medium text-foreground">
+            {hasUserCity ? "No one available nearby yet" : "Set your city to find people nearby"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {hasUserCity ? "Check Discover to explore people in other cities." : "Add your current city in Profile so Drift can show people in the same city."}
+          </p>
         </div>
       </section>
     )
@@ -837,6 +844,7 @@ function TodayHome({
   isLoading,
   savedLoading,
   loadSecondaryData,
+  hasUserCity,
   onNavigateToMessages,
   onViewSaved,
   onBrowseAll,
@@ -847,6 +855,7 @@ function TodayHome({
   isLoading: boolean
   savedLoading: boolean
   loadSecondaryData: boolean
+  hasUserCity: boolean
   onNavigateToMessages?: (conversationId: string) => void
   onViewSaved: () => void
   onBrowseAll: () => void
@@ -902,8 +911,12 @@ function TodayHome({
         ) : soonMeetups.length === 0 ? (
           <Empty className="rounded-3xl border border-border/60 bg-card/70 p-5">
             <EmptyHeader className="gap-1">
-              <EmptyTitle className="text-sm">No nearby meetups right now</EmptyTitle>
-              <EmptyDescription className="text-xs">Create one or browse Discover for other cities.</EmptyDescription>
+              <EmptyTitle className="text-sm">
+                {hasUserCity ? "No nearby meetups right now" : "Set your city to see local plans"}
+              </EmptyTitle>
+              <EmptyDescription className="text-xs">
+                {hasUserCity ? "Create one or browse Discover for other cities." : "Add your current city in Profile, or browse all cities for now."}
+              </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
@@ -920,7 +933,7 @@ function TodayHome({
         )}
       </section>
 
-      <AvailablePeople profiles={profiles} onNavigateToMessages={onNavigateToMessages} />
+      <AvailablePeople profiles={profiles} hasUserCity={hasUserCity} onNavigateToMessages={onNavigateToMessages} />
 
       <section className="px-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -1039,6 +1052,8 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
 
   const currentMood = (profile?.mood as MoodStatusType) ?? "exploring"
   const userCity = profile?.current_city
+  const userCountry = profile?.current_country
+  const hasUserCity = hasLocationValue(userCity)
   const nearbyCount = profiles.length
 
   const handleMoodChange = async (mood: MoodStatusType) => {
@@ -1054,9 +1069,14 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
       : displayMeetups
 
   const filteredMeetups =
-    browseAll || !userCity
+    browseAll
       ? visibleMeetups
-      : visibleMeetups.filter((m) => m.city?.toLowerCase() === userCity.toLowerCase())
+      : hasUserCity
+        ? visibleMeetups.filter((m) => sameCityAndCountry(
+          { city: m.city, country: m.country },
+          { city: userCity, country: userCountry }
+        ))
+        : []
 
   return (
     <div className="min-h-screen">
@@ -1068,7 +1088,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
               <div className="flex min-w-0 items-center gap-3 text-xs text-muted-foreground mt-0.5">
                 <span className="flex min-w-0 items-center gap-1">
                   <MapPin className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">{browseAll ? "All cities" : `Near ${userCity ?? "your city"}`}</span>
+                  <span className="truncate">{browseAll ? "All cities" : hasUserCity ? `Near ${userCity}` : "Set your city"}</span>
                 </span>
                 <span className="flex flex-shrink-0 items-center gap-1 text-emerald-400/80">
                   <Users className="w-3 h-3 flex-shrink-0" />
@@ -1093,10 +1113,12 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
               <p className="text-xs text-muted-foreground">
                 {browseAll
                   ? "Actionable meetups from every city."
-                  : "People and plans you can act on today."}
+                  : hasUserCity
+                    ? "People and plans you can act on today."
+                    : "Add your city in Profile to personalize Today."}
               </p>
 
-              {userCity && (
+              {hasUserCity ? (
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
                   <span>
                     {browseAll
@@ -1108,6 +1130,16 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
                     className="text-primary hover:underline"
                   >
                     {browseAll ? "Near me" : "Browse all"}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
+                  <span>Showing local results after your city is set</span>
+                  <button
+                    onClick={() => setBrowseAll(true)}
+                    className="text-primary hover:underline"
+                  >
+                    Browse all
                   </button>
                 </div>
               )}
@@ -1141,6 +1173,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             isLoading={isLoading}
             savedLoading={savedLoading}
             loadSecondaryData={loadSecondaryData}
+            hasUserCity={hasUserCity}
             onNavigateToMessages={onNavigateToMessages}
             onViewSaved={() => setActiveTab("saved")}
             onBrowseAll={() => setBrowseAll(true)}
