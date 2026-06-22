@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import type { TouchEvent } from "react"
 import Link from "next/link"
-import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion"
+import { Haptics } from "@capacitor/haptics"
+import { motion, useMotionValue, useTransform, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
   MapPin, X, Heart, Loader2, Coffee, Camera, Utensils,
   Moon, BookOpen, Gamepad2, Map, Users, ChevronRight, Sparkles, MessageCircle,
@@ -990,7 +991,10 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [loadSecondaryData, setLoadSecondaryData] = useState(false)
   const [refreshingSaved, setRefreshingSaved] = useState(false)
+  const [savedPullDistance, setSavedPullDistance] = useState(0)
   const savedPullStartY = useRef<number | null>(null)
+  const savedPullHapticFired = useRef(false)
+  const prefersReducedMotion = useReducedMotion()
   const { meetups, isLoading } = useMeetups()
   const shouldLoadSavedMeetups = activeTab === "saved" || loadSecondaryData
   const { savedMeetups, isLoading: savedLoading, refresh: refreshSavedMeetups } = useSavedMeetupsWithDetails({ enabled: shouldLoadSavedMeetups })
@@ -1037,14 +1041,31 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const handleSavedTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     if (activeTab !== "saved" || window.scrollY > 2) return
     savedPullStartY.current = event.touches[0]?.clientY ?? null
+    savedPullHapticFired.current = false
+  }
+
+  const handleSavedTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const startY = savedPullStartY.current
+    if (startY === null || activeTab !== "saved" || refreshingSaved || window.scrollY > 2) return
+
+    const distance = Math.max(0, event.touches[0]?.clientY - startY)
+    const nextDistance = Math.min(distance, 96)
+    setSavedPullDistance(nextDistance)
+
+    if (nextDistance >= 72 && !savedPullHapticFired.current) {
+      savedPullHapticFired.current = true
+      Haptics.selectionChanged().catch(() => {})
+    }
   }
 
   const handleSavedTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
     const startY = savedPullStartY.current
     savedPullStartY.current = null
+    const shouldRefresh = savedPullDistance >= 72
+    setSavedPullDistance(0)
     if (startY === null || activeTab !== "saved" || refreshingSaved) return
     const endY = event.changedTouches[0]?.clientY ?? startY
-    if (endY - startY > 72 && window.scrollY <= 2) {
+    if ((shouldRefresh || endY - startY > 72) && window.scrollY <= 2) {
       void refreshSaved()
     }
   }
@@ -1186,45 +1207,62 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
           <div
             className="min-h-[55svh] overscroll-y-contain"
             onTouchStart={handleSavedTouchStart}
+            onTouchMove={handleSavedTouchMove}
             onTouchEnd={handleSavedTouchEnd}
           >
-            <div
-              className={cn(
-                "flex items-center justify-center gap-2 pt-3 text-xs text-muted-foreground transition-opacity",
-                refreshingSaved ? "opacity-100" : "opacity-0"
-              )}
+            <motion.div
+              className="pointer-events-none flex items-center justify-center pt-3"
+              animate={{
+                opacity: refreshingSaved || savedPullDistance > 8 ? 1 : 0,
+                y: refreshingSaved ? 0 : Math.min(savedPullDistance * 0.25, 18),
+              }}
+              transition={prefersReducedMotion ? { duration: 0.01 } : { type: "spring", stiffness: 320, damping: 30 }}
               aria-live="polite"
             >
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-              Refreshing saved meetups
-            </div>
+              <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-card/80 px-3 py-1.5 text-xs text-muted-foreground shadow-lg shadow-black/10 backdrop-blur-xl">
+                <motion.span
+                  className="h-2 w-2 rounded-full bg-primary"
+                  animate={{
+                    scale: refreshingSaved ? [1, 1.35, 1] : savedPullDistance >= 72 ? 1.2 : 0.85,
+                    opacity: savedPullDistance >= 72 || refreshingSaved ? 1 : 0.55,
+                  }}
+                  transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.7, repeat: refreshingSaved ? Infinity : 0 }}
+                />
+                {refreshingSaved ? "Refreshing saved meetups" : savedPullDistance >= 72 ? "Release to refresh" : "Pull to refresh"}
+              </div>
+            </motion.div>
 
-            {savedLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
-            ) : savedMeetups.length === 0 ? (
-              <Empty className="mx-4 my-8 rounded-3xl border border-border/60 bg-card/70 px-6 py-14">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon" className="h-14 w-14 rounded-2xl bg-primary/10 text-primary">
-                    <Heart className="h-6 w-6" />
-                  </EmptyMedia>
-                  <EmptyTitle>No saved meetups yet</EmptyTitle>
-                  <EmptyDescription>Save meetups from Today or Discover to keep them here.</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <div className="px-4 py-6 space-y-6">
-                {savedMeetups.map((meetup) => (
-                  <MeetupCard
-                    key={meetup.id}
-                    meetup={meetup as MeetupWithCreator}
-                    loadUserState
-                    onNavigateToMessages={onNavigateToMessages}
-                  />
-                ))}
-              </div>
-            )}
+            <motion.div
+              animate={{ y: prefersReducedMotion ? 0 : Math.min(savedPullDistance * 0.28, 24) }}
+              transition={prefersReducedMotion ? { duration: 0.01 } : { type: "spring", stiffness: 360, damping: 32 }}
+            >
+              {savedLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : savedMeetups.length === 0 ? (
+                <Empty className="mx-4 my-8 rounded-3xl border border-border/60 bg-card/70 px-6 py-14">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon" className="h-14 w-14 rounded-2xl bg-primary/10 text-primary">
+                      <Heart className="h-6 w-6" />
+                    </EmptyMedia>
+                    <EmptyTitle>No saved meetups yet</EmptyTitle>
+                    <EmptyDescription>Save meetups from Today or Discover to keep them here.</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              ) : (
+                <div className="px-4 py-6 space-y-6">
+                  {savedMeetups.map((meetup) => (
+                    <MeetupCard
+                      key={meetup.id}
+                      meetup={meetup as MeetupWithCreator}
+                      loadUserState
+                      onNavigateToMessages={onNavigateToMessages}
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.div>
           </div>
         )}
       </div>
