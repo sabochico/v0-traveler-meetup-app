@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { motion, useReducedMotion } from "framer-motion"
 import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -140,6 +141,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const [activeTab, setActiveTab] = useState<"meetups" | "people">("meetups")
   const [searchQuery, setSearchQuery] = useState("")
   const [cityFilter, setCityFilter] = useState(ALL_CITIES_FILTER)
+  const prefersReducedMotion = useReducedMotion()
   const { profiles, isLoading: profilesLoading, needsLocation } = useNearbyProfiles({ enabled: activeTab === "people" })
   const { meetups, isLoading: meetupsLoading } = useMeetups()
   const { blockedUserIdSet } = useBlockedUsers()
@@ -334,9 +336,24 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
         ) : (
           <div className="max-w-lg mx-auto px-4 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom))] space-y-5">
             {filteredMeetups.map((meetup, index) => (
-              <div key={meetup.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${Math.min(index, 4) * 45}ms` }}>
+              <motion.div
+                key={meetup.id}
+                initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 10 }}
+                animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0.01 }
+                    : {
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 28,
+                        mass: 0.8,
+                        delay: Math.min(index, 4) * 0.045,
+                      }
+                }
+              >
                 <MeetupCard meetup={meetup} onNavigateToMessages={onNavigateToMessages} />
-              </div>
+              </motion.div>
             ))}
           </div>
         )

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { motion, useReducedMotion } from "framer-motion"
 import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users, Sparkles, Trash2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -93,6 +94,7 @@ function formatMeetupTime(dateString: string): string {
 
 export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true }: MeetupCardProps) {
   const { user } = useAuth()
+  const prefersReducedMotion = useReducedMotion()
   const { savedMeetupIds } = useSavedMeetups({ enabled: loadUserState })
   const { saveMeetup, unsaveMeetup } = useSaveMeetup()
   const { joinMeetup, leaveMeetup } = useJoinMeetup()
@@ -189,7 +191,11 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   }
 
   return (
-    <article className="group relative overflow-hidden rounded-[1.5rem] border border-white/[0.06] bg-card/88 shadow-[0_18px_42px_rgb(0_0_0_/_0.22)] transition-colors duration-300 hover:border-primary/25">
+    <motion.article
+      whileTap={prefersReducedMotion ? undefined : { scale: 0.992 }}
+      transition={prefersReducedMotion ? { duration: 0.01 } : { type: "spring", stiffness: 420, damping: 34, mass: 0.6 }}
+      className="group relative overflow-hidden rounded-[1.5rem] border border-white/[0.06] bg-card/88 shadow-[0_18px_42px_rgb(0_0_0_/_0.22)] transition-colors duration-300 hover:border-primary/25"
+    >
       {/* Image */}
       <div className="relative aspect-[16/10] overflow-hidden bg-secondary/40">
         {cardImageUrl && !imageFailed ? (
@@ -382,6 +388,6 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
           )}
         </div>
       </div>
-    </article>
+    </motion.article>
   )
 }
