@@ -108,10 +108,13 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   const [savingLike, setSavingLike] = useState(false)
   const [joiningMeetup, setJoiningMeetup] = useState(false)
   const [deletingMeetup, setDeletingMeetup] = useState(false)
+  const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null)
+  const [saveBurst, setSaveBurst] = useState<"save" | "unsave" | null>(null)
   const [optimisticJoined, setOptimisticJoined] = useState(false)
   const [joinSuccessBurst, setJoinSuccessBurst] = useState(false)
   
   const isLiked = savedMeetupIds.includes(meetup.id)
+  const showLikedState = optimisticLiked ?? isLiked
   const isJoined = joinedMeetups.some(m => m.meetup_id === meetup.id)
   const showJoinedState = isJoined || optimisticJoined
   const isCreator = user?.id === meetup.creator_id
@@ -135,6 +138,16 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   }, [isJoined])
 
   useEffect(() => {
+    if (optimisticLiked === isLiked) setOptimisticLiked(null)
+  }, [isLiked, optimisticLiked])
+
+  useEffect(() => {
+    if (!saveBurst) return
+    const timer = window.setTimeout(() => setSaveBurst(null), 320)
+    return () => window.clearTimeout(timer)
+  }, [saveBurst])
+
+  useEffect(() => {
     if (!joinSuccessBurst) return
     const timer = window.setTimeout(() => setJoinSuccessBurst(false), 420)
     return () => window.clearTimeout(timer)
@@ -144,10 +157,14 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
     if (!user) return
     setSavingLike(true)
     try {
-      if (isLiked) {
+      if (showLikedState) {
         await unsaveMeetup(meetup.id)
+        setOptimisticLiked(false)
+        setSaveBurst("unsave")
       } else {
         await saveMeetup(meetup.id)
+        setOptimisticLiked(true)
+        setSaveBurst("save")
       }
       triggerLightImpact()
     } catch (error) {
@@ -255,18 +272,38 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
         </div>
 
         {/* Like Button */}
-        <button
+        <motion.button
           onClick={handleLikeToggle}
           disabled={savingLike || !user}
+          animate={
+            saveBurst && !prefersReducedMotion
+              ? {
+                  scale: saveBurst === "save" ? [1, 1.16, 1] : [1, 0.9, 1],
+                  boxShadow:
+                    saveBurst === "save"
+                      ? [
+                          "0 0 0 0 rgb(255 179 0 / 0)",
+                          "0 0 18px 3px rgb(255 179 0 / 0.28)",
+                          "0 0 0 0 rgb(255 179 0 / 0)",
+                        ]
+                      : [
+                          "0 0 0 0 rgb(255 179 0 / 0)",
+                          "0 0 10px 1px rgb(255 179 0 / 0.12)",
+                          "0 0 0 0 rgb(255 179 0 / 0)",
+                        ],
+                }
+              : { scale: 1, boxShadow: "0 0 0 0 rgb(255 179 0 / 0)" }
+          }
+          transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
           className="absolute top-3 left-3 w-11 h-11 rounded-full bg-background/58 backdrop-blur-md flex items-center justify-center transition-colors hover:bg-background/78 disabled:opacity-50"
-          aria-label={isLiked ? "Unlike" : "Like"}
+          aria-label={showLikedState ? "Unlike" : "Like"}
         >
           {savingLike ? (
             <Loader2 className="w-4 h-4 animate-spin text-foreground" />
           ) : (
-            <Heart className={cn("w-5 h-5 transition-colors", isLiked ? "fill-accent text-accent" : "text-foreground")} />
+            <Heart className={cn("w-5 h-5 transition-colors", showLikedState ? "fill-accent text-accent" : "text-foreground")} />
           )}
-        </button>
+        </motion.button>
       </div>
 
       {/* Content */}
