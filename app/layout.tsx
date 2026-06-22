@@ -95,11 +95,16 @@ export default function RootLayout({
           }catch(e){}}());
         `}</Script>
         <Script id="startup-splash-ready" strategy="afterInteractive">{`
+          var reduceStartupMotion = false;
+          try {
+            reduceStartupMotion = document.documentElement.classList.contains('reduce-motion') ||
+              window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          } catch(e) {}
           window.setTimeout(function(){
             requestAnimationFrame(function(){
               document.documentElement.classList.add('drift-ready');
             });
-          }, 2000);
+          }, reduceStartupMotion ? 120 : 720);
         `}</Script>
         <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
           <NativeOAuthListener />
