@@ -11,7 +11,6 @@ import { MessagesView } from "@/components/messages-view"
 import { ProfileView } from "@/components/profile-view"
 import { AuthPrompt } from "@/components/auth-prompt"
 import { NotificationsBell } from "@/components/notifications-bell"
-import { DriftLogo } from "@/components/drift-logo"
 import { EditProfileModal } from "@/components/edit-profile-modal"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { useProfile } from "@/hooks/use-profile"
@@ -207,7 +206,7 @@ function StartupAppShell() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-serif font-semibold tracking-tight">Today</h1>
-              <DriftLogo markClassName="h-6 w-6" />
+              <img src="/drift-logo.png" alt="" className="h-6 w-6 rounded-[7px]" aria-hidden="true" />
             </div>
             <p className="mt-1 text-sm text-muted-foreground">Finding your people nearby...</p>
           </div>

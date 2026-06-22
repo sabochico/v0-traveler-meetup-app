@@ -235,7 +235,7 @@
     display: block;
     height: 104px;
     width: 104px;
-    color: var(--drift-white);
+    object-fit: contain;
   }
 
   @keyframes drift-logo-intro {
