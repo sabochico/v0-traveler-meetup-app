@@ -36,13 +36,6 @@ const MEETUP_TYPES = [
   { id: "explore", label: "Exploring", icon: Map },
 ]
 
-const TIME_OPTIONS = [
-  { label: "Now", value: 0 },
-  { label: "In 1 hour", value: 1 },
-  { label: "Tonight", value: 6 },
-  { label: "Tomorrow", value: 24 },
-]
-
 const CAPACITY_OPTIONS = [
   { label: "1-on-1", helper: "Just two people", value: 1 },
   { label: "2-4 people", helper: "Small and easy", value: 4 },
@@ -66,6 +59,8 @@ const BLOCKED_LOCATION_TERMS = [
   "bitch",
   "cunt",
 ]
+
+const TIME_INTERVAL_MINUTES = 15
 
 function formatCityLabel(s: CityResult): string {
   return `${s.name}, ${s.country}`
@@ -94,11 +89,98 @@ function triggerSelectionHaptic() {
   Haptics.impact({ style: ImpactStyle.Light }).catch(() => {})
 }
 
+function pad(value: number) {
+  return String(value).padStart(2, "0")
+}
+
+function getDateKey(date: Date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function getDateFromKey(key: string) {
+  const [year, month, day] = key.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function getMinutesFromDate(date: Date) {
+  return date.getHours() * 60 + date.getMinutes()
+}
+
+function buildStartDate(dateKey: string, minutes: number) {
+  const date = getDateFromKey(dateKey)
+  date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0)
+  return date
+}
+
+function roundUpToInterval(date: Date) {
+  const rounded = new Date(date)
+  const minutes = rounded.getMinutes()
+  const nextMinutes = Math.ceil(minutes / TIME_INTERVAL_MINUTES) * TIME_INTERVAL_MINUTES
+  rounded.setMinutes(nextMinutes, 0, 0)
+  return rounded
+}
+
+function getDefaultStartDate() {
+  const next = new Date()
+  next.setMinutes(next.getMinutes() + TIME_INTERVAL_MINUTES)
+  return roundUpToInterval(next)
+}
+
+function getWeekendDate() {
+  const date = new Date()
+  const day = date.getDay()
+  const daysUntilWeekend = day === 0 ? 0 : (6 - day + 7) % 7
+  date.setDate(date.getDate() + daysUntilWeekend)
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+function getDatePresets() {
+  const today = new Date()
+  const tomorrow = new Date()
+  tomorrow.setDate(today.getDate() + 1)
+
+  return [
+    { label: "Today", dateKey: getDateKey(today) },
+    { label: "Tomorrow", dateKey: getDateKey(tomorrow) },
+    { label: "This weekend", dateKey: getDateKey(getWeekendDate()) },
+  ]
+}
+
+function formatStartDate(date: Date) {
+  const today = getDateKey(new Date())
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  const dateLabel =
+    getDateKey(date) === today
+      ? "Today"
+      : getDateKey(date) === getDateKey(tomorrow)
+        ? "Tomorrow"
+        : date.toLocaleDateString(undefined, { weekday: "short" })
+  const timeLabel = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+  return `${dateLabel}, ${timeLabel}`
+}
+
+function getTimeOptions(dateKey: string) {
+  const now = new Date()
+  return Array.from({ length: (24 * 60) / TIME_INTERVAL_MINUTES }, (_, index) => index * TIME_INTERVAL_MINUTES).filter(
+    (minutes) => buildStartDate(dateKey, minutes) > now
+  )
+}
+
+function formatTimeOption(minutes: number) {
+  const date = new Date()
+  date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0)
+  return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+}
+
 export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [location, setLocation] = useState("")
-  const [selectedTime, setSelectedTime] = useState<number>(0)
+  const [selectedStartAt, setSelectedStartAt] = useState(() => getDefaultStartDate())
+  const [startTimeSheetOpen, setStartTimeSheetOpen] = useState(false)
   const [capacity, setCapacity] = useState(4)
   const [groupSizeSheetOpen, setGroupSizeSheetOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -115,6 +197,8 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   const { createMeetup } = useCreateMeetup()
   const selectedCapacity = getCapacityOption(capacity)
+  const selectedDateKey = getDateKey(selectedStartAt)
+  const selectedTimeMinutes = getMinutesFromDate(selectedStartAt)
 
   useEffect(() => {
     return () => {
@@ -203,6 +287,28 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
     triggerSelectionHaptic()
   }
 
+  const handleDateSelect = (dateKey: string) => {
+    const preferredStart = buildStartDate(dateKey, selectedTimeMinutes)
+    if (preferredStart > new Date()) {
+      setSelectedStartAt(preferredStart)
+    } else {
+      const firstValidTime = getTimeOptions(dateKey)[0]
+      if (firstValidTime != null) setSelectedStartAt(buildStartDate(dateKey, firstValidTime))
+    }
+    triggerSelectionHaptic()
+  }
+
+  const handleCustomDateChange = (value: string) => {
+    if (value) handleDateSelect(value)
+  }
+
+  const handleTimeSelect = (minutes: number) => {
+    const start = buildStartDate(selectedDateKey, minutes)
+    if (start <= new Date()) return
+    setSelectedStartAt(start)
+    triggerSelectionHaptic()
+  }
+
   const uploadCoverImage = async () => {
     if (!coverFile) return null
 
@@ -237,8 +343,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
     setError(null)
 
     try {
-      const startsAt = new Date()
-      startsAt.setHours(startsAt.getHours() + selectedTime)
+      const startsAt = selectedStartAt > new Date() ? selectedStartAt : getDefaultStartDate()
       const coverImageUrl = await uploadCoverImage()
 
       await createMeetup({
@@ -259,7 +364,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
       setSelectedType(null)
       setTitle("")
       setLocation("")
-      setSelectedTime(0)
+      setSelectedStartAt(getDefaultStartDate())
       setCapacity(4)
       setCityData(null)
       setCoverFile(null)
@@ -417,26 +522,26 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
             </div>
           </div>
 
-          {/* Time Options */}
+          {/* Start Time */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-foreground">When?</label>
-            <div className="flex gap-2">
-              {TIME_OPTIONS.map((time) => (
-                <button
-                  key={time.label}
-                  onClick={() => setSelectedTime(time.value)}
-                  className={cn(
-                    "flex min-h-11 items-center gap-1.5 px-4 py-2 rounded-full text-sm transition-colors",
-                    selectedTime === time.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  )}
-                >
-                  <Clock className="w-3.5 h-3.5" />
-                  {time.label}
-                </button>
-              ))}
-            </div>
+            <label className="text-sm font-medium text-foreground">Start time</label>
+            <button
+              type="button"
+              onClick={() => setStartTimeSheetOpen(true)}
+              aria-label={`Choose start time, currently ${formatStartDate(selectedStartAt)}`}
+              className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-border/60 bg-secondary px-4 text-left transition-colors hover:bg-secondary/80 active:scale-[0.99]"
+            >
+              <span className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/12 text-primary">
+                  <Clock className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-foreground">{formatStartDate(selectedStartAt)}</span>
+                  <span className="block text-xs text-muted-foreground">Specific date and time</span>
+                </span>
+              </span>
+              <span className="text-sm font-medium text-primary">Change</span>
+            </button>
           </div>
 
           {error && (
@@ -515,6 +620,87 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
             <button
               type="button"
               onClick={() => setGroupSizeSheetOpen(false)}
+              className="min-h-12 w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.99]"
+            >
+              Done
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={startTimeSheetOpen} onOpenChange={setStartTimeSheetOpen}>
+        <SheetContent
+          side="bottom"
+          className="mx-auto max-w-md rounded-t-[28px] border-border/70 bg-card/95 px-0 pb-[calc(env(safe-area-inset-bottom)+18px)] pt-3 shadow-2xl backdrop-blur-xl"
+        >
+          <SheetHeader className="px-6 pb-2 pt-6 text-left">
+            <SheetTitle className="text-xl font-serif">Start time</SheetTitle>
+            <p className="text-sm text-muted-foreground">Choose when people should meet.</p>
+          </SheetHeader>
+
+          <div className="space-y-4 px-5 pb-2 pt-2">
+            <div className="grid grid-cols-3 gap-2">
+              {getDatePresets().map((preset) => {
+                const isSelected = selectedDateKey === preset.dateKey
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => handleDateSelect(preset.dateKey)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      "min-h-12 rounded-2xl px-2 text-xs font-semibold transition-all active:scale-[0.98]",
+                      isSelected ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                    )}
+                  >
+                    {preset.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-medium text-muted-foreground">Pick date</span>
+              <Input
+                type="date"
+                value={selectedDateKey}
+                min={getDateKey(new Date())}
+                onChange={(event) => handleCustomDateChange(event.target.value)}
+                className="min-h-12 rounded-2xl border-border/60 bg-secondary text-foreground"
+              />
+            </label>
+
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-x-0 top-1/2 h-16 -translate-y-1/2 rounded-2xl border border-primary/25 bg-primary/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" />
+              <div
+                className="relative max-h-72 snap-y snap-mandatory overflow-y-auto overscroll-contain py-24 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                aria-label="Start time options"
+              >
+                {getTimeOptions(selectedDateKey).map((minutes) => {
+                  const isSelected = selectedTimeMinutes === minutes
+                  return (
+                    <button
+                      key={minutes}
+                      type="button"
+                      onClick={() => handleTimeSelect(minutes)}
+                      aria-pressed={isSelected}
+                      className={cn(
+                        "relative flex min-h-16 w-full snap-center items-center justify-center rounded-2xl px-5 text-center transition-all duration-200",
+                        isSelected ? "scale-100 text-primary" : "scale-[0.96] text-muted-foreground"
+                      )}
+                    >
+                      <span className="text-lg font-semibold">{formatTimeOption(minutes)}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 pt-1">
+            <button
+              type="button"
+              onClick={() => setStartTimeSheetOpen(false)}
               className="min-h-12 w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.99]"
             >
               Done
