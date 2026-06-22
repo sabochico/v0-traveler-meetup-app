@@ -108,9 +108,12 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   const [savingLike, setSavingLike] = useState(false)
   const [joiningMeetup, setJoiningMeetup] = useState(false)
   const [deletingMeetup, setDeletingMeetup] = useState(false)
+  const [optimisticJoined, setOptimisticJoined] = useState(false)
+  const [joinSuccessBurst, setJoinSuccessBurst] = useState(false)
   
   const isLiked = savedMeetupIds.includes(meetup.id)
   const isJoined = joinedMeetups.some(m => m.meetup_id === meetup.id)
+  const showJoinedState = isJoined || optimisticJoined
   const isCreator = user?.id === meetup.creator_id
   const canDeleteMeetup = isCreator || isAdminEmail(user?.email)
   
@@ -126,6 +129,16 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
   useEffect(() => {
     setImageFailed(false)
   }, [cardImageUrl])
+
+  useEffect(() => {
+    if (isJoined) setOptimisticJoined(false)
+  }, [isJoined])
+
+  useEffect(() => {
+    if (!joinSuccessBurst) return
+    const timer = window.setTimeout(() => setJoinSuccessBurst(false), 420)
+    return () => window.clearTimeout(timer)
+  }, [joinSuccessBurst])
 
   const handleLikeToggle = async () => {
     if (!user) return
@@ -148,11 +161,14 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
     if (!user) return
     setJoiningMeetup(true)
     try {
-      if (isJoined) {
+      if (showJoinedState) {
         await leaveMeetup(meetup.id)
+        setOptimisticJoined(false)
         toast({ title: "Left meetup", description: `You've left "${meetup.title}"` })
       } else {
         await joinMeetup(meetup.id)
+        setOptimisticJoined(true)
+        setJoinSuccessBurst(true)
         triggerSuccessHaptic()
 
         // Open a DM with the organizer (skip if user IS the creator)
@@ -362,10 +378,28 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-          ) : isJoined ? (
-            <button 
+          ) : showJoinedState ? (
+            <motion.button
               onClick={handleJoinToggle}
               disabled={joiningMeetup}
+              animate={
+                joinSuccessBurst && !prefersReducedMotion
+                  ? {
+                      scale: [1, 0.97, 1.025, 1],
+                      boxShadow: [
+                        "0 0 0 0 rgb(16 185 129 / 0)",
+                        "0 0 0 0 rgb(16 185 129 / 0)",
+                        "0 0 22px 3px rgb(16 185 129 / 0.28)",
+                        "0 0 0 0 rgb(16 185 129 / 0)",
+                      ],
+                    }
+                  : { scale: 1, boxShadow: "0 0 0 0 rgb(16 185 129 / 0)" }
+              }
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0.01 }
+                  : { duration: 0.36, ease: [0.16, 1, 0.3, 1] }
+              }
               className="flex shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-medium transition-colors hover:bg-emerald-500/30"
             >
               {joiningMeetup ? (
@@ -373,8 +407,8 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
               ) : (
                 <Check className="w-4 h-4" />
               )}
-              <span>Joined</span>
-            </button>
+              <span>Joined ✓</span>
+            </motion.button>
           ) : (
             <button 
               onClick={handleJoinToggle}
