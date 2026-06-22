@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { MapPin, Clock, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Sparkles, Loader2 } from "lucide-react"
+import { Haptics, ImpactStyle } from "@capacitor/haptics"
+import { MapPin, Clock, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Sparkles, Loader2, Users } from "lucide-react"
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateMeetup } from "@/hooks/use-meetups"
@@ -41,7 +43,13 @@ const TIME_OPTIONS = [
   { label: "Tomorrow", value: 24 },
 ]
 
-const CAPACITY_OPTIONS = [1, 2, 4, 6, 8, 12, 20]
+const CAPACITY_OPTIONS = [
+  { label: "1-on-1", helper: "Just two people", value: 1 },
+  { label: "2-4 people", helper: "Small and easy", value: 4 },
+  { label: "5-8 people", helper: "A friendly group", value: 8 },
+  { label: "9-15 people", helper: "Social but manageable", value: 15 },
+  { label: "15+ people", helper: "Open community plan", value: 20 },
+]
 const LOCATION_ERROR_MESSAGE = "Please enter a real venue, neighborhood, or city."
 const LOW_QUALITY_LOCATIONS = new Set(["test", "testing", "asdf", "qwerty", "123", "abc"])
 const BLOCKED_LOCATION_TERMS = [
@@ -78,12 +86,21 @@ function isValidMeetupLocation(value: string) {
   return !BLOCKED_LOCATION_TERMS.some((term) => words.includes(term))
 }
 
+function getCapacityOption(value: number) {
+  return CAPACITY_OPTIONS.find((option) => option.value === value) ?? CAPACITY_OPTIONS[1]
+}
+
+function triggerSelectionHaptic() {
+  Haptics.impact({ style: ImpactStyle.Light }).catch(() => {})
+}
+
 export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [location, setLocation] = useState("")
   const [selectedTime, setSelectedTime] = useState<number>(0)
   const [capacity, setCapacity] = useState(4)
+  const [groupSizeSheetOpen, setGroupSizeSheetOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
@@ -97,6 +114,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const coverInputRef = useRef<HTMLInputElement | null>(null)
 
   const { createMeetup } = useCreateMeetup()
+  const selectedCapacity = getCapacityOption(capacity)
 
   useEffect(() => {
     return () => {
@@ -178,6 +196,11 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
     setError(null)
     setCoverFile(file)
     setCoverPreviewUrl(URL.createObjectURL(file))
+  }
+
+  const handleCapacitySelect = (value: number) => {
+    setCapacity(value)
+    triggerSelectionHaptic()
   }
 
   const uploadCoverImage = async () => {
@@ -289,23 +312,23 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
           {/* Capacity */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">Group size</label>
-            <div className="flex flex-wrap gap-2">
-              {CAPACITY_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => setCapacity(option)}
-                  className={cn(
-                    "min-h-11 rounded-full px-4 text-sm font-medium transition-colors",
-                    capacity === option
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  )}
-                >
-                  {option === 1 ? "1-on-1" : option}
-                </button>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setGroupSizeSheetOpen(true)}
+              aria-label={`Choose group size, currently ${selectedCapacity.label}`}
+              className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-border/60 bg-secondary px-4 text-left transition-colors hover:bg-secondary/80 active:scale-[0.99]"
+            >
+              <span className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/12 text-primary">
+                  <Users className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-foreground">{selectedCapacity.label}</span>
+                  <span className="block text-xs text-muted-foreground">{selectedCapacity.helper}</span>
+                </span>
+              </span>
+              <span className="text-sm font-medium text-primary">Change</span>
+            </button>
           </div>
 
           {/* Optional Cover Photo */}
@@ -446,6 +469,59 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
           </button>
         </div>
       </DialogContent>
+
+      <Sheet open={groupSizeSheetOpen} onOpenChange={setGroupSizeSheetOpen}>
+        <SheetContent
+          side="bottom"
+          className="mx-auto max-w-md rounded-t-[28px] border-border/70 bg-card/95 px-0 pb-[calc(env(safe-area-inset-bottom)+18px)] pt-3 shadow-2xl backdrop-blur-xl"
+        >
+          <SheetHeader className="px-6 pb-2 pt-6 text-left">
+            <SheetTitle className="text-xl font-serif">Group size</SheetTitle>
+            <p className="text-sm text-muted-foreground">Pick the feel of this meetup.</p>
+          </SheetHeader>
+
+          <div className="relative px-5 pb-2 pt-2">
+            <div className="pointer-events-none absolute inset-x-5 top-1/2 h-16 -translate-y-1/2 rounded-2xl border border-primary/25 bg-primary/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" />
+            <div
+              className="relative max-h-80 snap-y snap-mandatory overflow-y-auto overscroll-contain py-24 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              aria-label="Group size options"
+            >
+              {CAPACITY_OPTIONS.map((option) => {
+                const isSelected = capacity === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleCapacitySelect(option.value)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      "relative flex min-h-16 w-full snap-center items-center justify-center rounded-2xl px-5 text-center transition-all duration-200",
+                      isSelected ? "scale-100 text-foreground" : "scale-[0.96] text-muted-foreground"
+                    )}
+                  >
+                    <span>
+                      <span className={cn("block text-lg font-semibold", isSelected && "text-primary")}>
+                        {option.label}
+                      </span>
+                      <span className="mt-0.5 block text-xs">{option.helper}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="px-6 pt-1">
+            <button
+              type="button"
+              onClick={() => setGroupSizeSheetOpen(false)}
+              className="min-h-12 w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.99]"
+            >
+              Done
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </Dialog>
   )
 }
