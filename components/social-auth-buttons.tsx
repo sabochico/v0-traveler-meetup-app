@@ -247,7 +247,7 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
   return (
     <div className="space-y-3">
       <div className="space-y-2.5">
-        {PROVIDERS.map((provider) => (
+        {PROVIDERS.filter((provider) => provider.id !== "apple").map((provider) => (
           <button
             key={provider.id}
             type="button"
