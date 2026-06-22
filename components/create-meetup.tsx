@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { MapPin, Clock, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Sparkles, Loader2, Users } from "lucide-react"
+import { motion, useReducedMotion } from "framer-motion"
+import { MapPin, Clock, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Sparkles, Loader2, Users, Check } from "lucide-react"
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
@@ -176,6 +177,7 @@ function formatTimeOption(minutes: number) {
 }
 
 export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
+  const prefersReducedMotion = useReducedMotion()
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [location, setLocation] = useState("")
@@ -184,6 +186,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const [capacity, setCapacity] = useState(4)
   const [groupSizeSheetOpen, setGroupSizeSheetOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [createSuccess, setCreateSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null)
@@ -341,6 +344,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
     setLoading(true)
     setError(null)
+    setCreateSuccess(false)
 
     try {
       const startsAt = selectedStartAt > new Date() ? selectedStartAt : getDefaultStartDate()
@@ -360,6 +364,9 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
         cover_image_url: coverImageUrl,
       })
       triggerSuccessHaptic()
+      setCreateSuccess(true)
+
+      await new Promise((resolve) => window.setTimeout(resolve, prefersReducedMotion ? 180 : 760))
 
       onOpenChange(false)
       setSelectedType(null)
@@ -370,7 +377,9 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
       setCityData(null)
       setCoverFile(null)
       setCoverPreviewUrl(null)
+      setCreateSuccess(false)
     } catch (err) {
+      setCreateSuccess(false)
       setError(err instanceof Error ? err.message : "Failed to create meetup")
     } finally {
       setLoading(false)
@@ -379,7 +388,42 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-dvh sm:max-h-[90dvh] bg-card border-border px-0 pb-0 pt-[calc(max(env(safe-area-inset-top),44px)+12px)] sm:p-0 gap-0 rounded-none sm:rounded-lg overflow-hidden flex flex-col">
+      <DialogContent showCloseButton={false} className="relative top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-dvh sm:max-h-[90dvh] bg-card border-border px-0 pb-0 pt-[calc(max(env(safe-area-inset-top),44px)+12px)] sm:p-0 gap-0 rounded-none sm:rounded-lg overflow-hidden flex flex-col">
+        {createSuccess && (
+          <motion.div
+            className="absolute inset-0 z-50 flex items-center justify-center bg-card/94 px-8 text-center backdrop-blur-xl"
+            initial={prefersReducedMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: prefersReducedMotion ? 0.01 : 0.16, ease: "easeOut" }}
+            aria-live="polite"
+          >
+            <div className="flex flex-col items-center">
+              <motion.div
+                className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-300/30 bg-emerald-400/15 text-emerald-300"
+                initial={prefersReducedMotion ? false : { scale: 0.96 }}
+                animate={
+                  prefersReducedMotion
+                    ? { scale: 1 }
+                    : {
+                        scale: [0.96, 1.045, 1],
+                        boxShadow: [
+                          "0 0 0 0 rgb(16 185 129 / 0)",
+                          "0 0 26px 4px rgb(16 185 129 / 0.2)",
+                          "0 0 0 0 rgb(16 185 129 / 0)",
+                        ],
+                      }
+                }
+                transition={{ duration: prefersReducedMotion ? 0.01 : 0.42, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Check className="h-8 w-8" strokeWidth={2.4} />
+              </motion.div>
+              <p className="text-xl font-serif font-semibold text-foreground">Meetup created</p>
+              <p className="mt-2 max-w-56 text-sm leading-relaxed text-muted-foreground">
+                Your plan is live and ready for people nearby.
+              </p>
+            </div>
+          </motion.div>
+        )}
         <DialogHeader className="shrink-0 border-b border-border/50 px-6 pb-4 pt-0 sm:pt-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 text-left">
