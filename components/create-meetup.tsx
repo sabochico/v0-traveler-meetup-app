@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Haptics, ImpactStyle } from "@capacitor/haptics"
 import { MapPin, Clock, Coffee, Camera, Utensils, Moon, BookOpen, Gamepad2, Map, Sparkles, Loader2, Users } from "lucide-react"
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -11,6 +10,7 @@ import { useCreateMeetup } from "@/hooks/use-meetups"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { checkTextModeration, cleanUserText } from "@/lib/text-moderation"
+import { triggerLightImpact, triggerSuccessHaptic } from "@/lib/haptics"
 
 interface CreateMeetupProps {
   open: boolean
@@ -86,7 +86,7 @@ function getCapacityOption(value: number) {
 }
 
 function triggerSelectionHaptic() {
-  Haptics.impact({ style: ImpactStyle.Light }).catch(() => {})
+  triggerLightImpact()
 }
 
 function pad(value: number) {
@@ -359,6 +359,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
         starts_at: startsAt.toISOString(),
         cover_image_url: coverImageUrl,
       })
+      triggerSuccessHaptic()
 
       onOpenChange(false)
       setSelectedType(null)

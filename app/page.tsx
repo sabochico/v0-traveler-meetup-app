@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 import { BottomNav } from "@/components/bottom-nav"
@@ -17,6 +17,7 @@ import { ErrorBoundary } from "@/components/error-boundary"
 import { useProfile } from "@/hooks/use-profile"
 import { usePresenceHeartbeat } from "@/hooks/use-presence-heartbeat"
 import { isNativeRuntime } from "@/lib/auth-redirect"
+import { triggerSuccessHaptic } from "@/lib/haptics"
 import { isProfileComplete } from "@/lib/profile-completion"
 import { Bell, Compass, HomeIcon, MessageCircle, Plus, UserIcon } from "lucide-react"
 
@@ -30,8 +31,37 @@ export default function Home() {
   const [showCreate, setShowCreate] = useState(false)
   const [pendingConversationId, setPendingConversationId] = useState<string | undefined>(undefined)
   const showPublicFooter = !isAuthenticated && !isNativeRuntime()
+  const authHydratedRef = useRef(false)
+  const wasAuthenticatedRef = useRef(false)
+  const pendingLoginHapticRef = useRef(false)
 
   usePresenceHeartbeat(isAuthenticated)
+
+  useEffect(() => {
+    if (isLoading) return
+
+    if (!authHydratedRef.current) {
+      authHydratedRef.current = true
+      wasAuthenticatedRef.current = isAuthenticated
+      return
+    }
+
+    if (!wasAuthenticatedRef.current && isAuthenticated) {
+      pendingLoginHapticRef.current = true
+    }
+
+    if (!isAuthenticated) {
+      pendingLoginHapticRef.current = false
+    }
+
+    wasAuthenticatedRef.current = isAuthenticated
+  }, [isAuthenticated, isLoading])
+
+  useEffect(() => {
+    if (!pendingLoginHapticRef.current || !isAuthenticated || profileLoading) return
+    triggerSuccessHaptic()
+    pendingLoginHapticRef.current = false
+  }, [isAuthenticated, profileLoading])
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search)

@@ -26,6 +26,7 @@ import { useCreateConversation, useSendMessage } from "@/hooks/use-messages"
 import { getMeetupCoverImage, getOptimizedMeetupCoverImage } from "@/lib/meetup-cover-images"
 import { getMeetupLifecycleLabel } from "@/lib/meetup-lifecycle"
 import { isAdminEmail } from "@/lib/admin"
+import { triggerLightImpact, triggerSuccessHaptic } from "@/lib/haptics"
 import type { MeetupWithCreator, MoodStatus } from "@/lib/types"
 
 interface MeetupCardProps {
@@ -135,6 +136,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
       } else {
         await saveMeetup(meetup.id)
       }
+      triggerLightImpact()
     } catch (error) {
       console.error("Failed to toggle like:", error)
     } finally {
@@ -151,6 +153,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
         toast({ title: "Left meetup", description: `You've left "${meetup.title}"` })
       } else {
         await joinMeetup(meetup.id)
+        triggerSuccessHaptic()
 
         // Open a DM with the organizer (skip if user IS the creator)
         if (meetup.creator_id !== user.id) {

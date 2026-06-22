@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { Profile } from "@/lib/types"
 import { getNextProfileRequirement, isProfileComplete, MIN_BIO_LENGTH, MIN_INTERESTS } from "@/lib/profile-completion"
 import { detectCurrentLocation, type DetectedLocation } from "@/lib/location"
+import { triggerSuccessHaptic } from "@/lib/haptics"
 
 const MAX_RAW_IMAGE_SIZE = 15 * 1024 * 1024
 const MAX_COMPRESSED_DIMENSION = 1600
@@ -362,6 +363,7 @@ export function EditProfileModal({ profile, isOpen, onClose, initialTab = "profi
         profile_photos: profilePhotos,
         instagram_handle: instagramHandle.trim().replace(/^@/, "") || null,
       })
+      if (setupMode) triggerSuccessHaptic()
       onClose()
     } catch (error) {
       console.error("Failed to update profile:", error)
