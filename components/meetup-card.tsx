@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { motion, useReducedMotion } from "framer-motion"
 import { MapPin, Clock, MessageCircle, Heart, Loader2, Check, Users, Sparkles, Trash2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProfileTransitionLink } from "@/components/profile-transition-link"
 import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
@@ -309,7 +309,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
       {/* Content */}
       <div className="p-4">
         {/* User Info */}
-        <Link
+        <ProfileTransitionLink
           href={`/profile/${meetup.creator_id}`}
           className="flex items-start gap-3 mb-3 group/creator"
           onClick={(e) => e.stopPropagation()}
@@ -341,7 +341,7 @@ export function MeetupCard({ meetup, onNavigateToMessages, loadUserState = true 
               ))}
             </div>
           </div>
-        </Link>
+        </ProfileTransitionLink>
 
         {/* Title */}
         <h3 className="text-[1.05rem] font-semibold leading-snug mb-3 text-balance">

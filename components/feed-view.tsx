@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import type { TouchEvent } from "react"
-import Link from "next/link"
 import { Haptics } from "@capacitor/haptics"
 import { motion, useMotionValue, useTransform, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
@@ -13,6 +12,7 @@ import type { LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { MeetupCard } from "./meetup-card"
+import { ProfileTransitionLink } from "./profile-transition-link"
 import { CategorySelector, type CategorySelectorOption } from "./category-selector"
 import { MoodStatus } from "./mood-status"
 import { EditProfileModal } from "./edit-profile-modal"
@@ -453,13 +453,13 @@ function CardFace({ meetup }: { meetup: MeetupWithCreator }) {
               MOOD_DOT[mood] ?? "bg-gray-500"
             )}
           />
-          <Link
+          <ProfileTransitionLink
             href={`/profile/${meetup.creator_id}`}
             className="text-white font-semibold text-base leading-tight hover:text-white/80 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             {meetup.creator?.display_name ?? "Anonymous"}
-          </Link>
+          </ProfileTransitionLink>
           {meetup.creator?.languages && meetup.creator.languages.length > 0 && (
             <>
               <span className="text-white/30 text-sm">/</span>
@@ -808,7 +808,7 @@ function AvailablePeople({
               key={person.id}
               className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-3"
             >
-              <Link href={`/profile/${person.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+              <ProfileTransitionLink href={`/profile/${person.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={person.avatar_url ?? undefined} alt={displayName} />
                   <AvatarFallback>{displayName[0]?.toUpperCase() ?? "U"}</AvatarFallback>
@@ -818,7 +818,7 @@ function AvailablePeople({
                   <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
                   <p className="text-xs text-muted-foreground truncate">{location}</p>
                 </div>
-              </Link>
+              </ProfileTransitionLink>
 
               <button
                 onClick={() => handleSayHi(person.id)}

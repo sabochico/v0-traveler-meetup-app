@@ -2,6 +2,7 @@
 
 import { use, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { motion, useReducedMotion } from "framer-motion"
 import {
   ArrowLeft,
   MapPin,
@@ -104,6 +105,7 @@ export default function PublicProfilePage({
 }) {
   const { userId } = use(params)
   const router = useRouter()
+  const prefersReducedMotion = useReducedMotion()
   const { profile, isLoading } = usePublicProfile(userId)
   const { pastMeetups } = usePastMeetupActivity(profile?.id ?? null)
   const { user, isAuthenticated } = useAuth()
@@ -349,7 +351,16 @@ export default function PublicProfilePage({
           </button>
         </div>
       ) : (
-        <main className="mx-auto max-w-lg space-y-4 pb-24">
+        <motion.main
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 10, scale: 0.985 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0.01 }
+              : { duration: 0.32, ease: [0.16, 1, 0.3, 1] }
+          }
+          className="mx-auto max-w-lg space-y-4 pb-24"
+        >
           <section className="relative px-4 pt-[calc(var(--drift-safe-top)+0.75rem)]">
             <div className="relative h-[48svh] min-h-[21rem] max-h-[31rem] overflow-hidden rounded-[2rem] bg-card shadow-2xl shadow-black/25">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/35 via-card to-[var(--drift-teal)]/18" />
@@ -684,7 +695,7 @@ export default function PublicProfilePage({
             </div>
           </section>
           </div>
-        </main>
+        </motion.main>
       )}
 
       {showReportModal && profile && (

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react"
-import Link from "next/link"
 import { Search, ArrowLeft, Send, Loader2, MapPin, Plane, Globe, Sparkles, MessageCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -14,6 +13,7 @@ import { useBlockedUsers } from "@/hooks/use-user-safety"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { motionEase, quickTransition } from "@/lib/motion"
 import { getPresenceStatus } from "@/lib/presence"
+import { ProfileTransitionLink } from "@/components/profile-transition-link"
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_SHOW_MOCK_DATA === "true"
 
@@ -552,7 +552,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
               </div>
             </>
           ) : (
-            <Link
+            <ProfileTransitionLink
               href={`/profile/${conversation.other_user?.id ?? ""}`}
               className="flex items-center gap-3 flex-1 min-w-0 group"
             >
@@ -573,7 +573,7 @@ function ChatView({ conversation, onBack, isMock = false }: ChatViewProps) {
                   {conversation.meetup?.title ?? presence.label ?? ""}
                 </p>
               </div>
-            </Link>
+            </ProfileTransitionLink>
           )}
         </div>
       </header>

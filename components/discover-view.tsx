@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import Link from "next/link"
 import { motion, useReducedMotion } from "framer-motion"
 import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { MeetupCard } from "./meetup-card"
+import { ProfileTransitionLink } from "./profile-transition-link"
 import { CategorySelector, type CategorySelectorOption } from "./category-selector"
 import { useNearbyProfiles } from "@/hooks/use-profile"
 import { useMeetups } from "@/hooks/use-meetups"
@@ -473,7 +473,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
 
   return (
     <article className="rounded-3xl bg-card border border-border/60 p-4 hover:border-primary/40 transition-all duration-300">
-      <Link href={profileHref} className="block">
+      <ProfileTransitionLink href={profileHref} className="block">
         <div className="flex gap-4">
           <div className="relative flex-shrink-0">
             <Avatar className="w-20 h-20 ring-2 ring-primary/20">
@@ -570,7 +570,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
             </div>
           </div>}
         </div>
-      </Link>
+      </ProfileTransitionLink>
 
       <button
         onClick={handleSayHi}
