@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "seed:review-account": "node scripts/ensure-review-account.mjs",
     "cap:sync": "cap sync",
     "cap:add:ios": "cap add ios",
     "cap:open:ios": "cap open ios"
