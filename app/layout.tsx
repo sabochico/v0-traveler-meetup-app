@@ -104,7 +104,7 @@ export default function RootLayout({
             requestAnimationFrame(function(){
               document.documentElement.classList.add('drift-ready');
             });
-          }, reduceStartupMotion ? 120 : 720);
+          }, reduceStartupMotion ? 120 : 1350);
         `}</Script>
         <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
           <NativeOAuthListener />

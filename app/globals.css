@@ -216,8 +216,8 @@
     opacity: 1;
     visibility: visible;
     transition:
-      opacity 260ms ease,
-      visibility 0s linear 260ms;
+      opacity 300ms ease,
+      visibility 0s linear 300ms;
     will-change: opacity;
   }
 
@@ -231,10 +231,10 @@
     opacity: 0;
     transform: scale(0.96);
     text-align: center;
-    animation: drift-logo-intro 340ms cubic-bezier(0.16, 1, 0.3, 1) 40ms both;
+    animation: drift-logo-intro 420ms cubic-bezier(0.16, 1, 0.3, 1) 70ms both;
     transition:
-      opacity 260ms ease,
-      transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+      opacity 300ms ease,
+      transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
   }
 
