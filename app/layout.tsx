@@ -78,6 +78,7 @@ export default function RootLayout({
         <div id="drift-startup-splash" className="drift-startup-splash" aria-hidden="true">
           <div className="drift-startup-splash__content">
             <img
+              id="drift-startup-logo"
               src="/drift-logo-splash-512.png"
               alt=""
               className="drift-startup-splash__logo"
@@ -102,20 +103,36 @@ export default function RootLayout({
             reduceStartupMotion = document.documentElement.classList.contains('reduce-motion') ||
               window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           } catch(e) {}
-          requestAnimationFrame(function(){
+          function beginStartup(){
             document.documentElement.classList.add('drift-startup-enter');
+            window.setTimeout(function(){
+              document.documentElement.classList.add('drift-app-reveal');
+            }, reduceStartupMotion ? 520 : 980);
             window.setTimeout(function(){
               requestAnimationFrame(function(){
                 document.documentElement.classList.add('drift-ready');
               });
-            }, reduceStartupMotion ? 700 : 1450);
+            }, reduceStartupMotion ? 860 : 1580);
+          }
+          requestAnimationFrame(function(){
+            var logo = document.getElementById('drift-startup-logo');
+            if (logo && logo.decode) {
+              Promise.race([
+                logo.decode().catch(function(){}),
+                new Promise(function(resolve){ window.setTimeout(resolve, 180); })
+              ]).then(beginStartup);
+            } else {
+              beginStartup();
+            }
           });
         `}</Script>
         <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
-          <NativeOAuthListener />
-          <PushNotificationRegistrar />
-          {children}
-          <Toaster />
+          <div className="drift-app-shell">
+            <NativeOAuthListener />
+            <PushNotificationRegistrar />
+            {children}
+            <Toaster />
+          </div>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
