@@ -62,6 +62,7 @@ const BLOCKED_LOCATION_TERMS = [
 ]
 
 const TIME_INTERVAL_MINUTES = 15
+const WHEEL_ROW_HEIGHT = 64
 
 function formatCityLabel(s: CityResult): string {
   return `${s.name}, ${s.country}`
@@ -197,6 +198,9 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const [cityData, setCityData] = useState<{ city: string; region?: string; country?: string; latitude?: number; longitude?: number } | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const coverInputRef = useRef<HTMLInputElement | null>(null)
+  const groupSizeWheelRef = useRef<HTMLDivElement | null>(null)
+  const startTimeWheelRef = useRef<HTMLDivElement | null>(null)
+  const wheelSnapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { createMeetup } = useCreateMeetup()
   const selectedCapacity = getCapacityOption(capacity)
@@ -206,8 +210,26 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   useEffect(() => {
     return () => {
       if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl)
+      if (wheelSnapTimeoutRef.current) clearTimeout(wheelSnapTimeoutRef.current)
     }
   }, [coverPreviewUrl])
+
+  useEffect(() => {
+    if (!groupSizeSheetOpen) return
+    const index = CAPACITY_OPTIONS.findIndex((option) => option.value === capacity)
+    requestAnimationFrame(() => {
+      groupSizeWheelRef.current?.scrollTo({ top: Math.max(index, 0) * WHEEL_ROW_HEIGHT, behavior: "auto" })
+    })
+  }, [capacity, groupSizeSheetOpen])
+
+  useEffect(() => {
+    if (!startTimeSheetOpen) return
+    const timeOptions = getTimeOptions(selectedDateKey)
+    const index = timeOptions.findIndex((minutes) => minutes === selectedTimeMinutes)
+    requestAnimationFrame(() => {
+      startTimeWheelRef.current?.scrollTo({ top: Math.max(index, 0) * WHEEL_ROW_HEIGHT, behavior: "auto" })
+    })
+  }, [selectedDateKey, selectedTimeMinutes, startTimeSheetOpen])
 
   // Debounced city search via Open-Meteo geocoding
   useEffect(() => {
@@ -285,9 +307,44 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
     setCoverPreviewUrl(URL.createObjectURL(file))
   }
 
-  const handleCapacitySelect = (value: number) => {
+  const snapWheelToIndex = <T,>(
+    element: HTMLDivElement | null,
+    options: T[],
+    selectOption: (option: T) => void
+  ) => {
+    if (!element || options.length === 0) return
+    const index = Math.max(0, Math.min(options.length - 1, Math.round(element.scrollTop / WHEEL_ROW_HEIGHT)))
+    element.scrollTo({
+      top: index * WHEEL_ROW_HEIGHT,
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    })
+    selectOption(options[index])
+  }
+
+  const scheduleWheelSnap = <T,>(
+    element: HTMLDivElement | null,
+    options: T[],
+    selectOption: (option: T) => void
+  ) => {
+    if (wheelSnapTimeoutRef.current) clearTimeout(wheelSnapTimeoutRef.current)
+    wheelSnapTimeoutRef.current = setTimeout(() => snapWheelToIndex(element, options, selectOption), 110)
+  }
+
+  const selectCapacity = (value: number, withHaptic = true) => {
+    if (capacity === value) return
     setCapacity(value)
-    triggerSelectionHaptic()
+    if (withHaptic) triggerSelectionHaptic()
+  }
+
+  const handleCapacitySelect = (value: number) => {
+    selectCapacity(value)
+    const index = CAPACITY_OPTIONS.findIndex((option) => option.value === value)
+    if (index >= 0) {
+      groupSizeWheelRef.current?.scrollTo({
+        top: index * WHEEL_ROW_HEIGHT,
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      })
+    }
   }
 
   const handleDateSelect = (dateKey: string) => {
@@ -308,8 +365,15 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
   const handleTimeSelect = (minutes: number) => {
     const start = buildStartDate(selectedDateKey, minutes)
     if (start <= new Date()) return
+    if (selectedTimeMinutes !== minutes) triggerSelectionHaptic()
     setSelectedStartAt(start)
-    triggerSelectionHaptic()
+    const index = getTimeOptions(selectedDateKey).findIndex((option) => option === minutes)
+    if (index >= 0) {
+      startTimeWheelRef.current?.scrollTo({
+        top: index * WHEEL_ROW_HEIGHT,
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      })
+    }
   }
 
   const uploadCoverImage = async () => {
@@ -633,7 +697,10 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
           <div className="relative px-5 pb-2 pt-2">
             <div className="pointer-events-none absolute inset-x-5 top-1/2 h-16 -translate-y-1/2 rounded-2xl border border-primary/25 bg-primary/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" />
             <div
-              className="relative max-h-80 snap-y snap-mandatory overflow-y-auto overscroll-contain py-24 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              ref={groupSizeWheelRef}
+              onScroll={() => scheduleWheelSnap(groupSizeWheelRef.current, CAPACITY_OPTIONS, (option) => selectCapacity(option.value))}
+              onTouchEnd={() => snapWheelToIndex(groupSizeWheelRef.current, CAPACITY_OPTIONS, (option) => selectCapacity(option.value))}
+              className="relative h-80 snap-y snap-mandatory overflow-y-auto overscroll-contain py-32 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               aria-label="Group size options"
             >
               {CAPACITY_OPTIONS.map((option) => {
@@ -645,7 +712,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
                     onClick={() => handleCapacitySelect(option.value)}
                     aria-pressed={isSelected}
                     className={cn(
-                      "relative flex min-h-16 w-full snap-center items-center justify-center rounded-2xl px-5 text-center transition-all duration-200",
+                      "relative flex h-16 w-full snap-center items-center justify-center rounded-2xl px-5 text-center transition-all duration-200",
                       isSelected ? "scale-100 text-foreground" : "scale-[0.96] text-muted-foreground"
                     )}
                   >
@@ -718,7 +785,10 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
             <div className="relative">
               <div className="pointer-events-none absolute inset-x-0 top-1/2 h-16 -translate-y-1/2 rounded-2xl border border-primary/25 bg-primary/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" />
               <div
-                className="relative max-h-72 snap-y snap-mandatory overflow-y-auto overscroll-contain py-24 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                ref={startTimeWheelRef}
+                onScroll={() => scheduleWheelSnap(startTimeWheelRef.current, getTimeOptions(selectedDateKey), handleTimeSelect)}
+                onTouchEnd={() => snapWheelToIndex(startTimeWheelRef.current, getTimeOptions(selectedDateKey), handleTimeSelect)}
+                className="relative h-72 snap-y snap-mandatory overflow-y-auto overscroll-contain py-28 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 aria-label="Start time options"
               >
                 {getTimeOptions(selectedDateKey).map((minutes) => {
@@ -730,7 +800,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
                       onClick={() => handleTimeSelect(minutes)}
                       aria-pressed={isSelected}
                       className={cn(
-                        "relative flex min-h-16 w-full snap-center items-center justify-center rounded-2xl px-5 text-center transition-all duration-200",
+                        "relative flex h-16 w-full snap-center items-center justify-center rounded-2xl px-5 text-center transition-all duration-200",
                         isSelected ? "scale-100 text-primary" : "scale-[0.96] text-muted-foreground"
                       )}
                     >
