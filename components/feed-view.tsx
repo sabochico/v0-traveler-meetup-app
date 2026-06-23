@@ -1,8 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react"
-import type { TouchEvent } from "react"
-import { Haptics } from "@capacitor/haptics"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { motion, useMotionValue, useTransform, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
   MapPin, X, Heart, Loader2, Coffee, Camera, Utensils,
@@ -16,6 +14,7 @@ import { ProfileTransitionLink } from "./profile-transition-link"
 import { CategorySelector, type CategorySelectorOption } from "./category-selector"
 import { MoodStatus } from "./mood-status"
 import { EditProfileModal } from "./edit-profile-modal"
+import { PullToRefresh } from "./pull-to-refresh"
 import { useMeetups } from "@/hooks/use-meetups"
 import { useSavedMeetupsWithDetails } from "@/hooks/use-saved-meetups"
 import { useProfile, useUpdateProfile, useNearbyProfiles } from "@/hooks/use-profile"
@@ -990,12 +989,8 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
   const [editProfileTab, setEditProfileTab] = useState<"profile" | "interests">("profile")
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [loadSecondaryData, setLoadSecondaryData] = useState(false)
-  const [refreshingSaved, setRefreshingSaved] = useState(false)
-  const [savedPullDistance, setSavedPullDistance] = useState(0)
-  const savedPullStartY = useRef<number | null>(null)
-  const savedPullHapticFired = useRef(false)
   const prefersReducedMotion = useReducedMotion()
-  const { meetups, isLoading } = useMeetups()
+  const { meetups, isLoading, refresh: refreshMeetups } = useMeetups()
   const shouldLoadSavedMeetups = activeTab === "saved" || loadSecondaryData
   const { savedMeetups, isLoading: savedLoading, refresh: refreshSavedMeetups } = useSavedMeetupsWithDetails({ enabled: shouldLoadSavedMeetups })
   const { profile } = useProfile()
@@ -1027,48 +1022,6 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
       void refreshSavedMeetups()
     }
   }, [activeTab, shouldLoadSavedMeetups, refreshSavedMeetups])
-
-  const refreshSaved = useCallback(async () => {
-    if (refreshingSaved) return
-    setRefreshingSaved(true)
-    try {
-      await refreshSavedMeetups()
-    } finally {
-      setRefreshingSaved(false)
-    }
-  }, [refreshSavedMeetups, refreshingSaved])
-
-  const handleSavedTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    if (activeTab !== "saved" || window.scrollY > 2) return
-    savedPullStartY.current = event.touches[0]?.clientY ?? null
-    savedPullHapticFired.current = false
-  }
-
-  const handleSavedTouchMove = (event: TouchEvent<HTMLDivElement>) => {
-    const startY = savedPullStartY.current
-    if (startY === null || activeTab !== "saved" || refreshingSaved || window.scrollY > 2) return
-
-    const distance = Math.max(0, event.touches[0]?.clientY - startY)
-    const nextDistance = Math.min(distance, 96)
-    setSavedPullDistance(nextDistance)
-
-    if (nextDistance >= 72 && !savedPullHapticFired.current) {
-      savedPullHapticFired.current = true
-      Haptics.selectionChanged().catch(() => {})
-    }
-  }
-
-  const handleSavedTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
-    const startY = savedPullStartY.current
-    savedPullStartY.current = null
-    const shouldRefresh = savedPullDistance >= 72
-    setSavedPullDistance(0)
-    if (startY === null || activeTab !== "saved" || refreshingSaved) return
-    const endY = event.changedTouches[0]?.clientY ?? startY
-    if ((shouldRefresh || endY - startY > 72) && window.scrollY <= 2) {
-      void refreshSaved()
-    }
-  }
 
   const handleDismissBanner = () => {
     sessionStorage.setItem("drift-profile-banner-dismissed", "1")
@@ -1191,6 +1144,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
 
       <div className="max-w-lg mx-auto">
         {activeTab === "feed" ? (
+          <PullToRefresh onRefresh={refreshMeetups} refreshingLabel="Refreshing Today">
           <TodayHome
             meetups={filteredMeetups}
             savedMeetups={savedMeetups as MeetupWithCreator[]}
@@ -1203,39 +1157,9 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             onViewSaved={() => setActiveTab("saved")}
             onBrowseAll={() => setBrowseAll(true)}
           />
+          </PullToRefresh>
         ) : (
-          <div
-            className="min-h-[55svh] overscroll-y-contain"
-            onTouchStart={handleSavedTouchStart}
-            onTouchMove={handleSavedTouchMove}
-            onTouchEnd={handleSavedTouchEnd}
-          >
-            <motion.div
-              className="pointer-events-none flex items-center justify-center pt-3"
-              animate={{
-                opacity: refreshingSaved || savedPullDistance > 8 ? 1 : 0,
-                y: refreshingSaved ? 0 : Math.min(savedPullDistance * 0.25, 18),
-              }}
-              transition={prefersReducedMotion ? { duration: 0.01 } : { type: "spring", stiffness: 320, damping: 30 }}
-              aria-live="polite"
-            >
-              <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-card/80 px-3 py-1.5 text-xs text-muted-foreground shadow-lg shadow-black/10 backdrop-blur-xl">
-                <motion.span
-                  className="h-2 w-2 rounded-full bg-primary"
-                  animate={{
-                    scale: refreshingSaved ? [1, 1.35, 1] : savedPullDistance >= 72 ? 1.2 : 0.85,
-                    opacity: savedPullDistance >= 72 || refreshingSaved ? 1 : 0.55,
-                  }}
-                  transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.7, repeat: refreshingSaved ? Infinity : 0 }}
-                />
-                {refreshingSaved ? "Refreshing saved meetups" : savedPullDistance >= 72 ? "Release to refresh" : "Pull to refresh"}
-              </div>
-            </motion.div>
-
-            <motion.div
-              animate={{ y: prefersReducedMotion ? 0 : Math.min(savedPullDistance * 0.28, 24) }}
-              transition={prefersReducedMotion ? { duration: 0.01 } : { type: "spring", stiffness: 360, damping: 32 }}
-            >
+          <PullToRefresh className="min-h-[55svh] overscroll-y-contain" onRefresh={refreshSavedMeetups} refreshingLabel="Refreshing saved meetups">
               {savedLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -1262,8 +1186,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
                   ))}
                 </div>
               )}
-            </motion.div>
-          </div>
+          </PullToRefresh>
         )}
       </div>
 

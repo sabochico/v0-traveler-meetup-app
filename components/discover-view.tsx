@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Search, MapPin, Globe, Loader2, MessageCircle, Check } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -10,6 +10,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { MeetupCard } from "./meetup-card"
 import { ProfileTransitionLink } from "./profile-transition-link"
 import { CategorySelector, type CategorySelectorOption } from "./category-selector"
+import { PullToRefresh } from "./pull-to-refresh"
 import { useNearbyProfiles } from "@/hooks/use-profile"
 import { useMeetups } from "@/hooks/use-meetups"
 import { useCreateConversation } from "@/hooks/use-messages"
@@ -142,8 +143,8 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [cityFilter, setCityFilter] = useState(ALL_CITIES_FILTER)
   const prefersReducedMotion = useReducedMotion()
-  const { profiles, isLoading: profilesLoading, needsLocation } = useNearbyProfiles({ enabled: activeTab === "people" })
-  const { meetups, isLoading: meetupsLoading } = useMeetups()
+  const { profiles, isLoading: profilesLoading, needsLocation, refresh: refreshProfiles } = useNearbyProfiles({ enabled: activeTab === "people" })
+  const { meetups, isLoading: meetupsLoading, refresh: refreshMeetups } = useMeetups()
   const { blockedUserIdSet } = useBlockedUsers()
 
   const displayProfiles = useMemo(
@@ -253,6 +254,12 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
       : displayProfiles,
     [displayProfiles, searchQuery]
   )
+  const refreshDiscover = useCallback(async () => {
+    await Promise.all([
+      refreshMeetups(),
+      activeTab === "people" ? refreshProfiles() : Promise.resolve(),
+    ])
+  }, [activeTab, refreshMeetups, refreshProfiles])
 
   return (
     <div className="min-h-screen">
@@ -303,6 +310,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
       </header>
 
       {/* Content */}
+      <PullToRefresh onRefresh={refreshDiscover} refreshingLabel="Refreshing Discover">
       {activeTab === "meetups" ? (
         meetupsLoading ? (
           <MeetupFeedSkeleton />
@@ -388,6 +396,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
           )}
         </div>
       )}
+      </PullToRefresh>
     </div>
   )
 }

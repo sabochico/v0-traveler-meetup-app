@@ -14,6 +14,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { motionEase, quickTransition } from "@/lib/motion"
 import { getPresenceStatus } from "@/lib/presence"
 import { ProfileTransitionLink } from "@/components/profile-transition-link"
+import { PullToRefresh } from "@/components/pull-to-refresh"
 
 const SHOW_MOCK_DATA = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_SHOW_MOCK_DATA === "true"
 
@@ -140,7 +141,7 @@ export function MessagesView({ initialConversationId, onBrowsePeople }: Messages
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const prefersReducedMotion = useReducedMotion()
-  const { conversations, isLoading } = useConversations()
+  const { conversations, isLoading, refresh: refreshConversations } = useConversations()
   const { blockedUserIdSet } = useBlockedUsers()
   const hasAutoOpened = useRef(false)
 
@@ -198,6 +199,7 @@ export function MessagesView({ initialConversationId, onBrowsePeople }: Messages
           exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -12 }}
           transition={prefersReducedMotion ? { duration: 0.01 } : quickTransition}
         >
+      <PullToRefresh onRefresh={refreshConversations} refreshingLabel="Refreshing messages">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[var(--drift-safe-top)]">
         <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
@@ -310,6 +312,7 @@ export function MessagesView({ initialConversationId, onBrowsePeople }: Messages
           )}
         </div>
       )}
+      </PullToRefresh>
         </motion.div>
       )}
     </AnimatePresence>
