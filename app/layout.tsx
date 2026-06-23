@@ -78,9 +78,11 @@ export default function RootLayout({
         <div id="drift-startup-splash" className="drift-startup-splash" aria-hidden="true">
           <div className="drift-startup-splash__content">
             <img
-              src="/drift-logo.png"
+              src="/drift-logo-splash-512.png"
               alt=""
               className="drift-startup-splash__logo"
+              decoding="sync"
+              fetchPriority="high"
               aria-hidden="true"
             />
           </div>
@@ -100,11 +102,14 @@ export default function RootLayout({
             reduceStartupMotion = document.documentElement.classList.contains('reduce-motion') ||
               window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           } catch(e) {}
-          window.setTimeout(function(){
-            requestAnimationFrame(function(){
-              document.documentElement.classList.add('drift-ready');
-            });
-          }, reduceStartupMotion ? 120 : 1350);
+          requestAnimationFrame(function(){
+            document.documentElement.classList.add('drift-startup-enter');
+            window.setTimeout(function(){
+              requestAnimationFrame(function(){
+                document.documentElement.classList.add('drift-ready');
+              });
+            }, reduceStartupMotion ? 700 : 1450);
+          });
         `}</Script>
         <ThemeProvider attribute="class" defaultTheme="dark" storageKey="drift-theme" value={{ light: "light", dark: "dark" }}>
           <NativeOAuthListener />

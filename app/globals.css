@@ -231,11 +231,15 @@
     opacity: 0;
     transform: scale(0.96);
     text-align: center;
-    animation: drift-logo-intro 420ms cubic-bezier(0.16, 1, 0.3, 1) 70ms both;
     transition:
-      opacity 300ms ease,
-      transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+      opacity 440ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
+  }
+
+  .drift-startup-enter .drift-startup-splash__content {
+    opacity: 1;
+    transform: scale(1);
   }
 
   .drift-ready .drift-startup-splash__content {
@@ -250,26 +254,20 @@
     object-fit: contain;
   }
 
-  @keyframes drift-logo-intro {
-    0% {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .drift-startup-splash,
-    .drift-startup-splash__content {
-      animation: none;
-      transition: none;
+    .drift-startup-splash {
+      transition: opacity 180ms ease, visibility 0s linear 180ms;
     }
 
     .drift-startup-splash__content {
-      opacity: 1;
+      transition: opacity 180ms ease;
+    }
+
+    .drift-startup-splash__content {
+      transform: none;
+    }
+
+    .drift-ready .drift-startup-splash__content {
       transform: none;
     }
   }
