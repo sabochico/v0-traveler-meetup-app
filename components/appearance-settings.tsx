@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
-import { X, Moon, Monitor, Palette, Check } from "lucide-react"
+import { X, Sun, Moon, Monitor, Palette, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface AppearanceSettingsProps {
@@ -76,8 +76,9 @@ export function AppearanceSettings({ isOpen, onClose }: AppearanceSettingsProps)
           {/* Theme Selection */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">Theme</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {[
+                { value: "light", label: "Light", description: "Always use light mode", icon: Sun },
                 { value: "dark", label: "Dark", description: "Always use dark mode", icon: Moon },
                 { value: "system", label: "System", description: "Follow your phone setting", icon: Monitor },
               ].map((option) => (
