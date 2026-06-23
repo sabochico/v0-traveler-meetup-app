@@ -388,7 +388,7 @@ export function CreateMeetup({ open, onOpenChange }: CreateMeetupProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="relative top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-dvh sm:max-h-[90dvh] bg-card border-border px-0 pb-0 pt-[calc(max(env(safe-area-inset-top),44px)+12px)] sm:p-0 gap-0 rounded-none sm:rounded-lg overflow-hidden flex flex-col">
+      <DialogContent showCloseButton={false} className="top-auto bottom-0 translate-y-0 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-full max-w-none sm:max-w-md max-h-dvh sm:max-h-[90dvh] bg-card border-border px-0 pb-0 pt-[calc(max(env(safe-area-inset-top),44px)+12px)] sm:p-0 gap-0 rounded-none sm:rounded-lg overflow-hidden flex flex-col">
         {createSuccess && (
           <motion.div
             className="absolute inset-0 z-50 flex items-center justify-center bg-card/94 px-8 text-center backdrop-blur-xl"
