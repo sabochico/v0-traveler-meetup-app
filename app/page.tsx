@@ -66,10 +66,17 @@ export default function Home() {
     const searchParams = new URLSearchParams(window.location.search)
     const urlTab = searchParams.get("tab") as AppTab | null
     const conversationId = searchParams.get("conversation") ?? undefined
+    const shouldOpenCreate = searchParams.get("create") === "1"
 
-    if (urlTab === "messages") {
+    if (urlTab && ["feed", "discover", "messages", "profile"].includes(urlTab)) {
       if (conversationId) setPendingConversationId(conversationId)
-      setActiveTab("messages")
+      setActiveTab(urlTab)
+      window.history.replaceState(null, "", "/")
+      return
+    }
+
+    if (shouldOpenCreate) {
+      setShowCreate(true)
       window.history.replaceState(null, "", "/")
       return
     }
@@ -81,6 +88,10 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    if (activeTab !== "create") {
+      sessionStorage.setItem("drift-open-tab", activeTab)
+    }
+
     setMountedTabs((current) => {
       if (current.has(activeTab)) return current
       const next = new Set(current)

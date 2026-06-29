@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { BottomNav } from "@/components/bottom-nav"
 import { usePublicProfile } from "@/hooks/use-profile"
 import { usePastMeetupActivity } from "@/hooks/use-meetups"
 import { useCreateConversation } from "@/hooks/use-messages"
@@ -98,6 +99,8 @@ type AdminReport = {
   created_at: string
 }
 
+type AppTab = "feed" | "discover" | "create" | "messages" | "profile"
+
 export default function PublicProfilePage({
   params,
 }: {
@@ -123,6 +126,11 @@ export default function PublicProfilePage({
   const [adminHiddenOverride, setAdminHiddenOverride] = useState<boolean | null>(null)
   const [activePhotoIndex, setActivePhotoIndex] = useState(0)
   const [brokenPhotoUrls, setBrokenPhotoUrls] = useState<Set<string>>(() => new Set())
+  const [originTab] = useState<AppTab>(() => {
+    if (typeof window === "undefined") return "discover"
+    const storedTab = sessionStorage.getItem("drift-open-tab") as AppTab | null
+    return storedTab && ["feed", "discover", "messages", "profile"].includes(storedTab) ? storedTab : "discover"
+  })
   const preloadedPhotoUrls = useRef<Set<string>>(new Set())
 
   const presence = getPresenceStatus(profile)
@@ -222,6 +230,16 @@ export default function PublicProfilePage({
 
     sessionStorage.setItem("drift-open-tab", "discover")
     router.replace("/")
+  }
+
+  const handleTabChange = (tab: AppTab) => {
+    if (tab === "create") {
+      router.push(isAuthenticated ? "/?create=1" : "/?tab=profile")
+      return
+    }
+
+    sessionStorage.setItem("drift-open-tab", tab)
+    router.push(`/?tab=${tab}`)
   }
 
   const handleSayHi = async () => {
@@ -755,6 +773,8 @@ export default function PublicProfilePage({
           </div>
         </div>
       )}
+
+      {!showReportModal && <BottomNav activeTab={originTab} onTabChange={handleTabChange} />}
     </div>
   )
 }
