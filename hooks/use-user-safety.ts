@@ -54,7 +54,7 @@ export function useUserSafety() {
     if (error && error.code !== "23505") throw error
     await globalMutate(BLOCKED_USERS_KEY)
     await Promise.all([
-      globalMutate("nearby-profiles"),
+      globalMutate((key) => Array.isArray(key) && key[0] === "nearby-profiles"),
       globalMutate("meetups"),
       globalMutate("conversations"),
     ])
@@ -71,6 +71,7 @@ export function useUserSafety() {
 
     if (error) throw error
     await globalMutate(BLOCKED_USERS_KEY)
+    await globalMutate((key) => Array.isArray(key) && key[0] === "nearby-profiles")
   }
 
   const reportUser = async (reportedUserId: string, reason: string, details?: string) => {

@@ -37,6 +37,7 @@ const PROVIDERS: Array<{
 interface SocialAuthButtonsProps {
   emailLabel: string
   onEmailClick: () => void
+  disabled?: boolean
 }
 
 function getOAuthErrorMessage(provider: SocialProvider, error: unknown) {
@@ -103,13 +104,13 @@ function getGoogleIdToken(result: unknown) {
   return value.idToken ?? value.authentication?.idToken ?? value.result?.idToken ?? value.result?.authentication?.idToken
 }
 
-export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButtonsProps) {
+export function SocialAuthButtons({ emailLabel, onEmailClick, disabled = false }: SocialAuthButtonsProps) {
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   const handleOAuth = async (provider: SocialProvider) => {
-    if (loadingProvider) return
+    if (loadingProvider || disabled) return
 
     setLoadingProvider(provider)
     setError(null)
@@ -247,12 +248,12 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
   return (
     <div className="space-y-3">
       <div className="space-y-2.5">
-        {PROVIDERS.filter((provider) => provider.id !== "apple").map((provider) => (
+        {PROVIDERS.map((provider) => (
           <button
             key={provider.id}
             type="button"
             onClick={() => handleOAuth(provider.id)}
-            disabled={Boolean(loadingProvider)}
+            disabled={disabled || Boolean(loadingProvider)}
             className="flex min-h-12 w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm font-semibold text-foreground shadow-sm shadow-black/10 transition-all active:scale-[0.99] hover:border-primary/30 hover:bg-white/[0.09] disabled:opacity-60"
           >
             {loadingProvider === provider.id ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : provider.icon}
@@ -262,7 +263,7 @@ export function SocialAuthButtons({ emailLabel, onEmailClick }: SocialAuthButton
         <button
           type="button"
           onClick={onEmailClick}
-          disabled={Boolean(loadingProvider)}
+          disabled={disabled || Boolean(loadingProvider)}
           className={cn(
             "flex min-h-12 w-full items-center justify-center gap-3 rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] disabled:opacity-60",
             "drift-gradient-button text-primary-foreground shadow-lg shadow-primary/20"

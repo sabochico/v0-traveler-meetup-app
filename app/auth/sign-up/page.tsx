@@ -15,6 +15,7 @@ export default function SignUpPage() {
   const [displayName, setDisplayName] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const router = useRouter()
 
   const focusEmailSignUp = () => {
@@ -39,6 +40,10 @@ export default function SignUpPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
+    if (!acceptedTerms) {
+      setError("Please agree to Drift's Terms, Privacy Policy, and Community Guidelines before creating an account.")
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -102,7 +107,25 @@ export default function SignUpPage() {
             <p className="text-muted-foreground">Create an account to find travelers nearby</p>
           </div>
 
-          <SocialAuthButtons emailLabel="Continue with email" onEmailClick={focusEmailSignUp} />
+          <label className="mb-4 flex items-start gap-3 rounded-2xl border border-border/70 bg-card/70 p-3 text-left text-xs leading-5 text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => {
+                setAcceptedTerms(event.target.checked)
+                if (event.target.checked) setError(null)
+              }}
+              className="mt-1 h-4 w-4 rounded border-border accent-primary"
+            />
+            <span>
+              I agree to Drift&apos;s{" "}
+              <Link href="/legal/terms" className="text-primary hover:underline">Terms</Link>,{" "}
+              <Link href="/legal/privacy" className="text-primary hover:underline">Privacy Policy</Link>, and{" "}
+              <Link href="/legal/community" className="text-primary hover:underline">Community Guidelines</Link>, including Drift&apos;s zero-tolerance policy for abusive or objectionable content.
+            </span>
+          </label>
+
+          <SocialAuthButtons emailLabel="Continue with email" onEmailClick={focusEmailSignUp} disabled={!acceptedTerms} />
 
           <div className="my-5 flex items-center gap-3">
             <div className="h-px flex-1 bg-border/70" />
@@ -177,7 +200,7 @@ export default function SignUpPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
               aria-busy={loading}
               className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium flex items-center justify-center gap-2 hover:glow-amber transition-all disabled:opacity-50"
             >

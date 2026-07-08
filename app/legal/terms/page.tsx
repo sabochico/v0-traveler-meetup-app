@@ -20,6 +20,10 @@ export default function TermsPage() {
             safety expectations.
           </p>
           <p>
+            Drift has zero tolerance for objectionable content and abusive users. Users can report or block other
+            users from their profiles, and reports are reviewed through Drift&apos;s moderation tools.
+          </p>
+          <p>
             Drift is provided as available. To the fullest extent allowed by law, Drift is not liable for offline
             interactions, user conduct, lost data, service interruptions, or indirect damages.
           </p>
