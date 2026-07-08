@@ -22,6 +22,7 @@ import { getProfileCompletionScore } from "@/lib/profile-completion"
 import { getPresenceStatus } from "@/lib/presence"
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notification-preferences"
 import { normalizeLocationValue, sameCity } from "@/lib/city-matching"
+import { getProximityLabel } from "@/lib/proximity-label"
 
 const STATUS_STYLES: Record<MoodStatus, { color: string; label: string }> = {
   social: { color: "bg-emerald-500", label: "Feeling social" },
@@ -143,7 +144,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [cityFilter, setCityFilter] = useState(ALL_CITIES_FILTER)
   const prefersReducedMotion = useReducedMotion()
-  const { profiles, isLoading: profilesLoading, needsLocation, refresh: refreshProfiles } = useNearbyProfiles({ enabled: activeTab === "people" })
+  const { profiles, currentProfile, isLoading: profilesLoading, needsLocation, refresh: refreshProfiles } = useNearbyProfiles({ enabled: activeTab === "people" })
   const { meetups, isLoading: meetupsLoading, refresh: refreshMeetups } = useMeetups()
   const { blockedUserIdSet } = useBlockedUsers()
 
@@ -391,7 +392,7 @@ export function DiscoverView({ onNavigateToMessages }: DiscoverViewProps) {
             </Empty>
           ) : (
             filteredProfiles.map((person) => (
-              <PersonCard key={person.id} person={person} isMock={isMockData} />
+              <PersonCard key={person.id} person={person} viewer={currentProfile} isMock={isMockData} />
             ))
           )}
         </div>
@@ -430,7 +431,7 @@ function MeetupFeedSkeleton() {
   )
 }
 
-function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
+function PersonCard({ person, viewer, isMock }: { person: Profile; viewer?: Profile | null; isMock: boolean }) {
   const [messageSent, setMessageSent] = useState(false)
   const [sending, setSending] = useState(false)
   const { startConversation } = useCreateConversation()
@@ -448,6 +449,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
     [person.current_city, person.current_country].filter(Boolean).join(", ") ||
     (typeof person.location === "string" ? person.location : null) ||
     "Location not shared"
+  const proximityLabel = getProximityLabel(viewer, person)
 
   const interests = person.interests ?? []
   const languages = person.languages ?? []
@@ -539,7 +541,7 @@ function PersonCard({ person, isMock }: { person: Profile; isMock: boolean }) {
 
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-3">
               <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span className="truncate">{location}</span>
+              <span className="truncate">{proximityLabel ? `${proximityLabel} · ${location}` : location}</span>
             </div>
           </div>
         </div>

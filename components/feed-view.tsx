@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useCreateConversation } from "@/hooks/use-messages"
 import { useBlockedUsers } from "@/hooks/use-user-safety"
 import { hasLocationValue, sameCityAndCountry } from "@/lib/city-matching"
+import { getProximityLabel } from "@/lib/proximity-label"
 import { getNextProfileRequirement, getProfileCompletionScore } from "@/lib/profile-completion"
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notification-preferences"
 import type { MoodStatus as MoodStatusType, MeetupWithCreator, Profile } from "@/lib/types"
@@ -743,10 +744,12 @@ function SwipeFeed({ meetups, isLoading, onSaveMeetup }: SwipeFeedProps) {
 
 function AvailablePeople({
   profiles,
+  viewer,
   hasUserCity,
   onNavigateToMessages,
 }: {
   profiles: Profile[]
+  viewer?: Profile | null
   hasUserCity: boolean
   onNavigateToMessages?: (conversationId: string) => void
 }) {
@@ -801,6 +804,7 @@ function AvailablePeople({
             [person.current_city, person.current_country].filter(Boolean).join(", ") ||
             (typeof person.location === "string" ? person.location : null) ||
             "Location not shared"
+          const proximityLabel = getProximityLabel(viewer, person)
 
           return (
             <div
@@ -815,7 +819,9 @@ function AvailablePeople({
 
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{location}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {proximityLabel ? `${proximityLabel} · ${location}` : location}
+                  </p>
                 </div>
               </ProfileTransitionLink>
 
@@ -845,6 +851,7 @@ function TodayHome({
   meetups,
   savedMeetups,
   profiles,
+  viewer,
   isLoading,
   savedLoading,
   loadSecondaryData,
@@ -856,6 +863,7 @@ function TodayHome({
   meetups: MeetupWithCreator[]
   savedMeetups: MeetupWithCreator[]
   profiles: Profile[]
+  viewer?: Profile | null
   isLoading: boolean
   savedLoading: boolean
   loadSecondaryData: boolean
@@ -937,7 +945,7 @@ function TodayHome({
         )}
       </section>
 
-      <AvailablePeople profiles={profiles} hasUserCity={hasUserCity} onNavigateToMessages={onNavigateToMessages} />
+      <AvailablePeople profiles={profiles} viewer={viewer} hasUserCity={hasUserCity} onNavigateToMessages={onNavigateToMessages} />
 
       <section className="px-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -1149,6 +1157,7 @@ export function FeedView({ onNavigateToMessages }: FeedViewProps) {
             meetups={filteredMeetups}
             savedMeetups={savedMeetups as MeetupWithCreator[]}
             profiles={profiles.filter((person) => !blockedUserIdSet.has(person.id))}
+            viewer={profile}
             isLoading={isLoading}
             savedLoading={savedLoading}
             loadSecondaryData={loadSecondaryData}

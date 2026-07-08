@@ -284,6 +284,7 @@ export function useNearbyProfiles(options: UseProfileOptions = {}) {
 
   return {
     profiles: data ?? [],
+    currentProfile: profile,
     isLoading: enabled && profileLoading ? true : isLoading,
     error,
     refresh: mutate,
